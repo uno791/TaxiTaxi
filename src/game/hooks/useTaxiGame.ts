@@ -42,6 +42,8 @@ const INITIAL_METRICS: RideMetrics = {
 const DEFAULT_START_POSITION: Vector2 = { x: 0, z: -48 };
 const WALK_HEIGHT = 1.6;
 const REENTRY_DISTANCE = 4;
+const WALK_EXIT_SIDE_OFFSET = 1.7;
+const WALK_EXIT_FORWARD_OFFSET = 0.6;
 
 function computeHeading(from: Vector2, to: Vector2): number {
   return Math.atan2(to.x - from.x, to.z - from.z);
@@ -172,13 +174,17 @@ export function useTaxiGame(containerRef: React.RefObject<HTMLDivElement | null>
 
     if (interactionModeRef.current === 'drive') {
       if ((metricsRef.current.speed || 0) > 0.02) {
-        setStatusMessage('Bring the taxi to a full stop before exiting.');
-        return;
+        setStatusMessage('Parking brake engaged. Switching to first-person walk mode.');
       }
 
       const exitPosition = runtime.car.position.clone();
       exitPosition.y = WALK_HEIGHT;
       const exitHeading = runtime.car.rotation.y;
+      const forward = new THREE.Vector3(Math.sin(exitHeading), 0, Math.cos(exitHeading));
+      const left = new THREE.Vector3(-forward.z, 0, forward.x).normalize();
+      exitPosition
+        .add(left.multiplyScalar(WALK_EXIT_SIDE_OFFSET))
+        .add(forward.multiplyScalar(WALK_EXIT_FORWARD_OFFSET));
 
       const playerObject = runtime.pointerControls.object;
       playerObject.position.copy(exitPosition);
@@ -191,7 +197,7 @@ export function useTaxiGame(containerRef: React.RefObject<HTMLDivElement | null>
       interactionModeRef.current = 'walk';
       setInteractionMode('walk');
       runtime.pointerControls.lock();
-      setStatusMessage('Walk mode: WASD to move, mouse to look. Press E near the taxi to get back in.');
+      setStatusMessage('Walk mode: WASD to move, mouse to look. Click if needed to lock the view. Press E near the taxi to hop back in.');
     } else {
       const runtimePlayer = runtime.pointerControls.object;
       const carPosition = runtime.car.position.clone();
@@ -275,6 +281,24 @@ export function useTaxiGame(containerRef: React.RefObject<HTMLDivElement | null>
     const pointerControls = new PointerLockControls(camera, renderer.domElement);
     pointerControls.object.position.set(0, WALK_HEIGHT, -60);
     scene.add(pointerControls.object);
+
+    const attemptPointerLock = () => {
+      if (interactionModeRef.current === 'walk' && !pointerControls.isLocked) {
+        pointerControls.lock();
+      }
+    };
+
+    const handleControlsLock = () => {
+      renderer.domElement.style.cursor = 'none';
+    };
+
+    const handleControlsUnlock = () => {
+      renderer.domElement.style.cursor = '';
+    };
+
+    renderer.domElement.addEventListener('click', attemptPointerLock);
+    pointerControls.addEventListener('lock', handleControlsLock);
+    pointerControls.addEventListener('unlock', handleControlsUnlock);
 
     const runtime: GameRuntime = {
       scene,
@@ -487,7 +511,11 @@ export function useTaxiGame(containerRef: React.RefObject<HTMLDivElement | null>
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('keyup', handleKeyUp);
       window.removeEventListener('resize', handleResize);
+      renderer.domElement.removeEventListener('click', attemptPointerLock);
+      pointerControls.removeEventListener('lock', handleControlsLock);
+      pointerControls.removeEventListener('unlock', handleControlsUnlock);
       pointerControls.unlock();
+      renderer.domElement.style.cursor = '';
       renderer.dispose();
       container.removeChild(renderer.domElement);
       runtimeRef.current = null;
