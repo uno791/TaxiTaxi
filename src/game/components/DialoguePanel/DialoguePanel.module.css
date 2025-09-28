@@ -1,0 +1,23 @@
+.panel {
+  position: absolute;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(8, 0, 0, 0.82);
+  color: #f5f2e8;
+  padding: 18px 28px;
+  border-radius: 12px;
+  width: min(640px, 90vw);
+  font-size: 1.05rem;
+  line-height: 1.4;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.speaker {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  margin-bottom: 8px;
+  color: #ffdd9b;
+}

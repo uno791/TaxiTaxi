@@ -1,14 +1,9 @@
 import React from 'react';
 import TaxiGame from './game/components/TaxiGame';
-
-const appStyle: React.CSSProperties = {
-  width: '100%',
-  height: '100vh',
-  margin: 0,
-};
+import styles from './App.module.css';
 
 const App: React.FC = () => (
-  <div style={appStyle}>
+  <div className={styles.app}>
     <TaxiGame />
   </div>
 );
