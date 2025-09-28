@@ -57,8 +57,8 @@ export function BuildingRowVariant1(props: BaseRowProps) {
     <BuildingRowBase
       sequence={[
         { Component: BigBuilding, offset: 0 },
-        { Component: BrownBuilding, offset: 3.9 },
-        { Component: GreenBuilding, offset: 2.8 },
+        { Component: BrownBuilding, offset: 3.4 },
+        { Component: GreenBuilding, offset: 2.2 },
       ]}
       {...props}
     />
