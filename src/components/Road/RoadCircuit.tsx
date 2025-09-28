@@ -1,45 +1,17 @@
+// RoadCircuit.tsx
 import type { JSX } from 'react/jsx-runtime'
-import {
-  RoadStraight,
-  RoadCorner,
-  RoadCornerCurved,
-  RoadJunction,
-  RoadStraightCrossing,
-  RoadTSplit,
-} from './RoadBitsGenerated'
-import type { PI } from 'three/tsl';
+import BlockBuilder from './BlockBuilder'
+import { Grass } from '../Ground/Grass'
 
 export default function RoadCircuit(props: JSX.IntrinsicElements['group']) {
-    const spacing = 2
-    const tilesUp:JSX.Element[]=[];
-    const tilesDown:JSX.Element[]=[];
-    
-    for(let i=0;i<6;i=i+2){
-        tilesUp.push(<RoadStraight key={i} position={[0,0,-i] }/>)
-        tilesDown.push(<RoadStraight key={i} position={[4,0,-i] }/>)
-    }
-    return(
+  return (
     <group {...props}>
-      
-      {tilesUp}
-      <RoadCornerCurved position={[0,0,-6]}/>
-      <RoadStraightCrossing position={[2, 0, -6]} rotation={[Math.PI / 2, Math.PI, Math.PI/2]}/>
-      <RoadCornerCurved position={[4,0,-6]}rotation={[Math.PI / 2, Math.PI, Math.PI/2]}/>
-      {tilesDown}
-      <RoadCornerCurved position={[0,0,2]}rotation={[Math.PI / 2, Math.PI, -Math.PI/2]}/>
-      <RoadStraightCrossing position={[2, 0, 2]} rotation={[Math.PI / 2, Math.PI, Math.PI/2]}/>
-      <RoadCornerCurved position={[4,0,2]}rotation={[Math.PI / 2, Math.PI, -2*Math.PI]}/>
+      <BlockBuilder position={[-30, 0, 0]} rotation={[Math.PI , -Math.PI/2,Math.PI ]}/> 
+      <BlockBuilder position={[36, 0, 0]} rotation={[Math.PI , Math.PI,Math.PI ]}/>   {/* 20 + 16 gap = 36 */}
+      <BlockBuilder position={[0, 0, -60]} rotation={[Math.PI , 2*Math.PI,Math.PI ]}/> {/* 18 + 22 gap = 40 */}
+      <BlockBuilder position={[60, 0, -50]} rotation={[Math.PI , Math.PI/2,Math.PI ]}/>
+      <Grass position={[0,-0.09,0]} scale={[1000,1,1000]}/>
 
-
-
-        
-
-
-
-      {/* examples of adding other bits later: */}
-      {/* <RoadCorner position={[spacing, 0, 0]} rotation={[-Math.PI/2, Math.PI/2, 0]} /> */}
-      {/* <RoadJunction position={[2 * spacing, 0, spacing]} /> */}
     </group>
-    )
-
+  )
 }
