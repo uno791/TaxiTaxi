@@ -9,11 +9,20 @@ import { RedBuilding } from "./Buildings/RedBuilding";
 
 type BuildingEl = {
   Component: (props: JSX.IntrinsicElements["group"]) => JSX.Element;
-  offset?: number; // distance along the line from previous building
+  /**
+   * Distance from the previous building along the row direction (cumulative).
+   */
+  offset?: number;
+
+  /**
+   * A sideways adjustment, perpendicular to the row direction.
+   * Positive = right side, negative = left side.
+   */
+  lateral?: number;
 };
 
 type BaseRowProps = JSX.IntrinsicElements["group"] & {
-  angle?: number; // orientation of the row (in radians)
+  angle?: number;        // orientation of the row (in radians)
   facingOffset?: number; // adjustment for building orientation
 };
 
@@ -29,13 +38,21 @@ function BuildingRowBase({
   ...props
 }: BaseRowProps & { sequence: BuildingEl[] }) {
   const dir = new Vector3(Math.cos(angle), 0, Math.sin(angle));
+  // Perpendicular direction (rotate dir 90° around Y)
+  const lateralDir = new Vector3(-Math.sin(angle), 0, Math.cos(angle));
+
   let distance = 0;
 
   return (
     <group {...props}>
-      {sequence.map(({ Component, offset = 0 }, i) => {
+      {sequence.map(({ Component, offset = 0, lateral = 0 }, i) => {
         distance += offset;
+
+        // base forward position
         const pos = dir.clone().multiplyScalar(distance);
+
+        // add sideways offset
+        pos.add(lateralDir.clone().multiplyScalar(lateral));
 
         return (
           <Component
@@ -50,15 +67,15 @@ function BuildingRowBase({
 }
 
 // === Preset Rows ===
-// Adjust offsets for your building dimensions
 
 export function BuildingRowVariant1(props: BaseRowProps) {
   return (
     <BuildingRowBase
       sequence={[
-        { Component: BigBuilding, offset: 0 },
-        { Component: BrownBuilding, offset: 3.4 },
-        { Component: GreenBuilding, offset: 2.2 },
+        { Component: BigBuilding, offset: 0, lateral:-1 },
+        { Component: BrownBuilding, offset: 3.3 },
+        // Example: push this one slightly left
+        { Component: GreenBuilding, offset: 2.1},
       ]}
       {...props}
     />
@@ -70,9 +87,10 @@ export function BuildingRowVariant2(props: BaseRowProps) {
     <BuildingRowBase
       sequence={[
         { Component: CornerBuilding, offset: 0 },
-        { Component: RedBuilding, offset: 2.5 },
-        { Component: BrownBuilding, offset: 3 },
-        { Component: BigBuilding, offset: 4 },
+        { Component: RedBuilding, offset: 1.9 },
+        { Component: BrownBuilding, offset: 2.2 },
+        // Example: push this one to the right
+        { Component: BigBuilding, offset: 3.1, lateral:-1},
       ]}
       {...props}
     />
@@ -84,10 +102,10 @@ export function BuildingRowVariant3(props: BaseRowProps) {
     <BuildingRowBase
       sequence={[
         { Component: GreenBuilding, offset: 0 },
-        { Component: RedBuilding, offset: 2.9 },
-        { Component: BigBuilding, offset: 4 },
-        { Component: BrownBuilding, offset: 3.9 },
-        { Component: CornerBuilding, offset: 2.5 },
+        { Component: RedBuilding, offset: 2.4},
+        { Component: BigBuilding, offset: 3.5, lateral:1 },
+        { Component: BrownBuilding, offset: 3.2 },
+        { Component: CornerBuilding, offset: 1.7},
       ]}
       {...props}
     />
