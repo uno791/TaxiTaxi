@@ -12,7 +12,7 @@ import AllBuildings from "./components/City/AllBuildings";
 export default function App() {
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
-      <Canvas shadows camera={{ position: [0, 5, 10], fov: 50 }}>
+      <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
         <ambientLight intensity={2} />
         <directionalLight position={[10, 5, 2]} castShadow />
 
