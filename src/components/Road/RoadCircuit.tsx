@@ -5,8 +5,8 @@ import { Grass } from '../Ground/Grass'
 import {
   RoadStraight,
   RoadCornerCurved,
-  RoadStraightCrossing,
   RoadTSplit,
+  RoadJunction
 } from './RoadBitsGenerated'
 
 type Vector3 = [number, number, number]
@@ -14,7 +14,8 @@ type Vector3 = [number, number, number]
 export default function RoadCircuit(props: JSX.IntrinsicElements['group']) {
   const horizontalRotation: Vector3 = [Math.PI / 2, Math.PI, Math.PI / 2]
   const cornerEastToSouth: Vector3 = [Math.PI / 2, Math.PI, 0]
-  const crossingRotation: Vector3 = [Math.PI / 2, Math.PI, -Math.PI / 2]
+  const cornerNorthToEast: Vector3 = [Math.PI / 2, Math.PI, Math.PI]
+  const junctionRotation: Vector3 = [Math.PI / 2, Math.PI, -Math.PI / 2]
   const tSplitRotations: Record<'north' | 'south' | 'east' | 'west', Vector3> = {
     north: [Math.PI / 2, Math.PI, Math.PI],
     south: [Math.PI / 2, Math.PI, -Math.PI / 2],
@@ -62,7 +63,7 @@ export default function RoadCircuit(props: JSX.IntrinsicElements['group']) {
       x: 12,
       start: 2,
       end: -54,
-      skip: new Set([4, -4, -12, -20, -36, -40]),
+      skip: new Set([4, -4, -12, -20, -36, -40, -54]),
     },
     {
       id: 'b-loop',
@@ -95,31 +96,32 @@ export default function RoadCircuit(props: JSX.IntrinsicElements['group']) {
 
   const tSplitData: Array<{ id: string; position: Vector3; rotation: Vector3 }> = [
     { id: 'hub-top', position: [12, 0, 4], rotation: tSplitRotations.south },
-    { id: 'hub-b-west', position: [12, 0, -4], rotation: tSplitRotations.east },
+    { id: 'hub-b-west', position: [12, 0, -4], rotation: tSplitRotations.north },
     { id: 'hub-a-west', position: [12, 0, -12], rotation: tSplitRotations.west },
-    { id: 'hub-south', position: [12, 0, -20], rotation: tSplitRotations.east },
-    { id: 'hub-c-north', position: [12, 0, -36], rotation: tSplitRotations.east },
+    { id: 'hub-south', position: [12, 0, -20], rotation: tSplitRotations.north },
+    { id: 'hub-c-north', position: [12, 0, -36], rotation: tSplitRotations.north },
     { id: 'hub-c-south', position: [12, 0, -40], rotation: tSplitRotations.west },
     { id: 'b-loop-entry', position: [24, 0, 4], rotation: tSplitRotations.south },
-    { id: 'b-loop-junction', position: [24, 0, -20], rotation: tSplitRotations.north },
+    { id: 'b-loop-junction', position: [24, 0, -20], rotation: tSplitRotations.east },
   ]
 
   const tSplits = tSplitData.map(({ id, position, rotation }) => (
     <RoadTSplit key={`ts-${id}`} position={position} rotation={rotation} />
   ))
 
-  const crossings = [
+  const junctions = [
     { id: 'bd-cross', position: [40, 0, -36] as Vector3 },
     { id: 'd-cross', position: [56, 0, -54] as Vector3 },
   ].map(({ id, position }) => (
-    <RoadStraightCrossing key={`cross-${id}`} position={position} rotation={crossingRotation} />
+    <RoadJunction key={`junction-${id}`} position={position} rotation={junctionRotation} />
   ))
 
   const corners = [
-    { id: 'b-north-turn', position: [40, 0, 4] as Vector3 },
-    { id: 'd-west-turn', position: [56, 0, -36] as Vector3 },
-  ].map(({ id, position }) => (
-    <RoadCornerCurved key={`corner-${id}`} position={position} rotation={cornerEastToSouth} />
+    { id: 'b-north-turn', position: [40, 0, 4] as Vector3, rotation: cornerEastToSouth },
+    { id: 'd-west-turn', position: [56, 0, -36] as Vector3, rotation: cornerEastToSouth },
+    // { id: 'lower-loop-ne', position: [12, 0, -56] as Vector3, rotation: cornerNorthToEast },
+  ].map(({ id, position, rotation }) => (
+    <RoadCornerCurved key={`corner-${id}`} position={position} rotation={rotation} />
   ))
 
   return (
@@ -131,9 +133,16 @@ export default function RoadCircuit(props: JSX.IntrinsicElements['group']) {
       {horizontalRoads}
       {verticalRoads}
       {tSplits}
-      {crossings}
+      {junctions}
       {corners}
       <Grass position={[0, -0.09, 0]} scale={[1000, 1, 1000]} />
+      <RoadCornerCurved position={[-26,0,-12]}/>
+      <RoadCornerCurved position={[-4,0,-40]} rotation={[Math.PI/2 ,Math.PI,-Math.PI/2]}/>
+      <RoadTSplit position={[12,0,-54]}/>
+      <RoadCornerCurved position={[12,0,-56]} rotation={[Math.PI/2 ,Math.PI,Math.PI/2]}/>
+      <RoadTSplit position={[40,0,-54]} rotation={[Math.PI/2 ,Math.PI,Math.PI/2]}/>
+      <RoadTSplit position={[40,0,-20]} rotation={[Math.PI/2 ,Math.PI,2*Math.PI]}/>
+      <RoadTSplit position={[40,0,2]} rotation={[Math.PI/2 ,Math.PI,Math.PI/2]}/>
     </group>
   )
 }
