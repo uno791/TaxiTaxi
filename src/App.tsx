@@ -24,7 +24,7 @@ export default function App() {
         <RoadCircuit position={[0, 0, 0]} />
         <Background position={[0, 0, 0]} />
         {/* TAXI CONTROLLER */}
-        {/* <TaxiController /> */}
+        <TaxiController />
 
         <OrbitControls makeDefault />
       </Canvas>
