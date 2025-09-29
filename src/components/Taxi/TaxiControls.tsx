@@ -33,12 +33,31 @@ export function TaxiController() {
     taxi.position.x += Math.sin(angle) * speed * delta;
     taxi.position.z += Math.cos(angle) * speed * delta;
 
-    // --- Camera follow ---
-    const offset = new THREE.Vector3(0, 7, -10)
-      .applyAxisAngle(new THREE.Vector3(0, 1, 0), angle)
-      .add(taxi.position);
-    camera.position.lerp(offset, 0.1);
-    camera.lookAt(taxi.position.x, taxi.position.y + 0.6, taxi.position.z + 2);
+    // --- Camera follow (centered & closer) ---
+    // Behind-offset: no lateral (x) offset, closer Z, slightly above Y.
+    const behindOffset = new THREE.Vector3(0, 1.6, -3).applyAxisAngle(
+      new THREE.Vector3(0, 1, 0),
+      angle
+    );
+
+    // Desired camera position = taxi position + behind-offset
+    const desiredPos = new THREE.Vector3()
+      .copy(taxi.position)
+      .add(behindOffset);
+
+    // Smooth follow (time-independent-ish damping)
+    const followLerp = 1 - Math.exp(-8 * delta); // snappier follow
+    camera.position.lerp(desiredPos, followLerp);
+
+    // Look slightly ahead in the taxi's forward direction to keep the angle centered
+    const forward = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
+    const lookAhead = 1.8; // how far ahead to look
+    const target = new THREE.Vector3()
+      .copy(taxi.position)
+      .addScaledVector(forward, lookAhead)
+      .add(new THREE.Vector3(0, 0.5, 0)); // small upward bias
+
+    camera.lookAt(target);
   });
 
   return <Taxi scale={0.27} ref={taxiRef} />;

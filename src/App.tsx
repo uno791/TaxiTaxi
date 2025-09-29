@@ -8,7 +8,8 @@ import {
   BuildingRowVariant3,
 } from "./components/City/BuildingRow";
 import AllBuildings from "./components/City/AllBuildings";
-
+import Background from "./components/City/Background";
+import { Nature } from "./components/Ground/Nature";
 export default function App() {
   return (
     <div style={{ width: "100vw", height: "100vh" }}>
@@ -17,14 +18,11 @@ export default function App() {
         <directionalLight position={[10, 5, 2]} castShadow />
 
         {/* BUILDINGS*/}
-        <AllBuildings position={[0,0,0]}/>
-        
-       
-       
+        <AllBuildings position={[0, 0, 0]} />
 
         {/* ROAD */}
         <RoadCircuit position={[0, 0, 0]} />
-
+        <Background position={[0, 0, 0]} />
         {/* TAXI CONTROLLER */}
         {/* <TaxiController /> */}
 
