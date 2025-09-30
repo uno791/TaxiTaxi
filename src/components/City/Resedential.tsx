@@ -28,6 +28,26 @@ for (let c = 10; c >= -20; c -= 2) {
   )
 }
 
+
+const lightsA: JSX.Element[] = []
+
+for (let c = 10; c >= -20; c -= 8) {
+  straight.push(
+    <StreetLight position={[c,0,-23.9]} rotation={[0, -Math.PI/2, 0]} scale={[2.3,2.3,2.3]}/>
+    
+  )
+}
+
+const lightsB: JSX.Element[] = []
+
+for (let c = 10; c >= -20; c -= 8) {
+  straight.push(
+    <StreetLight position={[c,0,-26.1]} rotation={[0, Math.PI/2, 0]} scale={[2.3,2.3,2.3]}/>
+    
+  )
+}
+
+
      
     
 
@@ -42,9 +62,25 @@ export default function Resedential(props: JSX.IntrinsicElements['group']) {
 
         <RoadTSplit position={[12,0,-25]} rotation={[-Math.PI/2, 0, Math.PI]}/>
         {straight}
+        {lightsA}
+        {lightsB}
+
+        <StreetLight position={[-21.3,0,-29.5]} rotation={[0, Math.PI/2, 0]} scale={[2.3,2.3,2.3]}/>
+        <StreetLight position={[-21.3,0,-29.5]} rotation={[0, 2*Math.PI, 0]} scale={[2.3,2.3,2.3]}/>
+
+        <StreetLight position={[-21.3,0,-20.5]} rotation={[0,-Math.PI/2, 0]} scale={[2.3,2.3,2.3]}/>
+        <StreetLight position={[-21.3,0,-20.5]} rotation={[0,-2*Math.PI, 0]} scale={[2.3,2.3,2.3]}/>
+
+        <StreetLight position={[-30.7,0,-20.5]} rotation={[0,-Math.PI/2, 0]} scale={[2.3,2.3,2.3]}/>
+        <StreetLight position={[-30.7,0,-20.5]} rotation={[0,Math.PI, 0]} scale={[2.3,2.3,2.3]}/>
+
+        <StreetLight position={[-30.7,0,-29.5]} rotation={[0,Math.PI/2, 0]} scale={[2.3,2.3,2.3]}/>
+        <StreetLight position={[-30.7,0,-29.5]} rotation={[0,Math.PI, 0]} scale={[2.3,2.3,2.3]}/>
 
 
-        <StreetLight position={[10,0,-23.9]} rotation={[0, 0, 0]} scale={[0.5,0.4,0.4]}/>
+        
+
+
         <RoadTSplit position={[-22,0,-25]} rotation={[-Math.PI/2, 0, 2*Math.PI]}/>
 
         <RoadStraight position={[-22,0,-23]} rotation={[-Math.PI/2, 0, 2*Math.PI]}/>
