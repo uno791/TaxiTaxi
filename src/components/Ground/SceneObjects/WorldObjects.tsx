@@ -14,6 +14,13 @@ import { TreeA } from "./TreeA";
 import { TreeB } from "./TreeB";
 import { Bush } from "./Bush";
 import { Billboard } from "./Billboard";
+import { FloorHole } from "./FloorHole";
+import { Woman } from "./Woman";
+import { PowerBox } from "./PowerBox";
+import ElectricityBox from "./ElectricityBox";
+import { Fence } from "./Fence";
+import { Hedge } from "./Hedge";
+import DumpsterFull from "./DumpsterFull";
 export default function WorldObjects(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
@@ -23,7 +30,8 @@ export default function WorldObjects(props: JSX.IntrinsicElements["group"]) {
           scale={0.005}
           rotation={[0, Math.PI / 3, 0]}
         />
-        <ManHole position={[26, 0.1, 2]} scale={2} rotation={[0, 0, 0]} />
+        <FloorHole position={[26, 0.1, 2]} scale={1.67} rotation={[0, 0, 0]} />
+        <ManHole position={[26, 0.05, 2]} scale={2.6} rotation={[0, 0, 0]} />
         <Cone position={[26.7, 0.1, 2.6]} scale={0.5} />
         <Cone position={[26, 0.1, 2.86]} scale={0.5} />
         <Cone position={[26, 0.1, 1.1]} scale={0.5} />
@@ -54,7 +62,6 @@ export default function WorldObjects(props: JSX.IntrinsicElements["group"]) {
           scale={0.005}
           rotation={[0, Math.PI * 1.5, 0]}
         />
-
         <TreeA
           position={[26, 0, -15]}
           scale={0.005}
@@ -134,20 +141,25 @@ export default function WorldObjects(props: JSX.IntrinsicElements["group"]) {
         <TrashBag position={[38, 0.2, -18]} scale={1.3} />
         <TrashBag position={[38, 0.2, -17.8]} scale={1.2} />
         <TrashBag position={[38.3, 0.2, -18]} scale={1.6} />
-        <Dumpster position={[-13, 0, -10]} scale={0.5} />
-        <Dumpster position={[-14.2, 0, -10]} scale={0.5} />
-        <TrashBag position={[-14.2, 0, -9.5]} scale={1.6} />
-        <TrashBag position={[-13.7, 0.1, -9.5]} scale={1.6} />
-        <TrashBag position={[-14.5, 0.2, -9.5]} scale={1.6} />
-        <TrashBag position={[-14.97, 0.2, -9.7]} scale={1.6} />
-        <TrashBag position={[-14.8, 0.1, -9.3]} scale={1.6} />
-        <TrashBag position={[-13, 0.1, -9.5]} scale={1.6} />
-        <TrashBag position={[-12.7, 0, -9.5]} scale={1.6} />
+
         <Billboard
           position={[-24.5, 0, -10]}
           scale={0.005}
           rotation={[0, Math.PI, 0]}
         />
+        <ElectricityBox position={[0.5, 0, -0.6]} />
+        <TreeA position={[42, 0, -48]} scale={0.005} />
+        <TreeA position={[42, 0, -46]} scale={0.005} />
+        <TreeA position={[42, 0, -44]} scale={0.005} />
+        <TreeB position={[42, 1.8, -42]} scale={1} />
+        <TreeB position={[42, 1.8, -50]} scale={1} />
+        <FireHydrant
+          position={[42.5, 0, -41.3]}
+          scale={0.003}
+          rotation={[0, Math.PI * 1.5, 0]}
+        />
+        <DumpsterFull />
+        <DumpsterFull position={[60, 0, -29]} />
       </group>
     </group>
   );

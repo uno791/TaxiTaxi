@@ -133,7 +133,7 @@ export default function Background(props: JSX.IntrinsicElements["group"]) {
           rotationY={Math.PI}
         />
         <Barrier
-          position={[-32, 0, 13.1]}
+          position={[-32.4, 0, 13.1]}
           scale={0.5}
           rotation={[0, Math.PI, 0]}
         />
@@ -143,6 +143,25 @@ export default function Background(props: JSX.IntrinsicElements["group"]) {
           step={[0, 0, -1.9]}
           count={11}
           rotationY={Math.PI * 1.5}
+        />
+        <BarrierRun
+          name="left-vert-back"
+          start={[-33.18, 0, 12.2]}
+          step={[0, 0, -1.9]}
+          count={11}
+          rotationY={Math.PI / 2}
+        />
+        <Barrier
+          position={[-33.18, 0, -8.4]}
+          scale={0.5}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <BarrierRun
+          name="left-horz-top"
+          start={[-32.18, 0, -9.2]}
+          step={[1.9, 0, 0]}
+          count={3}
+          rotationY={Math.PI * 2}
         />
         <CityObjects position={[0, 0, 0]} />
       </group>
