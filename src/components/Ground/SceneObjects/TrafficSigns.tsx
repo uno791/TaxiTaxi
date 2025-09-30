@@ -5,10 +5,12 @@ import { TrafficLight } from "./TrafficLight";
 import { TrafficLightB } from "./TrafficLightB";
 import { TrafficLightC } from "./TrafficLightC";
 import { StopSign } from "./StopSign";
+
 export default function TrafficSigns(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
       <group>
+        <StreetLight position={[11, 0, -12]} scale={2.3} />
         <TrafficLightC
           position={[11, 0, -11]}
           scale={2.3}
@@ -38,6 +40,16 @@ export default function TrafficSigns(props: JSX.IntrinsicElements["group"]) {
           position={[-27, 0, -9]}
           scale={0.007}
           rotation={[0, Math.PI / 2, 0]}
+        />
+        <StopSign
+          position={[-3, 0, -43]}
+          scale={0.007}
+          rotation={[0, Math.PI * 1.5, 0]}
+        />
+        <StopSign
+          position={[-3, 0, -43]}
+          scale={0.007}
+          rotation={[0, Math.PI * 1.5, 0]}
         />
         <StopSign
           position={[13, 0, -21]}
