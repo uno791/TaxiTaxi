@@ -45,7 +45,7 @@ export function TaxiController() {
       .copy(taxi.position)
       .add(behindOffset);
 
-    // Smooth follow (time-independent-ish damping)
+    // Smooth follow (time-independent-ish damping)s
     const followLerp = 1 - Math.exp(-8 * delta); // snappier follow
     camera.position.lerp(desiredPos, followLerp);
 
