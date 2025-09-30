@@ -5,6 +5,7 @@ import {
   BuildingRowVariant3,
 } from './BuildingRow';
 import BlockBuildings from './BlockBuildings';
+import Resedential from './Resedential';
 
 
 export default function Allbuildings(props: JSX.IntrinsicElements['group']) {
@@ -33,6 +34,7 @@ export default function Allbuildings(props: JSX.IntrinsicElements['group']) {
       <BlockBuildings position={[17.7,0,-12.2]} rotation={[0, Math.PI/2, 0]} scale={[0.85,1,0.55]}/>
       <BlockBuildings position={[17.7,0,0]} rotation={[0, Math.PI/2, 0]} scale={[0.35,2,0.55]}/>
       <BlockBuildings position={[49.75,0,-48.2]} rotation={[0, Math.PI/2, 0]} scale={[0.6,1,0.55]}/>
+      <Resedential position={[0,0,0]}/>
 
 
       
