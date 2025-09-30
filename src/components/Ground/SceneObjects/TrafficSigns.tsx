@@ -10,7 +10,6 @@ export default function TrafficSigns(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
       <group>
-        <StreetLight position={[11, 0, -12]} scale={2.3} />
         <TrafficLightC
           position={[11, 0, -11]}
           scale={2.3}
@@ -47,9 +46,19 @@ export default function TrafficSigns(props: JSX.IntrinsicElements["group"]) {
           rotation={[0, Math.PI * 1.5, 0]}
         />
         <StopSign
-          position={[-3, 0, -43]}
+          position={[11, 0, -39]}
           scale={0.007}
-          rotation={[0, Math.PI * 1.5, 0]}
+          rotation={[0, Math.PI, 0]}
+        />
+        <StopSign
+          position={[9, 0, -57]}
+          scale={0.007}
+          rotation={[0, Math.PI * 2, 0]}
+        />
+        <StopSign
+          position={[13, 0, -55]}
+          scale={0.007}
+          rotation={[0, Math.PI * 2, 0]}
         />
         <StopSign
           position={[13, 0, -21]}
@@ -67,6 +76,11 @@ export default function TrafficSigns(props: JSX.IntrinsicElements["group"]) {
           rotation={[0, Math.PI * 1.5, 0]}
         />
         <StopSign
+          position={[23, 0, 3]}
+          scale={0.007}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <StopSign
           position={[39, 0, -19]}
           scale={0.007}
           rotation={[0, Math.PI, 0]}
@@ -80,6 +94,41 @@ export default function TrafficSigns(props: JSX.IntrinsicElements["group"]) {
           position={[40.8, 0, 2.9]}
           scale={0.007}
           rotation={[0, Math.PI * 1.2, 0]}
+        />
+        <TrafficLightB
+          position={[55, 0, -41]}
+          scale={2.3}
+          rotation={[0, Math.PI * 2, 0]}
+        />
+        <TrafficLightC
+          position={[57, 0, -41]}
+          scale={2.3}
+          rotation={[0, Math.PI, 0]}
+        />
+        <TrafficLightB
+          position={[57, 0, -43]}
+          scale={2.3}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <TrafficLightC
+          position={[55, 0, -43]}
+          scale={2.3}
+          rotation={[0, Math.PI * 1.5, 0]}
+        />
+        <StopSign
+          position={[57, 0, -53]}
+          scale={0.007}
+          rotation={[0, Math.PI * 1.5, 0]}
+        />
+        <StopSign
+          position={[55, 0, -55]}
+          scale={0.007}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <StopSign
+          position={[57, 0, -61]}
+          scale={0.007}
+          rotation={[0, Math.PI * 1.5, 0]}
         />
         <TrafficLightB
           position={[39, 0, -17]}
