@@ -1,8 +1,8 @@
 import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
-export function StreetLight(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Streetlight.glb");
+export function TrafficLightB(props: JSX.IntrinsicElements["group"]) {
+  const { scene } = useGLTF("/models/Trafficlight B.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function StreetLight(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Streetlight.glb");
+useGLTF.preload("/models/Trafficlight B.glb");

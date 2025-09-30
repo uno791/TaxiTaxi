@@ -1,4 +1,4 @@
-import type { JSX } from 'react/jsx-runtime'
+import type { JSX } from "react/jsx-runtime";
 import {
   BuildingRowVariant1,
   BuildingRowVariant2,
@@ -7,24 +7,40 @@ import {
 import BlockBuildings from './BlockBuildings';
 import Resedential from './Resedential';
 
-
-export default function Allbuildings(props: JSX.IntrinsicElements['group']) {
+export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
-      <BuildingRowVariant1 position={[-8, 0, 1.8]} angle={0} scale={[1,1,1]} />
-      <BuildingRowVariant2
-        position={[-0.8, 0, 1.8]} angle={0} scale={[1,1,1]}
+      <BuildingRowVariant1
+        position={[-8, 0, 1.8]}
+        angle={0}
+        scale={[1, 1, 1]}
       />
-      <BuildingRowVariant3 position={[-10.8, 0, 1.4]} angle={-Math.PI/2} scale={[1,1,1]} />
-
-      <BuildingRowVariant1 position={[-3.6, 0, -9]} angle={-Math.PI} scale={[1,1,1]} />
       <BuildingRowVariant2
-        position={[8.1, 0, -9]} angle={-Math.PI} scale={[1,1,1]}
+        position={[-0.8, 0, 1.8]}
+        angle={0}
+        scale={[1, 1, 1]}
       />
-      <BuildingRowVariant3 position={[9.3, 0,-8.5]} angle={Math.PI/2} scale={[1,1,0.9]} />
+      <BuildingRowVariant3
+        position={[-10.8, 0, 1.4]}
+        angle={-Math.PI / 2}
+        scale={[1, 1, 1]}
+      />
 
-
-
+      <BuildingRowVariant1
+        position={[-3.6, 0, -9]}
+        angle={-Math.PI}
+        scale={[1, 1, 1]}
+      />
+      <BuildingRowVariant2
+        position={[8.1, 0, -9]}
+        angle={-Math.PI}
+        scale={[1, 1, 1]}
+      />
+      <BuildingRowVariant3
+        position={[9.3, 0, -8.5]}
+        angle={Math.PI / 2}
+        scale={[1, 1, 0.9]}
+      />
 
       <BlockBuildings position={[-22.7,0,1.5]} scale={[1,2,1]}/>
       <BlockBuildings position={[37.5,0,-7.3]} rotation={[0, Math.PI/2, 0]} />
