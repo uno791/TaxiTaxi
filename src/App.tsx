@@ -2,14 +2,8 @@ import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
 import RoadCircuit from "./components/Road/RoadCircuit";
 import { TaxiController } from "./components/Taxi/TaxiControls";
-import {
-  BuildingRowVariant1,
-  BuildingRowVariant2,
-  BuildingRowVariant3,
-} from "./components/City/BuildingRow";
 import AllBuildings from "./components/City/AllBuildings";
 import Background from "./components/City/Background";
-import { Nature } from "./components/Ground/Nature";
 export default function App() {
   return (
     <div style={{ width: "100vw", height: "100vh" }}>

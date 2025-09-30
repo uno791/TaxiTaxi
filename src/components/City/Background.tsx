@@ -2,7 +2,7 @@ import type { JSX } from "react/jsx-runtime";
 import { Mountain } from "../Ground/Mountain";
 import { Nature } from "../Ground/Nature";
 import { Barrier } from "../Ground/Barrier";
-
+import CityObjects from "./CityObjects";
 /** Utility: lay out N barriers along a straight line with constant step */
 function BarrierRun({
   start,
@@ -144,6 +144,7 @@ export default function Background(props: JSX.IntrinsicElements["group"]) {
           count={11}
           rotationY={Math.PI * 1.5}
         />
+        <CityObjects position={[0, 0, 0]} />
       </group>
     </group>
   );

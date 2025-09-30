@@ -12,12 +12,28 @@ import { MailBox } from "../Ground/SceneObjects/MailBox";
 import { ManHole } from "../Ground/SceneObjects/ManHole";
 import { Paper } from "../Ground/SceneObjects/Paper";
 import { Planter } from "../Ground/SceneObjects/Planter";
+import { StreetLight } from "../Ground/SceneObjects/StreetLight";
+import { TrafficLight } from "../Ground/SceneObjects/TrafficLight";
 import { TrashBag } from "../Ground/SceneObjects/TrashBag";
+import BoxCluster from "../Ground/SceneObjects/BoxCluster";
+import { TrafficLightB } from "../Ground/SceneObjects/TrafficLightB";
+import { TrafficLightC } from "../Ground/SceneObjects/TrafficLightC";
+import TrafficSigns from "../Ground/SceneObjects/TrafficSigns";
 
 export default function CityObjects(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
-      <group></group>
+      <group>
+        <Billboard
+          position={[43, 0, -38]}
+          scale={0.005}
+          rotation={[0, Math.PI / 3, 0]}
+        />
+        <BoxCluster position={[0, 0, 0]} />
+        <BoxCluster position={[-0.1, 0, 0.7]} rotation={[0, 0, 0]} />
+
+        <TrafficSigns position={[0, 0, 0]} />
+      </group>
     </group>
   );
 }
