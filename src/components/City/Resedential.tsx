@@ -14,6 +14,11 @@ import { Driveway } from '../Ground/SceneObjects/Driveway';
 import { Tree } from '../Ground/SceneObjects/Tree';
 import { Hedge } from '../Ground/SceneObjects/Hedge';
 import { StreetLight } from '../Ground/SceneObjects/StreetLight';
+import { Gazebo } from './Buildings/Gazebo';
+import { TrashBag } from '../Ground/SceneObjects/TrashBag';
+import { PlayGround } from '../Ground/SceneObjects/PlayGround';
+import { Slide } from '../Ground/SceneObjects/Slide';
+
 
 
 const straight: JSX.Element[] = []
@@ -76,6 +81,18 @@ export default function Resedential(props: JSX.IntrinsicElements['group']) {
 
         <StreetLight position={[-30.7,0,-29.5]} rotation={[0,Math.PI/2, 0]} scale={[2.3,2.3,2.3]}/>
         <StreetLight position={[-30.7,0,-29.5]} rotation={[0,Math.PI, 0]} scale={[2.3,2.3,2.3]}/>
+        <Gazebo position={[-26,0,-23.5]} rotation={[0,Math.PI, 0]} scale={[0.2,0.2,0.2]}/>
+        <TrashBag position={[-26,0.12,-24.56]} rotation={[0,Math.PI, 0]} scale={[0.5,0.5,0.5]}/>
+        <TrashBag position={[-26.2,0.12,-24.58]} rotation={[0,Math.PI, 0]} scale={[0.5,0.5,0.5]}/>
+        <TrashBag position={[-25.8,0.12,-24.7]} rotation={[0,Math.PI, 0]} scale={[0.5,0.5,0.5]}/>
+        <TrashBag position={[-25.6,0.12,-24.7]} rotation={[0,Math.PI, 0]} scale={[0.5,0.5,0.5]}/>
+        <TrashBag position={[-26.2,0.12,-24.58]} rotation={[0,Math.PI, 0]} scale={[0.5,0.5,0.5]}/>
+        <TrashBag position={[-25.8,0.12,-24.60]} rotation={[0,Math.PI, 0]} scale={[0.5,0.5,0.5]}/>
+        <TrashBag position={[-25.6,0.12,-24.56]} rotation={[0,Math.PI, 0]} scale={[0.5,0.5,0.5]}/>
+
+        <PlayGround position={[-25,0,-27]} rotation={[0,Math.PI, 0]} scale={[0.006,0.006,0.006]}/>
+        <Slide position={[-28,0,-27]} rotation={[0,Math.PI/2, 0]} scale={[0.17,0.17,0.17]}/>
+
 
 
         
