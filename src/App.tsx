@@ -13,6 +13,7 @@ import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
 export default function App() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
+  const [isPaused, setIsPaused] = useState(false);
 
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -32,7 +33,11 @@ export default function App() {
           {/* ROAD */}
           <RoadCircuit position={[0, 0, 0]} />
           <Background position={[0, 0, 0]} />
-          <TaxiPhysics chaseRef={chaseRef} controlMode={controlMode} />
+          <TaxiPhysics
+            chaseRef={chaseRef}
+            controlMode={controlMode}
+            isPaused={isPaused}
+          />
           <CameraChase target={chaseRef} />
           <OrbitControls makeDefault />
         </Physics>
@@ -41,6 +46,8 @@ export default function App() {
       <TaxiControlSettings
         controlMode={controlMode}
         onControlModeChange={setControlMode}
+        isPaused={isPaused}
+        onPauseChange={setIsPaused}
       />
     </div>
   );

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import settingsIcon from "../../assets/settings-svgrepo-com.svg";
 import infoIcon from "../../assets/info-circle-svgrepo-com.svg";
 import type { ControlMode } from "./useControls";
@@ -6,15 +6,21 @@ import type { ControlMode } from "./useControls";
 type Props = {
   controlMode: ControlMode;
   onControlModeChange: (mode: ControlMode) => void;
+  isPaused: boolean;
+  onPauseChange: (paused: boolean) => void;
 };
 
 const CONTROL_OPTIONS: Array<{ mode: ControlMode; label: string }> = [
-  { mode: "mouse", label: "Mouse" },
+  { mode: "mouse", label: "Mouse (Recomeneded)" },
   { mode: "keyboard", label: "Keyboard (WASD)" },
 ];
 
-export function TaxiControlSettings({ controlMode, onControlModeChange }: Props) {
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+export function TaxiControlSettings({
+  controlMode,
+  onControlModeChange,
+  isPaused,
+  onPauseChange,
+}: Props) {
   const [infoTarget, setInfoTarget] = useState<ControlMode | null>(null);
 
   const infoText = useMemo(
@@ -28,15 +34,31 @@ export function TaxiControlSettings({ controlMode, onControlModeChange }: Props)
   );
 
   const closeSettings = () => {
-    setIsSettingsOpen(false);
-    setInfoTarget(null);
+    onPauseChange(false);
   };
+
+  useEffect(() => {
+    if (!isPaused) setInfoTarget(null);
+  }, [isPaused]);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape") return;
+      event.preventDefault();
+      onPauseChange(!isPaused);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isPaused, onPauseChange]);
 
   return (
     <>
       <button
         type="button"
-        onClick={() => setIsSettingsOpen(true)}
+        onClick={() => onPauseChange(true)}
         style={{
           position: "absolute",
           top: 16,
@@ -52,10 +74,14 @@ export function TaxiControlSettings({ controlMode, onControlModeChange }: Props)
         }}
         aria-label="Open driving settings"
       >
-        <img src={settingsIcon} alt="Settings" style={{ width: "100%", height: "100%" }} />
+        <img
+          src={settingsIcon}
+          alt="Settings"
+          style={{ width: "100%", height: "100%" }}
+        />
       </button>
 
-      {isSettingsOpen && (
+      {isPaused && (
         <div
           style={{
             position: "absolute",
@@ -98,7 +124,9 @@ export function TaxiControlSettings({ controlMode, onControlModeChange }: Props)
                     gap: 12,
                     padding: "12px 16px",
                     borderRadius: 12,
-                    border: isActive ? "2px solid #1C274C" : "1px solid #d0d0d0",
+                    border: isActive
+                      ? "2px solid #1C274C"
+                      : "1px solid #d0d0d0",
                     background: isActive ? "#f5f8ff" : "#fafafa",
                   }}
                 >
@@ -125,16 +153,16 @@ export function TaxiControlSettings({ controlMode, onControlModeChange }: Props)
                   <button
                     type="button"
                     onClick={() =>
-                      setInfoTarget((current) => (current === mode ? null : mode))
+                      setInfoTarget((current) =>
+                        current === mode ? null : mode
+                      )
                     }
                     style={{
                       width: 32,
                       height: 32,
                       borderRadius: "50%",
                       border: "none",
-                      background: "#1C274C",
-                      color: "white",
-                      fontWeight: 600,
+                      background: "rgba(28, 39, 76, 0.92)",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
@@ -145,8 +173,9 @@ export function TaxiControlSettings({ controlMode, onControlModeChange }: Props)
                   >
                     <img
                       src={infoIcon}
-                      alt="Control info"
-                      style={{ width: 18, height: 18 }}
+                      alt=""
+                      aria-hidden="true"
+                      style={{ width: 20, height: 20, display: "block" }}
                     />
                   </button>
                 </div>
@@ -162,7 +191,9 @@ export function TaxiControlSettings({ controlMode, onControlModeChange }: Props)
                   color: "#1c274c",
                 }}
               >
-                <p style={{ margin: 0, fontSize: 14 }}>{infoText[infoTarget]}</p>
+                <p style={{ margin: 0, fontSize: 14 }}>
+                  {infoText[infoTarget]}
+                </p>
               </div>
             )}
 

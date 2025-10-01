@@ -12,9 +12,10 @@ type Props = {
   /** Optional: expose the chassis ref so the camera can follow it */
   chaseRef?: React.MutableRefObject<THREE.Object3D | null>;
   controlMode: ControlMode;
+  isPaused: boolean;
 };
 
-export function TaxiPhysics({ chaseRef, controlMode }: Props) {
+export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
   const position: [number, number, number] = [-3, 0.5, -2];
   const width = 0.375;
   const height = 0.1;
@@ -45,7 +46,7 @@ export function TaxiPhysics({ chaseRef, controlMode }: Props) {
     vehicleRef
   );
 
-  useControls(vehicleApi, chassisApi, controlMode);
+  useControls(vehicleApi, chassisApi, controlMode, isPaused);
 
   const taxiScale = 0.18;
   const taxiOffset: [number, number, number] = [0, -0.07, 0.02];
