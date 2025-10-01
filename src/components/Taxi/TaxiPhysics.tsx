@@ -25,7 +25,7 @@ export function TaxiPhysics({ chaseRef }: Props) {
   const [chassisBoxRef, chassisApi] = useBox(
     () => ({
       args: chassisBodyArgs,
-      mass: 150,
+      mass: 500,
       position,
     }),
     chassisRef

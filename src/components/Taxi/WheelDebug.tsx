@@ -1,6 +1,6 @@
 import * as THREE from "three";
 
-const debug = false;
+const debug = true;
 
 interface WheelDebugProps {
   radius: number;

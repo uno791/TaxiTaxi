@@ -9,36 +9,21 @@ export const useWheels = (
 ) => {
   const wheels = [useRef(null), useRef(null), useRef(null), useRef(null)];
 
-  //   const wheelInfo = {
-  //     radius,
-  //     directionLocal: [0, -1, 0],
-  //     axleLocal: [1, 0, 0],
-  //     suspensionStiffness: 60,
-  //     suspensionRestLength: 0.1,
-  //     frictionSlip: 5,
-  //     dampingRelaxation: 2.3,
-  //     dampingCompression: 4.4,
-  //     maxSuspensionForce: 100000,
-  //     rollInfluence: 0.01,
-  //     maxSuspensionTravel: 0.1,
-  //     customSlidingRotationalSpeed: -30,
-  //     useCustomSlidingRotationalSpeed: true,
-  //   };
-
   const wheelInfo = {
     radius,
-    directionLocal: [0, -1, 0],
-    axleLocal: [1, 0, 0],
-    suspensionStiffness: 15,
-    suspensionRestLength: 0.1,
-    frictionSlip: 12,
-    dampingRelaxation: 4,
-    dampingCompression: 6,
-    maxSuspensionForce: 100000,
-    rollInfluence: 0.01,
-    maxSuspensionTravel: 0.1,
-    customSlidingRotationalSpeed: -30,
-    useCustomSlidingRotationalSpeed: false,
+    directionLocal: [0, -1, 0] as [number, number, number],
+    axleLocal: [1, 0, 0] as [number, number, number],
+
+    suspensionStiffness: 25, // raise for stronger springs
+    suspensionRestLength: 0.08, // a bit shorter rest length
+    maxSuspensionTravel: 0.15, // allow more travel
+    dampingRelaxation: 2.3, // rebound
+    dampingCompression: 4.5, // bump
+    frictionSlip: 6.5, // moderate grip
+    rollInfluence: 0.03, // slight body roll allowed
+    maxSuspensionForce: 1e5,
+    customSlidingRotationalSpeed: -20,
+    useCustomSlidingRotationalSpeed: true,
   };
 
   const wheelInfos = [
@@ -93,6 +78,7 @@ export const useWheels = (
     type: "Kinematic" as const,
   });
 
+  // Assign compound bodies for wheels (just visual / link bodies)
   useCompoundBody(propsFunc, wheels[0]);
   useCompoundBody(propsFunc, wheels[1]);
   useCompoundBody(propsFunc, wheels[2]);
