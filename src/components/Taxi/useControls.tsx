@@ -3,7 +3,7 @@ import * as THREE from "three";
 
 const COUNTER_STEER_RATIO = 0.1 / 0.35;
 const ENGINE_FORCE = 150;
-const BRAKE_FORCE = -150;
+const BRAKE_FORCE = -400;
 
 export type ControlMode = "keyboard" | "mouse";
 
@@ -15,7 +15,11 @@ type MouseState = {
   steer: number;
 };
 
-const ZERO_MOUSE_STATE: MouseState = { accelerate: false, brake: false, steer: 0 };
+const ZERO_MOUSE_STATE: MouseState = {
+  accelerate: false,
+  brake: false,
+  steer: 0,
+};
 
 type VehicleApi = {
   applyEngineForce: (force: number, wheelIndex: number) => void;
@@ -270,8 +274,8 @@ export const useControls = (
     vehicleApi.setSteeringValue(rearSteer, 1);
   }, [mouseControls, controlMode, vehicleApi, isPaused]);
 
-  return useMemo(() => ({ keyboardControls, mouseControls }), [
-    keyboardControls,
-    mouseControls,
-  ]);
+  return useMemo(
+    () => ({ keyboardControls, mouseControls }),
+    [keyboardControls, mouseControls]
+  );
 };
