@@ -15,6 +15,7 @@ import GameOverPopup from "./components/UI/GameOverPopup";
 import { Physics } from "@react-three/cannon";
 import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
+import TaxiSpeedometer from "./components/Taxi/TaxiSpeedometer";
 
 export default function App() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
@@ -57,6 +58,7 @@ export default function App() {
       />
 
       {/* UI overlay */}
+      <TaxiSpeedometer />
       <GameUI />
       <GameOverPopup />
     </div>

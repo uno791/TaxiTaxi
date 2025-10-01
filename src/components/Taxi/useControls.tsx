@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { useGame } from "../../GameContext";
 
 const COUNTER_STEER_RATIO = 0.1 / 0.35;
 const ENGINE_FORCE = 150;
-const BRAKE_FORCE = -150;
+const BRAKE_FORCE = -400;
+const BOOST_ENGINE_FORCE = 400;
 
 export type ControlMode = "keyboard" | "mouse";
 
@@ -15,7 +17,11 @@ type MouseState = {
   steer: number;
 };
 
-const ZERO_MOUSE_STATE: MouseState = { accelerate: false, brake: false, steer: 0 };
+const ZERO_MOUSE_STATE: MouseState = {
+  accelerate: false,
+  brake: false,
+  steer: 0,
+};
 
 type VehicleApi = {
   applyEngineForce: (force: number, wheelIndex: number) => void;
@@ -36,6 +42,7 @@ const relevantKeys = new Set([
   "arrowdown",
   "arrowleft",
   "arrowright",
+  "space",
 ]);
 
 const resetVehicle = (vehicleApi: VehicleApi) => {
@@ -57,6 +64,9 @@ export const useControls = (
     ...ZERO_MOUSE_STATE,
   });
   const pointerStateRef = useRef<MouseState>({ ...ZERO_MOUSE_STATE });
+  const gameState = useGame();
+  const { boost } = gameState;
+  const spacePressed = Boolean(keyboardControls.space);
 
   useEffect(() => {
     resetVehicle(vehicleApi);
@@ -74,13 +84,18 @@ export const useControls = (
   }, [isPaused, vehicleApi, chassisApi]);
 
   useEffect(() => {
-    if (controlMode !== "keyboard") {
-      setKeyboardControls({});
-      return;
-    }
+    setKeyboardControls({});
+  }, [controlMode]);
+
+  useEffect(() => {
+    const normalizeKey = (event: KeyboardEvent) => {
+      const key = event.key.toLowerCase();
+      if (key === " ") return "space";
+      return key;
+    };
 
     const keyDownPressHandler = (event: KeyboardEvent) => {
-      const key = event.key.toLowerCase();
+      const key = normalizeKey(event);
       if (!relevantKeys.has(key)) return;
       if (isPaused) return;
       setKeyboardControls((controls) => {
@@ -90,17 +105,14 @@ export const useControls = (
     };
 
     const keyUpPressHandler = (event: KeyboardEvent) => {
-      const key = event.key.toLowerCase();
+      const key = normalizeKey(event);
       if (!relevantKeys.has(key)) return;
-      if (isPaused) return;
       setKeyboardControls((controls) => {
         if (!controls[key]) return controls;
         const next = { ...controls, [key]: false };
         return next;
       });
     };
-
-    setKeyboardControls({});
 
     window.addEventListener("keydown", keyDownPressHandler);
     window.addEventListener("keyup", keyUpPressHandler);
@@ -109,7 +121,7 @@ export const useControls = (
       window.removeEventListener("keydown", keyDownPressHandler);
       window.removeEventListener("keyup", keyUpPressHandler);
     };
-  }, [controlMode, isPaused]);
+  }, [isPaused]);
 
   useEffect(() => {
     if (controlMode !== "mouse") {
@@ -216,9 +228,14 @@ export const useControls = (
       return;
     }
 
+    const boostActive = Boolean(spacePressed && boost > 0.01);
+
     if (keyboardControls.w || keyboardControls.arrowup) {
-      vehicleApi.applyEngineForce(ENGINE_FORCE, 2);
-      vehicleApi.applyEngineForce(ENGINE_FORCE, 3);
+      const force = boostActive
+        ? ENGINE_FORCE + BOOST_ENGINE_FORCE
+        : ENGINE_FORCE;
+      vehicleApi.applyEngineForce(force, 2);
+      vehicleApi.applyEngineForce(force, 3);
     } else if (keyboardControls.s || keyboardControls.arrowdown) {
       vehicleApi.applyEngineForce(BRAKE_FORCE, 2);
       vehicleApi.applyEngineForce(BRAKE_FORCE, 3);
@@ -242,7 +259,7 @@ export const useControls = (
         vehicleApi.setSteeringValue(0, i);
       }
     }
-  }, [keyboardControls, controlMode, vehicleApi, isPaused]);
+  }, [keyboardControls, controlMode, vehicleApi, isPaused, boost, spacePressed]);
 
   useEffect(() => {
     if (controlMode !== "mouse") return;
@@ -251,8 +268,12 @@ export const useControls = (
       return;
     }
 
+    const boostActive = Boolean(
+      mouseControls.accelerate && spacePressed && boost > 0.01
+    );
+
     const engineForce = mouseControls.accelerate
-      ? ENGINE_FORCE
+      ? ENGINE_FORCE + (boostActive ? BOOST_ENGINE_FORCE : 0)
       : mouseControls.brake
       ? BRAKE_FORCE
       : 0;
@@ -268,10 +289,10 @@ export const useControls = (
     vehicleApi.setSteeringValue(frontSteer, 3);
     vehicleApi.setSteeringValue(rearSteer, 0);
     vehicleApi.setSteeringValue(rearSteer, 1);
-  }, [mouseControls, controlMode, vehicleApi, isPaused]);
+  }, [mouseControls, controlMode, vehicleApi, isPaused, spacePressed, boost]);
 
-  return useMemo(() => ({ keyboardControls, mouseControls }), [
-    keyboardControls,
-    mouseControls,
-  ]);
+  return useMemo(
+    () => ({ keyboardControls, mouseControls }),
+    [keyboardControls, mouseControls]
+  );
 };

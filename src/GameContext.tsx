@@ -6,6 +6,10 @@ type GameContextType = {
   setMoney: React.Dispatch<React.SetStateAction<number>>;
   kilometers: number;
   setKilometers: React.Dispatch<React.SetStateAction<number>>;
+  speed: number;
+  setSpeed: React.Dispatch<React.SetStateAction<number>>;
+  boost: number;
+  setBoost: React.Dispatch<React.SetStateAction<number>>;
   gameOver: boolean;
   setGameOver: React.Dispatch<React.SetStateAction<boolean>>;
 };
@@ -15,6 +19,8 @@ const GameContext = createContext<GameContextType | undefined>(undefined);
 export function GameProvider({ children }: { children: ReactNode }) {
   const [money, setMoney] = useState(1000);
   const [kilometers, setKilometers] = useState(0);
+  const [speed, setSpeed] = useState(0);
+  const [boost, setBoost] = useState(0);
   const [gameOver, setGameOver] = useState(false);
 
   return (
@@ -24,6 +30,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
         setMoney,
         kilometers,
         setKilometers,
+        speed,
+        setSpeed,
+        boost,
+        setBoost,
         gameOver,
         setGameOver,
       }}
