@@ -21,6 +21,8 @@ import ElectricityBox from "./ElectricityBox";
 import { Fence } from "./Fence";
 import { Hedge } from "./Hedge";
 import DumpsterFull from "./DumpsterFull";
+import HedgeBoundry from "../hedgeboundry";
+
 export default function WorldObjects(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
@@ -159,7 +161,11 @@ export default function WorldObjects(props: JSX.IntrinsicElements["group"]) {
           rotation={[0, Math.PI * 1.5, 0]}
         />
         <DumpsterFull />
+
         <DumpsterFull position={[60, 0, -29]} />
+        <HedgeBoundry />
+        <HedgeBoundry position={[52, 0, -51]} rotation={[0, Math.PI, 0]} />
+        <HedgeBoundry position={[1, 0, -66]} rotation={[0, Math.PI * 1.5, 0]} />
       </group>
     </group>
   );
