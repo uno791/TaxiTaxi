@@ -2,16 +2,20 @@ import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Taxi } from "./Taxi";
+import { useGame } from "../../GameContext";
 
 export function TaxiController() {
   const taxiRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
+  const { setMoney, setKilometers, gameOver, setGameOver } = useGame();
 
-  // Taxi state
-  let speed = 10;
-  let angle = 0;
+  // Taxi state (persist across renders using refs)
+  const speedRef = useRef(0); // Start at 0 so the car doesn’t auto-drive
+  const angleRef = useRef(0);
 
   useFrame((_, delta) => {
+    if (gameOver) return; // Stop movement if out of fuel
+
     const taxi = taxiRef.current;
     if (!taxi) return;
 
@@ -21,26 +25,40 @@ export function TaxiController() {
     const decel = 10;
     const turnSpeed = 1.8;
 
-    if (keys["w"] || keys["ArrowUp"])
-      speed = Math.min(10, speed + accel * delta);
-    else speed = Math.max(0, speed - decel * delta);
+    if (keys["w"] || keys["ArrowUp"]) {
+      speedRef.current = Math.min(10, speedRef.current + accel * delta);
+    } else {
+      speedRef.current = Math.max(0, speedRef.current - decel * delta);
+    }
 
-    if (keys["a"] || keys["ArrowLeft"]) angle += turnSpeed * delta;
-    if (keys["d"] || keys["ArrowRight"]) angle -= turnSpeed * delta;
+    if (keys["a"] || keys["ArrowLeft"]) angleRef.current += turnSpeed * delta;
+    if (keys["d"] || keys["ArrowRight"]) angleRef.current -= turnSpeed * delta;
 
     // --- Movement ---
-    taxi.rotation.y = angle;
-    taxi.position.x += Math.sin(angle) * speed * delta;
-    taxi.position.z += Math.cos(angle) * speed * delta;
+    taxi.rotation.y = angleRef.current;
+    taxi.position.x += Math.sin(angleRef.current) * speedRef.current * delta;
+    taxi.position.z += Math.cos(angleRef.current) * speedRef.current * delta;
 
-    // --- Camera follow (centered & closer) ---
-    // Behind-offset: no lateral (x) offset, closer Z, slightly above Y.
+    // --- Track kilometers ---
+    const distanceTraveled = speedRef.current * delta * 0.1; // scale factor for km
+    setKilometers((k) => k + distanceTraveled);
+
+    // --- Fuel (money decreases with distance) ---
+    setMoney((m) => {
+      const newMoney = m - distanceTraveled * 20; // cost per km
+      if (newMoney <= 0) {
+        setGameOver(true);
+        return 0;
+      }
+      return newMoney;
+    });
+
+    // --- Camera follow (third-person chase view) ---
     const behindOffset = new THREE.Vector3(0, 1.6, -3).applyAxisAngle(
       new THREE.Vector3(0, 1, 0),
-      angle
+      angleRef.current
     );
 
-    // Desired camera position = taxi position + behind-offset
     const desiredPos = new THREE.Vector3()
       .copy(taxi.position)
       .add(behindOffset);
@@ -49,14 +67,15 @@ export function TaxiController() {
     const followLerp = 1 - Math.exp(-8 * delta); // snappier follow
     camera.position.lerp(desiredPos, followLerp);
 
-    // Look slightly ahead in the taxi's forward direction to keep the angle centered
-    const forward = new THREE.Vector3(Math.sin(angle), 0, Math.cos(angle));
-    const lookAhead = 1.8; // how far ahead to look
+    const forward = new THREE.Vector3(
+      Math.sin(angleRef.current),
+      0,
+      Math.cos(angleRef.current)
+    );
     const target = new THREE.Vector3()
       .copy(taxi.position)
-      .addScaledVector(forward, lookAhead)
-      .add(new THREE.Vector3(0, 0.5, 0)); // small upward bias
-
+      .addScaledVector(forward, 1.8)
+      .add(new THREE.Vector3(0, 0.5, 0)); // slight upward bias
     camera.lookAt(target);
   });
 

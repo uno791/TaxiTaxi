@@ -5,7 +5,13 @@ import RoadCircuit from "./components/Road/RoadCircuit";
 import * as THREE from "three";
 import { TaxiPhysics } from "./components/Taxi/TaxiPhysics";
 import { CameraChase } from "./components/Taxi/CameraChase";
+import AllBuildings from "./components/City/AllBuildings";
 import Background from "./components/City/Background";
+
+// NEW UI imports
+import GameUI from "./components/UI/GameUI";
+import GameOverPopup from "./components/UI/GameOverPopup";
+
 import { Physics } from "@react-three/cannon";
 import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
@@ -29,7 +35,7 @@ export default function App() {
         >
           <ambientLight intensity={2} />
           <directionalLight position={[10, 5, 2]} castShadow />
-
+          <AllBuildings />
           {/* ROAD */}
           <RoadCircuit position={[0, 0, 0]} />
           <Background position={[0, 0, 0]} />
@@ -49,6 +55,10 @@ export default function App() {
         isPaused={isPaused}
         onPauseChange={setIsPaused}
       />
+
+      {/* UI overlay */}
+      <GameUI />
+      <GameOverPopup />
     </div>
   );
 }
