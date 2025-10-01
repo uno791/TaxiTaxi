@@ -21,8 +21,9 @@ export default function App() {
           broadphase="SAP"
           allowSleep
           iterations={12}
-          tolerance={0.0005}
-          stepProps={{ fixedTimeStep: 1 / 120, maxSubSteps: 2 }}
+          tolerance={1.005}
+          stepSize={1 / 120}
+          maxSubSteps={4}
         >
           <ambientLight intensity={2} />
           <directionalLight position={[10, 5, 2]} castShadow />
