@@ -43,7 +43,7 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
 
   const [wheels, wheelInfos] = useWheels(width, height, front, wheelRadius);
   const vehicleRef = useRef<THREE.Group>(null);
-  const { setMoney, setKilometers, setGameOver, gameOver } = useGame();
+  const { setMoney, setKilometers, setGameOver, setSpeed, gameOver } = useGame();
   const [rvRef, vehicleApi] = useRaycastVehicle(
     () => ({ chassisBody: chassisBoxRef, wheels, wheelInfos }),
     vehicleRef
@@ -67,11 +67,20 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
   }, [chassisApi]);
 
   useFrame((_, delta) => {
-    if (gameOver || isPaused) return;
+    if (gameOver || isPaused) {
+      setSpeed(0);
+      return;
+    }
 
     velocityVector.current.fromArray(velocityRef.current);
     const speed = velocityVector.current.length();
-    if (speed <= 0.0001) return;
+    if (speed <= 0.0001) {
+      setSpeed(0);
+      return;
+    }
+
+    const speedInKmh = speed * 3.6;
+    setSpeed(speedInKmh);
 
     const metersTravelled = speed * delta;
     const kilometers = metersTravelled * 0.1;
