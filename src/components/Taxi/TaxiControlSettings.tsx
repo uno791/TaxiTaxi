@@ -162,7 +162,7 @@ export function TaxiControlSettings({
                       height: 32,
                       borderRadius: "50%",
                       border: "none",
-                      background: "rgba(28, 39, 76, 0.92)",
+                      background: "rgba(255, 255, 255, 0.92)",
                       cursor: "pointer",
                       display: "flex",
                       alignItems: "center",
