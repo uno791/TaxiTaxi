@@ -2,6 +2,7 @@
 import { useBox, useRaycastVehicle } from "@react-three/cannon";
 import { useEffect, useRef } from "react";
 import { useControls } from "./useControls";
+import type { ControlMode } from "./useControls";
 import { useWheels } from "./useWheels";
 import { WheelDebug } from "./WheelDebug";
 import { Taxi } from "./Taxi";
@@ -10,9 +11,10 @@ import * as THREE from "three";
 type Props = {
   /** Optional: expose the chassis ref so the camera can follow it */
   chaseRef?: React.MutableRefObject<THREE.Object3D | null>;
+  controlMode: ControlMode;
 };
 
-export function TaxiPhysics({ chaseRef }: Props) {
+export function TaxiPhysics({ chaseRef, controlMode }: Props) {
   const position: [number, number, number] = [-3, 0.5, -2];
   const width = 0.375;
   const height = 0.1;
@@ -43,7 +45,7 @@ export function TaxiPhysics({ chaseRef }: Props) {
     vehicleRef
   );
 
-  useControls(vehicleApi, chassisApi);
+  useControls(vehicleApi, chassisApi, controlMode);
 
   const taxiScale = 0.18;
   const taxiOffset: [number, number, number] = [0, -0.07, 0.02];
