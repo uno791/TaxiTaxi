@@ -7,7 +7,8 @@ import { useGame } from "../../GameContext";
 export function TaxiController() {
   const taxiRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
-  const { setMoney, setKilometers, gameOver, setGameOver } = useGame();
+  const { setMoney, setKilometers, gameOver, setGameOver, setSpeed } =
+    useGame();
 
   // Taxi state (persist across renders using refs)
   const speedRef = useRef(0); // Start at 0 so the car doesn’t auto-drive
@@ -25,8 +26,15 @@ export function TaxiController() {
     const decel = 10;
     const turnSpeed = 1.8;
 
+    // --- BOOST ---
+    const boostMultiplier = keys["b"] ? 2.5 : 1; // Nitro if "b" is held
+    const maxSpeed = keys["b"] ? 20 : 10; // Higher max speed while boosting
+
     if (keys["w"] || keys["ArrowUp"]) {
-      speedRef.current = Math.min(10, speedRef.current + accel * delta);
+      speedRef.current = Math.min(
+        maxSpeed,
+        speedRef.current + accel * boostMultiplier * delta
+      );
     } else {
       speedRef.current = Math.max(0, speedRef.current - decel * delta);
     }
@@ -45,13 +53,19 @@ export function TaxiController() {
 
     // --- Fuel (money decreases with distance) ---
     setMoney((m) => {
-      const newMoney = m - distanceTraveled * 20; // cost per km
+      // Extra penalty if boosting
+      const boostPenalty = keys["b"] ? 0.5 : 0;
+      const newMoney = m - distanceTraveled * 20 - boostPenalty;
       if (newMoney <= 0) {
         setGameOver(true);
         return 0;
       }
       return newMoney;
     });
+
+    // --- Update speed in context (convert to km/h) ---
+    const kmh = speedRef.current * 20; // tweak this factor to feel realistic
+    setSpeed(kmh);
 
     // --- Camera follow (third-person chase view) ---
     const behindOffset = new THREE.Vector3(0, 1.6, -3).applyAxisAngle(

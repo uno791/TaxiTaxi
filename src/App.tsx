@@ -5,9 +5,10 @@ import { TaxiController } from "./components/Taxi/TaxiControls";
 import AllBuildings from "./components/City/AllBuildings";
 import Background from "./components/City/Background";
 
-// NEW UI imports
+// UI imports
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
+import Speedometer from "./components/UI/Speedometer"; // NEW
 
 export default function App() {
   return (
@@ -28,9 +29,9 @@ export default function App() {
 
         <OrbitControls makeDefault />
       </Canvas>
-
       {/* UI overlay */}
       <GameUI />
+      <Speedometer /> {/* NEW */}
       <GameOverPopup />
     </div>
   );
