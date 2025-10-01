@@ -62,7 +62,9 @@ export function TaxiController() {
     const desiredPos = new THREE.Vector3()
       .copy(taxi.position)
       .add(behindOffset);
-    const followLerp = 1 - Math.exp(-8 * delta); // smooth follow
+
+    // Smooth follow (time-independent-ish damping)s
+    const followLerp = 1 - Math.exp(-8 * delta); // snappier follow
     camera.position.lerp(desiredPos, followLerp);
 
     const forward = new THREE.Vector3(
