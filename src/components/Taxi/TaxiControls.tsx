@@ -26,15 +26,10 @@ export function TaxiController() {
     const decel = 10;
     const turnSpeed = 1.8;
 
-    // --- BOOST ---
-    const boostMultiplier = keys["b"] ? 2.5 : 1; // Nitro if "b" is held
-    const maxSpeed = keys["b"] ? 20 : 10; // Higher max speed while boosting
+    const maxSpeed = 10; // fixed max speed (no boost)
 
     if (keys["w"] || keys["ArrowUp"]) {
-      speedRef.current = Math.min(
-        maxSpeed,
-        speedRef.current + accel * boostMultiplier * delta
-      );
+      speedRef.current = Math.min(maxSpeed, speedRef.current + accel * delta);
     } else {
       speedRef.current = Math.max(0, speedRef.current - decel * delta);
     }
@@ -53,9 +48,7 @@ export function TaxiController() {
 
     // --- Fuel (money decreases with distance) ---
     setMoney((m) => {
-      // Extra penalty if boosting
-      const boostPenalty = keys["b"] ? 0.5 : 0;
-      const newMoney = m - distanceTraveled * 20 - boostPenalty;
+      const newMoney = m - distanceTraveled * 20;
       if (newMoney <= 0) {
         setGameOver(true);
         return 0;
