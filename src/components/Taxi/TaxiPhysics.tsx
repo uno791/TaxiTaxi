@@ -9,6 +9,12 @@ import { WheelDebug } from "./WheelDebug";
 import { Taxi } from "./Taxi";
 import * as THREE from "three";
 import { useGame } from "../../GameContext";
+import { useHitDetection } from "./useHitDetection";
+
+const MAX_BOOST = 100;
+const BOOST_CHARGE_RATE = 5; // units per second when driving
+const BOOST_DEPLETION_RATE = 45; // units per second while boosting
+const MIN_SPEED_FOR_CHARGE = 2; // m/s threshold to start charging boost
 
 type Props = {
   /** Optional: expose the chassis ref so the camera can follow it */
@@ -27,11 +33,13 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
   const chassisBodyArgs: [number, number, number] = [width, height, front * 2];
 
   const chassisRef = useRef<THREE.Mesh>(null);
+  const hitDetection = useHitDetection();
   const [chassisBoxRef, chassisApi] = useBox(
     () => ({
       args: chassisBodyArgs,
       mass: 500,
       position,
+      onCollide: hitDetection.onCollide,
     }),
     chassisRef
   );
@@ -43,15 +51,30 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
 
   const [wheels, wheelInfos] = useWheels(width, height, front, wheelRadius);
   const vehicleRef = useRef<THREE.Group>(null);
-  const { setMoney, setKilometers, setGameOver, setSpeed, gameOver } = useGame();
+  const {
+    setMoney,
+    setKilometers,
+    setGameOver,
+    setSpeed,
+    setBoost,
+    boost,
+    gameOver,
+  } = useGame();
   const [rvRef, vehicleApi] = useRaycastVehicle(
     () => ({ chassisBody: chassisBoxRef, wheels, wheelInfos }),
     vehicleRef
   );
 
-  useControls(vehicleApi, chassisApi, controlMode, isPaused || gameOver);
+  const controlStates = useControls(
+    vehicleApi,
+    chassisApi,
+    controlMode,
+    isPaused || gameOver
+  );
   const velocityRef = useRef<[number, number, number]>([0, 0, 0]);
   const velocityVector = useRef(new THREE.Vector3());
+  const boostRef = useRef(boost);
+  const keyboardStateRef = useRef<Record<string, boolean>>({});
 
   const taxiScale = 0.18;
   const taxiOffset: [number, number, number] = [0, -0.07, 0.02];
@@ -66,14 +89,51 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
     };
   }, [chassisApi]);
 
+  useEffect(() => {
+    boostRef.current = boost;
+  }, [boost]);
+
+  useEffect(() => {
+    keyboardStateRef.current = controlStates.keyboardControls;
+  }, [controlStates.keyboardControls]);
+
+  useEffect(() => {
+    return hitDetection.onHit(() => {
+      if (boostRef.current === 0) return;
+      boostRef.current = 0;
+      setBoost(0);
+    });
+  }, [hitDetection, setBoost]);
+
   useFrame((_, delta) => {
     if (gameOver || isPaused) {
+      if (boostRef.current !== 0) {
+        boostRef.current = 0;
+        setBoost(0);
+      }
       setSpeed(0);
       return;
     }
 
     velocityVector.current.fromArray(velocityRef.current);
     const speed = velocityVector.current.length();
+
+    const keyboardControls = keyboardStateRef.current;
+    const boostKeyHeld = Boolean(keyboardControls?.space);
+    const wantsBoost = boostKeyHeld && boostRef.current > 0.01;
+    let nextBoost = boostRef.current;
+
+    if (wantsBoost && nextBoost > 0) {
+      nextBoost = Math.max(0, nextBoost - BOOST_DEPLETION_RATE * delta);
+    } else if (!boostKeyHeld && speed > MIN_SPEED_FOR_CHARGE) {
+      nextBoost = Math.min(MAX_BOOST, nextBoost + BOOST_CHARGE_RATE * delta);
+    }
+
+    if (Math.abs(nextBoost - boostRef.current) > 0.001) {
+      boostRef.current = nextBoost;
+      setBoost(nextBoost);
+    }
+
     if (speed <= 0.0001) {
       setSpeed(0);
       return;
