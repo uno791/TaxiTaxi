@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -9,50 +9,11 @@ import AllBuildings from "./components/City/AllBuildings";
 import Background from "./components/City/Background";
 import { NavigationSystem } from "./components/Navigation/NavigationSystem";
 import { DestinationMarker } from "./components/Navigation/DestinationMarker";
-
-function MiniMapOverlay({ canvas }: { canvas: HTMLCanvasElement | null }) {
-  const containerRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) {
-      return;
-    }
-    container.innerHTML = "";
-    if (canvas) {
-      container.appendChild(canvas);
-    }
-    return () => {
-      if (canvas && canvas.parentElement === container) {
-        container.removeChild(canvas);
-      }
-    };
-  }, [canvas]);
-
-  return (
-    <div
-      ref={containerRef}
-      style={{
-        position: "absolute",
-        bottom: 24,
-        right: 24,
-        width: 220,
-        height: 220,
-        borderRadius: 12,
-        overflow: "hidden",
-        background: "rgba(20, 24, 32, 0.6)",
-        border: "2px solid rgba(255, 255, 255, 0.3)",
-        boxShadow: "0 12px 20px rgba(0, 0, 0, 0.35)",
-        pointerEvents: "none",
-      }}
-    />
-  );
-}
+import { MiniMapOverlay } from "./hooks/useMiniMapOverlay";
 
 const DEFAULT_DESTINATION = new THREE.Vector3(48, 0, -46);
 
 import Mission from "./components/Missions/Mission";
-// NEW UI imports
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
 import { Physics } from "@react-three/cannon";
@@ -60,12 +21,10 @@ import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
 import TaxiSpeedometer from "./components/Taxi/TaxiSpeedometer";
 
-// NEW screens
 import LoginScreen from "./components/UI/LoginScreen";
 import EntranceScreen from "./components/UI/EntranceScreen";
 import CarSelector from "./components/CarSelector/CarSelector";
 
-// NEW context
 import { MetaProvider, useMeta } from "./context/MetaContext";
 
 function GameWorld() {
