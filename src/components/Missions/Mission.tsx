@@ -32,7 +32,7 @@ const missionConfigs: MissionConfig[] = [
     dropoffHint: "the tennis courts",
     reward: 350,
     pickupRadius: 3,
-    dropoffRadius: 4,
+    dropoffRadius: 2,
     passengerRotation: [0, Math.PI, 0],
     passengerDialog: [
       "Thanks for stopping! I’m running late for my match.",
@@ -43,8 +43,8 @@ const missionConfigs: MissionConfig[] = [
   {
     id: "mission-docks",
     pickupPosition: [59, 0.012, -58],
-    passengerPosition: [59, 0.5, -58],
-    dropoffPosition: [-18, -1, 8],
+    passengerPosition: [59, 0, -58],
+    dropoffPosition: [-18, -1, 11],
     dropoffHint: "the city docks",
     reward: 420,
     pickupRadius: 3.5,
@@ -58,8 +58,8 @@ const missionConfigs: MissionConfig[] = [
   {
     id: "mission-museum",
     pickupPosition: [-33, 0, -22.4],
-    passengerPosition: [-33, 0.5, -22.4],
-    dropoffPosition: [25, -1, -40],
+    passengerPosition: [-33, 0, -22.4],
+    dropoffPosition: [25, -1, -53],
     dropoffHint: "the museum plaza",
     reward: 380,
     pickupRadius: 3,
@@ -73,8 +73,8 @@ const missionConfigs: MissionConfig[] = [
   {
     id: "mission-mall",
     pickupPosition: [-12.5, 0.1, -3.45],
-    passengerPosition: [-12.5, 0.6, -3.45],
-    dropoffPosition: [45, -1, -12],
+    passengerPosition: [-12.5, 0, -3.45],
+    dropoffPosition: [46.6, -1, -12],
     dropoffHint: "the shopping district",
     reward: 400,
     pickupRadius: 3,
@@ -105,16 +105,20 @@ type CompletionInfo = {
   reward: number;
 };
 
-export default function Mission({ taxiRef, onDestinationChange, ...groupProps }: MissionProps) {
-  const [missionStates, setMissionStates] = useState<Record<string, MissionState>>(
-    () => {
-      const initial: Record<string, MissionState> = {};
-      for (const config of missionConfigs) {
-        initial[config.id] = "available";
-      }
-      return initial;
+export default function Mission({
+  taxiRef,
+  onDestinationChange,
+  ...groupProps
+}: MissionProps) {
+  const [missionStates, setMissionStates] = useState<
+    Record<string, MissionState>
+  >(() => {
+    const initial: Record<string, MissionState> = {};
+    for (const config of missionConfigs) {
+      initial[config.id] = "available";
     }
-  );
+    return initial;
+  });
   const [promptMissionId, setPromptMissionId] = useState<string | null>(null);
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
   const [completionInfo, setCompletionInfo] = useState<CompletionInfo | null>(
@@ -260,11 +264,12 @@ export default function Mission({ taxiRef, onDestinationChange, ...groupProps }:
     ? missionConfigById[completionInfo.missionId] ?? null
     : null;
 
-  const activeDialog = activeConfig && activeConfig.passengerDialog.length > 0
-    ? activeConfig.passengerDialog[
-        dialogIndex % activeConfig.passengerDialog.length
-      ]
-    : null;
+  const activeDialog =
+    activeConfig && activeConfig.passengerDialog.length > 0
+      ? activeConfig.passengerDialog[
+          dialogIndex % activeConfig.passengerDialog.length
+        ]
+      : null;
 
   useEffect(() => {
     if (promptConfig) {
@@ -319,7 +324,8 @@ export default function Mission({ taxiRef, onDestinationChange, ...groupProps }:
     <group {...groupProps}>
       {missionConfigs.map((config) => {
         const missionState = missionStates[config.id];
-        const pickupActive = missionState === "available" || missionState === "prompt";
+        const pickupActive =
+          missionState === "available" || missionState === "prompt";
         const dropoffActive = missionState === "active";
 
         return (
