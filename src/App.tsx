@@ -20,6 +20,8 @@ import { Physics } from "@react-three/cannon";
 import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
 import TaxiSpeedometer from "./components/Taxi/TaxiSpeedometer";
+import { MissionUIProvider } from "./components/Missions/MissionUIContext";
+import MissionOverlay from "./components/Missions/MissionOverlay";
 
 import LoginScreen from "./components/UI/LoginScreen";
 import EntranceScreen from "./components/UI/EntranceScreen";
@@ -39,60 +41,63 @@ function GameWorld() {
   );
 
   return (
-    <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
-      <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
-        <Physics
-          gravity={[0, -9.81, 0]}
-          broadphase="SAP"
-          allowSleep
-          iterations={18}
-          tolerance={1e-5}
-          stepSize={1 / 120}
-          maxSubSteps={6}
-        >
-          {/* Lighting */}
-          <ambientLight intensity={2} />
-          <directionalLight position={[10, 5, 2]} castShadow />
+    <MissionUIProvider>
+      <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+        <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
+          <Physics
+            gravity={[0, -9.81, 0]}
+            broadphase="SAP"
+            allowSleep
+            iterations={18}
+            tolerance={1e-5}
+            stepSize={1 / 120}
+            maxSubSteps={6}
+          >
+            {/* Lighting */}
+            <ambientLight intensity={2} />
+            <directionalLight position={[10, 5, 2]} castShadow />
 
-          {/* World */}
-          <AllBuildings />
-          <RoadCircuit position={[0, 0, 0]} />
-          <Background position={[0, 0, 0]} />
+            {/* World */}
+            <AllBuildings />
+            <RoadCircuit position={[0, 0, 0]} />
+            <Background position={[0, 0, 0]} />
 
-          {/* Taxi — unchanged from original */}
-          <TaxiPhysics
-            chaseRef={chaseRef}
-            controlMode={controlMode}
-            isPaused={isPaused}
-            playerPositionRef={playerPositionRef}
-          />
-          <Mission position={[0, 0, 0]} />
-          <DestinationMarker destinationRef={destinationRef} />
-          <NavigationSystem
-            playerRef={playerPositionRef}
-            destinationRef={destinationRef}
-            onMiniMapCanvasChange={setMiniMapCanvas}
-          />
-          {/* Camera */}
-          {<CameraChase target={chaseRef} />}
-          <OrbitControls makeDefault />
-        </Physics>
-      </Canvas>
+            {/* Taxi — unchanged from original */}
+            <TaxiPhysics
+              chaseRef={chaseRef}
+              controlMode={controlMode}
+              isPaused={isPaused}
+              playerPositionRef={playerPositionRef}
+            />
+            <Mission position={[0, 0, 0]} taxiRef={chaseRef} />
+            <DestinationMarker destinationRef={destinationRef} />
+            <NavigationSystem
+              playerRef={playerPositionRef}
+              destinationRef={destinationRef}
+              onMiniMapCanvasChange={setMiniMapCanvas}
+            />
+            {/* Camera */}
+            {<CameraChase target={chaseRef} />}
+            <OrbitControls makeDefault />
+          </Physics>
+        </Canvas>
 
-      {/* Controls */}
-      <TaxiControlSettings
-        controlMode={controlMode}
-        onControlModeChange={setControlMode}
-        isPaused={isPaused}
-        onPauseChange={setIsPaused}
-      />
+        {/* Controls */}
+        <TaxiControlSettings
+          controlMode={controlMode}
+          onControlModeChange={setControlMode}
+          isPaused={isPaused}
+          onPauseChange={setIsPaused}
+        />
 
-      {/* UI overlay */}
-      <TaxiSpeedometer />
-      <GameUI />
-      <GameOverPopup />
-      <MiniMapOverlay canvas={miniMapCanvas} />
-    </div>
+        {/* UI overlay */}
+        <TaxiSpeedometer />
+        <GameUI />
+        <GameOverPopup />
+        <MiniMapOverlay canvas={miniMapCanvas} />
+        <MissionOverlay />
+      </div>
+    </MissionUIProvider>
   );
 }
 
