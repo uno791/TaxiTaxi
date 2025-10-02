@@ -9,6 +9,7 @@ export interface PathVisualizerOptions {
   breadcrumbRadius?: number;
   color?: number;
   layer?: number;
+  layers?: number[];
   lineRadius?: number;
 }
 
@@ -27,7 +28,21 @@ export function usePathVisualizer(
   const mode = options?.mode ?? "line";
   const color = options?.color ?? DEFAULT_COLOR;
   const breadcrumbRadius = options?.breadcrumbRadius ?? 0.8;
-  const targetLayer = options?.layer ?? 0;
+  const configuredLayers = options?.layers?.length ? options.layers : undefined;
+  const targetLayers =
+    configuredLayers ?? (options?.layer !== undefined ? [options.layer] : [0]);
+
+  const applyLayers = (object: THREE.Object3D) => {
+    if (targetLayers.length === 0) {
+      object.layers.set(0);
+      return;
+    }
+    object.layers.disableAll();
+    object.layers.set(targetLayers[0]);
+    for (let index = 1; index < targetLayers.length; index += 1) {
+      object.layers.enable(targetLayers[index]);
+    }
+  };
   const lineRadius = options?.lineRadius ?? DEFAULT_LINE_RADIUS;
 
   const groupRef = useRef<THREE.Object3D | null>(null);
@@ -43,18 +58,22 @@ export function usePathVisualizer(
     const container = new THREE.Group();
     container.name = "PathVisualizer";
     container.userData.keepOriginalForMinimap = true;
-    container.layers.set(targetLayer);
+    applyLayers(container);
 
     if (mode === "line") {
       const geometry = new THREE.BufferGeometry();
-      const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.92 });
+      const material = new THREE.MeshBasicMaterial({
+        color,
+        transparent: true,
+        opacity: 0.92,
+      });
       material.depthTest = false;
       material.depthWrite = false;
       material.toneMapped = false;
       const mesh = new THREE.Mesh(geometry, material);
       mesh.renderOrder = 20;
       mesh.userData.keepOriginalForMinimap = true;
-      mesh.layers.set(targetLayer);
+      applyLayers(mesh);
       mesh.visible = false;
       lineRef.current = mesh;
       lastLineGeometryRef.current = geometry;
@@ -109,9 +128,20 @@ export function usePathVisualizer(
           mesh.visible = false;
           return;
         }
-        const curve = new THREE.CatmullRomCurve3(points, false, "catmullrom", 0.05);
+        const curve = new THREE.CatmullRomCurve3(
+          points,
+          false,
+          "catmullrom",
+          0.05
+        );
         const tubularSegments = Math.max(points.length * 6, 60);
-        const geometry = new THREE.TubeGeometry(curve, tubularSegments, lineRadius, 12, false);
+        const geometry = new THREE.TubeGeometry(
+          curve,
+          tubularSegments,
+          lineRadius,
+          12,
+          false
+        );
         const previousGeometry = lastLineGeometryRef.current;
         mesh.geometry = geometry;
         mesh.visible = true;
@@ -131,7 +161,11 @@ export function usePathVisualizer(
 
         while (breadcrumbs.length < required) {
           const geometry = new THREE.CircleGeometry(breadcrumbRadius, 16);
-          const material = new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.85 });
+          const material = new THREE.MeshBasicMaterial({
+            color,
+            transparent: true,
+            opacity: 0.85,
+          });
           material.depthTest = false;
           material.depthWrite = false;
           material.toneMapped = false;
@@ -140,7 +174,7 @@ export function usePathVisualizer(
           dot.position.y = 0;
           dot.renderOrder = 100;
           dot.userData.keepOriginalForMinimap = true;
-          dot.layers.set(targetLayer);
+          applyLayers(dot);
           breadcrumbs.push(dot);
           group.add(dot);
         }

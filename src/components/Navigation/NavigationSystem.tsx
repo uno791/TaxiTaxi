@@ -70,7 +70,7 @@ export function NavigationSystem({
   const { updatePath, clear: clearPath } = usePathVisualizer(scene, {
     mode: "line",
     color: 0x0d1a8c,
-    layer: 2,
+    layers: [0, 2],
   });
 
   const lastPathCellsRef = useRef<GridCell[]>([]);
