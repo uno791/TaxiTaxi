@@ -3,9 +3,9 @@ import * as THREE from "three";
 import { useGame } from "../../GameContext";
 
 const COUNTER_STEER_RATIO = 0.1 / 0.35;
-const ENGINE_FORCE = 150;
-const BRAKE_FORCE = -400;
-const BOOST_ENGINE_FORCE = 400;
+const ENGINE_FORCE = 100;
+const BRAKE_FORCE = -200;
+const BOOST_ENGINE_FORCE = 1600;
 
 export type ControlMode = "keyboard" | "mouse";
 
@@ -259,7 +259,14 @@ export const useControls = (
         vehicleApi.setSteeringValue(0, i);
       }
     }
-  }, [keyboardControls, controlMode, vehicleApi, isPaused, boost, spacePressed]);
+  }, [
+    keyboardControls,
+    controlMode,
+    vehicleApi,
+    isPaused,
+    boost,
+    spacePressed,
+  ]);
 
   useEffect(() => {
     if (controlMode !== "mouse") return;

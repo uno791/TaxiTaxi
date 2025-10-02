@@ -28,7 +28,7 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
   const width = 0.375;
   const height = 0.1;
   const front = 0.38;
-  const wheelRadius = 0.05;
+  const wheelRadius = 0.12;
 
   const chassisBodyArgs: [number, number, number] = [width, height, front * 2];
 
@@ -37,8 +37,10 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
   const [chassisBoxRef, chassisApi] = useBox(
     () => ({
       args: chassisBodyArgs,
-      mass: 500,
+      mass: 180,
       position,
+      linearDamping: 0.15,
+      angularDamping: 0.45,
       onCollide: hitDetection.onCollide,
     }),
     chassisRef
@@ -77,7 +79,7 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
   const keyboardStateRef = useRef<Record<string, boolean>>({});
 
   const taxiScale = 0.18;
-  const taxiOffset: [number, number, number] = [0, -0.07, 0.02];
+  const taxiOffset: [number, number, number] = [0, -0.14, 0.02];
 
   useEffect(() => {
     const unsubscribeVelocity = chassisApi?.velocity?.subscribe?.((next) => {

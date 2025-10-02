@@ -14,15 +14,15 @@ export const useWheels = (
     directionLocal: [0, -1, 0] as [number, number, number],
     axleLocal: [1, 0, 0] as [number, number, number],
 
-    suspensionStiffness: 25, // raise for stronger springs
-    suspensionRestLength: 0.08, // a bit shorter rest length
-    maxSuspensionTravel: 0.15, // allow more travel
-    dampingRelaxation: 2.3, // rebound
-    dampingCompression: 4.5, // bump
-    frictionSlip: 6.5, // moderate grip
-    rollInfluence: 0.03, // slight body roll allowed
-    maxSuspensionForce: 1e5,
-    customSlidingRotationalSpeed: -20,
+    suspensionStiffness: 82,
+    suspensionRestLength: 0.16,
+    maxSuspensionTravel: 0.22,
+    dampingRelaxation: 11,
+    dampingCompression: 7.5,
+    frictionSlip: 5,
+    rollInfluence: 0.03,
+    maxSuspensionForce: 3e5,
+    customSlidingRotationalSpeed: -25,
     useCustomSlidingRotationalSpeed: true,
   };
 

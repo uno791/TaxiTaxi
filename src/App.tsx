@@ -26,13 +26,13 @@ export default function App() {
     <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
       <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
         <Physics
-          gravity={[0, -2.3, 0]}
+          gravity={[0, -9.81, 0]}
           broadphase="SAP"
           allowSleep
-          iterations={12}
-          tolerance={1.005}
-          stepSize={1 / 120}
-          maxSubSteps={4}
+          iterations={20}
+          tolerance={0.001}
+          stepSize={1 / 180}
+          maxSubSteps={8}
         >
           <ambientLight intensity={2} />
           <directionalLight position={[10, 5, 2]} castShadow />
