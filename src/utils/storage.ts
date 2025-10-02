@@ -1,3 +1,4 @@
+// storage.ts
 export type UserData = {
   username: string;
   password: string;
@@ -6,7 +7,9 @@ export type UserData = {
 };
 
 const STORAGE_KEY = "users";
+const CURRENT_KEY = "currentUser"; // 👈 new key for last logged-in user
 
+// --- User list handling ---
 export function loadUsers(): UserData[] {
   const data = localStorage.getItem(STORAGE_KEY);
   return data ? JSON.parse(data) : [];
@@ -40,5 +43,23 @@ export function createUser(username: string, password: string): UserData {
   const users = loadUsers();
   users.push(newUser);
   saveUsers(users);
+
+  // Save as current user immediately after signup
+  saveCurrentUser(newUser);
+
   return newUser;
+}
+
+// --- Current user handling (for auto-login) ---
+export function saveCurrentUser(user: UserData) {
+  localStorage.setItem(CURRENT_KEY, JSON.stringify(user));
+}
+
+export function loadCurrentUser(): UserData | null {
+  const data = localStorage.getItem(CURRENT_KEY);
+  return data ? JSON.parse(data) : null;
+}
+
+export function clearCurrentUser() {
+  localStorage.removeItem(CURRENT_KEY);
 }
