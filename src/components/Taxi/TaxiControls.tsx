@@ -1,9 +1,14 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
+import type { MutableRefObject } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Taxi } from "./Taxi";
 
-export function TaxiController() {
+interface TaxiControllerProps {
+  positionRef?: MutableRefObject<THREE.Vector3>;
+}
+
+export function TaxiController({ positionRef }: TaxiControllerProps) {
   const taxiRef = useRef<THREE.Group>(null);
   const { camera } = useThree();
 
@@ -33,6 +38,10 @@ export function TaxiController() {
     taxi.position.x += Math.sin(angle) * speed * delta;
     taxi.position.z += Math.cos(angle) * speed * delta;
 
+    if (positionRef) {
+      positionRef.current.copy(taxi.position);
+    }
+
     // --- Camera follow (centered & closer) ---
     // Behind-offset: no lateral (x) offset, closer Z, slightly above Y.
     const behindOffset = new THREE.Vector3(0, 1.6, -3).applyAxisAngle(
@@ -59,6 +68,13 @@ export function TaxiController() {
 
     camera.lookAt(target);
   });
+
+  useEffect(() => {
+    const taxi = taxiRef.current;
+    if (taxi && positionRef) {
+      positionRef.current.copy(taxi.position);
+    }
+  }, [positionRef]);
 
   return <Taxi scale={0.27} ref={taxiRef} />;
 }
