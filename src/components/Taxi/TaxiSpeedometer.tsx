@@ -40,8 +40,10 @@ export default function TaxiSpeedometer() {
   const boostPercent = (clampedBoost / MAX_BOOST) * 100;
 
   const speedValue = Number.isFinite(speed) ? speed : 0;
-  const clampedSpeed = Math.min(Math.max(speedValue, 0), MAX_SPEED);
+  const safeSpeed = Math.max(speedValue, 0);
+  const clampedSpeed = Math.min(safeSpeed, MAX_SPEED);
   const speedPercent = (clampedSpeed / MAX_SPEED) * 100;
+  const displaySpeed = Math.round(safeSpeed);
 
   return (
     <div
@@ -83,7 +85,7 @@ export default function TaxiSpeedometer() {
           letterSpacing: "0.1em",
         }}
       >
-        {Math.round(clampedSpeed)} km/h
+        {displaySpeed} km/h
       </div>
       <div
         style={{

@@ -3,9 +3,9 @@ import * as THREE from "three";
 import { useGame } from "../../GameContext";
 
 const COUNTER_STEER_RATIO = 0.1 / 0.35;
-const ENGINE_FORCE = 100;
-const BRAKE_FORCE = -200;
-const BOOST_ENGINE_FORCE = 1600;
+const ENGINE_FORCE = 650;
+const BRAKE_FORCE = -900;
+const BOOST_ENGINE_FORCE = 1400;
 
 export type ControlMode = "keyboard" | "mouse";
 
