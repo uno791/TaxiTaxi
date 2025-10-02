@@ -7,7 +7,7 @@ import { TaxiPhysics } from "./components/Taxi/TaxiPhysics";
 import { CameraChase } from "./components/Taxi/CameraChase";
 import AllBuildings from "./components/City/AllBuildings";
 import Background from "./components/City/Background";
-
+import Mission from "./components/Missions/Mission";
 // NEW UI imports
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
@@ -56,9 +56,9 @@ function GameWorld() {
             controlMode={controlMode}
             isPaused={isPaused}
           />
-
+          <Mission position={[0, 0, 0]} />
           {/* Camera */}
-          <CameraChase target={chaseRef} />
+          {/* <CameraChase target={chaseRef} /> */}
           <OrbitControls makeDefault />
         </Physics>
       </Canvas>
