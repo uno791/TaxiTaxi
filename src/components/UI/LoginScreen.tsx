@@ -1,6 +1,11 @@
 import { useState } from "react";
 import { useMeta } from "../../context/MetaContext";
-import { findUser, createUser, findUserByUsername } from "../../utils/storage";
+import {
+  findUser,
+  createUser,
+  findUserByUsername,
+  saveCurrentUser,
+} from "../../utils/storage";
 
 export default function LoginScreen() {
   const { setCurrentUser, setAppStage } = useMeta();
@@ -13,6 +18,7 @@ export default function LoginScreen() {
     const user = findUser(username, password);
     if (user) {
       setCurrentUser(user);
+      saveCurrentUser(user); // 🔹 persist login
       setAppStage("entrance");
     } else {
       setError("Invalid username or password");
@@ -25,7 +31,6 @@ export default function LoginScreen() {
       return;
     }
 
-    // 🔹 Check if username already exists
     const existingUser = findUserByUsername(username);
     if (existingUser) {
       setError("Username already taken, please choose another");
@@ -34,6 +39,7 @@ export default function LoginScreen() {
 
     const user = createUser(username, password);
     setCurrentUser(user);
+    saveCurrentUser(user); // 🔹 persist new user login
     setAppStage("entrance");
   };
 
