@@ -186,11 +186,13 @@ export function NavigationSystem({
 
     const playerPosition = playerRef.current;
     const destinationPosition = destinationRef.current;
+    const hasDestination = Number.isFinite(destinationPosition.x) && Number.isFinite(destinationPosition.z);
 
-    if (!playerPosition || !destinationPosition) {
+    if (!playerPosition || !hasDestination) {
       clearPath();
       lastPathKeyRef.current = null;
       lastPathCellsRef.current = [];
+      lastDestinationPositionRef.current.set(Number.NaN, Number.NaN, Number.NaN);
       return;
     }
 

@@ -13,6 +13,7 @@ export function DestinationMarker({ destinationRef }: DestinationMarkerProps) {
   useEffect(() => {
     if (groupRef.current) {
       groupRef.current.userData.keepOriginalForMinimap = true;
+      groupRef.current.visible = false;
     }
   }, []);
 
@@ -22,6 +23,11 @@ export function DestinationMarker({ destinationRef }: DestinationMarkerProps) {
       return;
     }
     const destination = destinationRef.current;
+    const hasDestination = Number.isFinite(destination.x) && Number.isFinite(destination.z);
+    group.visible = hasDestination;
+    if (!hasDestination) {
+      return;
+    }
     group.position.set(destination.x, 0, destination.z);
   });
 
