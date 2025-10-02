@@ -17,7 +17,10 @@ interface NavigationSystemProps {
 const BOUNDS_EPSILON = 0.05;
 const PATH_SURFACE_OFFSET = 0.04;
 
-function boundsApproximatelyEqual(a: GridBounds | null, b: GridBounds | null): boolean {
+function boundsApproximatelyEqual(
+  a: GridBounds | null,
+  b: GridBounds | null
+): boolean {
   if (!a || !b) {
     return a === b;
   }
@@ -57,8 +60,11 @@ export function NavigationSystem({
   destinationRef,
   onMiniMapCanvasChange,
 }: NavigationSystemProps) {
-  const { scene } = useThree();
+  const { scene, camera } = useThree();
   const [bounds, setBounds] = useState<GridBounds | null>(null);
+
+  const WORLD_PATH_LAYER = 5;
+  const SHOW_WORLD_NAV_PATH = true; // Comment out or set to false to hide the navigation path drawn on the road
 
   const miniMap = useMiniMap(scene, playerRef, destinationRef, {
     size: 220,
@@ -67,16 +73,61 @@ export function NavigationSystem({
   });
   const gridData = useGridBuilder(scene, bounds, { cellSize: 1.2 });
   const { findPath } = usePathfinding(gridData);
-  const { updatePath, clear: clearPath } = usePathVisualizer(scene, {
-    mode: "line",
-    color: 0x0d1a8c,
-    layers: [0, 2],
-  });
+  const { updatePath: updateMiniMapPath, clear: clearMiniMapPath } =
+    usePathVisualizer(scene, {
+      mode: "line",
+      color: 0x0d1a8c,
+      layer: 2,
+    });
+  const { updatePath: updateWorldPathCore, clear: clearWorldPathCore } =
+    usePathVisualizer(scene, {
+      mode: "line",
+      color: 0xffc857,
+      lineRadius: 0.24,
+      opacity: 1,
+      layer: WORLD_PATH_LAYER,
+    });
+  const { updatePath: updateWorldPathGlow, clear: clearWorldPathGlow } =
+    usePathVisualizer(scene, {
+      mode: "line",
+      color: 0xfff2c2,
+      lineRadius: 0.38,
+      opacity: 0.36,
+      layer: WORLD_PATH_LAYER,
+    });
+
+  const clearPaths = () => {
+    clearMiniMapPath();
+    clearWorldPathCore();
+    clearWorldPathGlow();
+  };
+
+  const updatePaths = (points: THREE.Vector3[]) => {
+    updateMiniMapPath(points);
+    if (SHOW_WORLD_NAV_PATH) {
+      updateWorldPathCore(points);
+      updateWorldPathGlow(points);
+    } else {
+      clearWorldPathCore();
+      clearWorldPathGlow();
+    }
+  };
+
+  useEffect(() => {
+    camera.layers.enable(WORLD_PATH_LAYER);
+    return () => {
+      camera.layers.disable(WORLD_PATH_LAYER);
+    };
+  }, [camera, WORLD_PATH_LAYER]);
 
   const lastPathCellsRef = useRef<GridCell[]>([]);
   const lastPathKeyRef = useRef<string | null>(null);
-  const lastPlayerPositionRef = useRef(new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN));
-  const lastDestinationPositionRef = useRef(new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN));
+  const lastPlayerPositionRef = useRef(
+    new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN)
+  );
+  const lastDestinationPositionRef = useRef(
+    new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN)
+  );
 
   const resolveCell = (position: THREE.Vector3): GridCell | null => {
     const candidate = gridData.worldToCell(position);
@@ -118,7 +169,10 @@ export function NavigationSystem({
           if (Math.abs(deltaRow) !== radius && Math.abs(deltaCol) !== radius) {
             continue;
           }
-          const scored = checkAndScore(candidate.row + deltaRow, candidate.col + deltaCol);
+          const scored = checkAndScore(
+            candidate.row + deltaRow,
+            candidate.col + deltaCol
+          );
           if (!scored) {
             continue;
           }
@@ -178,7 +232,7 @@ export function NavigationSystem({
     miniMap.render();
 
     if (!gridData.ready) {
-      clearPath();
+      clearPaths();
       lastPathKeyRef.current = null;
       lastPathCellsRef.current = [];
       return;
@@ -186,13 +240,19 @@ export function NavigationSystem({
 
     const playerPosition = playerRef.current;
     const destinationPosition = destinationRef.current;
-    const hasDestination = Number.isFinite(destinationPosition.x) && Number.isFinite(destinationPosition.z);
+    const hasDestination =
+      Number.isFinite(destinationPosition.x) &&
+      Number.isFinite(destinationPosition.z);
 
     if (!playerPosition || !hasDestination) {
-      clearPath();
+      clearPaths();
       lastPathKeyRef.current = null;
       lastPathCellsRef.current = [];
-      lastDestinationPositionRef.current.set(Number.NaN, Number.NaN, Number.NaN);
+      lastDestinationPositionRef.current.set(
+        Number.NaN,
+        Number.NaN,
+        Number.NaN
+      );
       return;
     }
 
@@ -200,7 +260,7 @@ export function NavigationSystem({
     const goalCell = resolveCell(destinationPosition);
 
     if (!startCell || !goalCell) {
-      clearPath();
+      clearPaths();
       lastPathKeyRef.current = null;
       lastPathCellsRef.current = [];
       return;
@@ -208,11 +268,17 @@ export function NavigationSystem({
 
     const pathKey = `${startCell.row}:${startCell.col}-${goalCell.row}:${goalCell.col}-${gridData.version}`;
     const hasLastPlayer = Number.isFinite(lastPlayerPositionRef.current.x);
-    const hasLastDestination = Number.isFinite(lastDestinationPositionRef.current.x);
-    const playerMoved = !hasLastPlayer ||
-      playerPosition.distanceTo(lastPlayerPositionRef.current) > gridData.cellSize * 0.35;
-    const destinationMoved = !hasLastDestination ||
-      destinationPosition.distanceTo(lastDestinationPositionRef.current) > gridData.cellSize * 0.35;
+    const hasLastDestination = Number.isFinite(
+      lastDestinationPositionRef.current.x
+    );
+    const playerMoved =
+      !hasLastPlayer ||
+      playerPosition.distanceTo(lastPlayerPositionRef.current) >
+        gridData.cellSize * 0.35;
+    const destinationMoved =
+      !hasLastDestination ||
+      destinationPosition.distanceTo(lastDestinationPositionRef.current) >
+        gridData.cellSize * 0.35;
     const pathUnknown = lastPathCellsRef.current.length === 0;
 
     let pathChanged = false;
@@ -223,7 +289,13 @@ export function NavigationSystem({
       pathChanged = true;
     }
 
-    if (!playerMoved && !destinationMoved && !pathChanged && pathKey === lastPathKeyRef.current && !pathUnknown) {
+    if (
+      !playerMoved &&
+      !destinationMoved &&
+      !pathChanged &&
+      pathKey === lastPathKeyRef.current &&
+      !pathUnknown
+    ) {
       return;
     }
 
@@ -232,7 +304,7 @@ export function NavigationSystem({
 
     const cells = lastPathCellsRef.current;
     if (cells.length === 0) {
-      clearPath();
+      clearPaths();
       return;
     }
 
@@ -268,7 +340,7 @@ export function NavigationSystem({
       points.push(duplicate);
     }
 
-    updatePath(points);
+    updatePaths(points);
   });
 
   return null;

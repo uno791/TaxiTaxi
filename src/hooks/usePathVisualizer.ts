@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import * as THREE from "three";
 
 export type PathVisualizationMode = "line" | "breadcrumbs";
@@ -11,6 +11,7 @@ export interface PathVisualizerOptions {
   layer?: number;
   layers?: number[];
   lineRadius?: number;
+  opacity?: number;
 }
 
 export interface PathVisualizerHandle {
@@ -28,11 +29,17 @@ export function usePathVisualizer(
   const mode = options?.mode ?? "line";
   const color = options?.color ?? DEFAULT_COLOR;
   const breadcrumbRadius = options?.breadcrumbRadius ?? 0.8;
-  const configuredLayers = options?.layers?.length ? options.layers : undefined;
-  const targetLayers =
-    configuredLayers ?? (options?.layer !== undefined ? [options.layer] : [0]);
+  const targetLayers = useMemo(() => {
+    if (options?.layers && options.layers.length > 0) {
+      return [...options.layers];
+    }
+    if (options?.layer !== undefined) {
+      return [options.layer];
+    }
+    return [0];
+  }, [options?.layer, options?.layers]);
 
-  const applyLayers = (object: THREE.Object3D) => {
+  const applyLayers = useCallback((object: THREE.Object3D) => {
     if (targetLayers.length === 0) {
       object.layers.set(0);
       return;
@@ -42,8 +49,10 @@ export function usePathVisualizer(
     for (let index = 1; index < targetLayers.length; index += 1) {
       object.layers.enable(targetLayers[index]);
     }
-  };
+  }, [targetLayers]);
   const lineRadius = options?.lineRadius ?? DEFAULT_LINE_RADIUS;
+  const materialOpacity = options?.opacity ?? 0.92;
+  const materialTransparent = options?.opacity !== undefined ? options.opacity < 1 : true;
 
   const groupRef = useRef<THREE.Object3D | null>(null);
   const lineRef = useRef<THREE.Mesh | null>(null);
@@ -64,8 +73,8 @@ export function usePathVisualizer(
       const geometry = new THREE.BufferGeometry();
       const material = new THREE.MeshBasicMaterial({
         color,
-        transparent: true,
-        opacity: 0.92,
+        transparent: materialTransparent,
+        opacity: materialOpacity,
       });
       material.depthTest = false;
       material.depthWrite = false;
@@ -111,7 +120,7 @@ export function usePathVisualizer(
       }
       groupRef.current = null;
     };
-  }, [color, mode, scene]);
+  }, [applyLayers, color, materialOpacity, materialTransparent, mode, scene]);
 
   const updatePath = useCallback(
     (points: THREE.Vector3[]) => {
@@ -190,7 +199,7 @@ export function usePathVisualizer(
         });
       }
     },
-    [breadcrumbRadius, color, mode, scene]
+    [breadcrumbRadius, color, lineRadius, mode, scene]
   );
 
   const clear = useCallback(() => {
