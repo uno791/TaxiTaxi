@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -39,6 +39,16 @@ function GameWorld() {
   const [miniMapCanvas, setMiniMapCanvas] = useState<HTMLCanvasElement | null>(
     null
   );
+  const updateDestination = useCallback(
+    (position: [number, number, number] | null) => {
+      if (position) {
+        destinationRef.current.set(position[0], position[1], position[2]);
+      } else {
+        destinationRef.current.copy(DEFAULT_DESTINATION);
+      }
+    },
+    [destinationRef]
+  );
 
   return (
     <MissionUIProvider>
@@ -69,7 +79,11 @@ function GameWorld() {
               isPaused={isPaused}
               playerPositionRef={playerPositionRef}
             />
-            <Mission position={[0, 0, 0]} taxiRef={chaseRef} />
+            <Mission
+              position={[0, 0, 0]}
+              taxiRef={chaseRef}
+              onDestinationChange={updateDestination}
+            />
             <DestinationMarker destinationRef={destinationRef} />
             <NavigationSystem
               playerRef={playerPositionRef}

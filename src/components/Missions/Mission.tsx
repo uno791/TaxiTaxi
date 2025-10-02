@@ -97,6 +97,7 @@ const missionConfigById: Record<string, MissionConfig> = missionConfigs.reduce(
 
 type MissionProps = JSX.IntrinsicElements["group"] & {
   taxiRef?: MutableRefObject<Object3D | null>;
+  onDestinationChange?: (position: [number, number, number] | null) => void;
 };
 
 type CompletionInfo = {
@@ -104,7 +105,7 @@ type CompletionInfo = {
   reward: number;
 };
 
-export default function Mission({ taxiRef, ...groupProps }: MissionProps) {
+export default function Mission({ taxiRef, onDestinationChange, ...groupProps }: MissionProps) {
   const [missionStates, setMissionStates] = useState<Record<string, MissionState>>(
     () => {
       const initial: Record<string, MissionState> = {};
@@ -167,7 +168,11 @@ export default function Mission({ taxiRef, ...groupProps }: MissionProps) {
     setPromptMissionId(null);
     setDialogIndex(0);
     setDialogVisible(true);
-  }, []);
+    const config = missionConfigById[missionId];
+    if (config && onDestinationChange) {
+      onDestinationChange(config.dropoffPosition);
+    }
+  }, [onDestinationChange]);
 
   const handleDeclineMission = useCallback(() => {
     const missionId = promptMissionIdRef.current;
@@ -187,8 +192,11 @@ export default function Mission({ taxiRef, ...groupProps }: MissionProps) {
       setDialogVisible(false);
       setMoney((value) => value + config.reward);
       setCompletionInfo({ missionId, reward: config.reward });
+      if (onDestinationChange) {
+        onDestinationChange(null);
+      }
     },
-    [setMoney]
+    [setMoney, onDestinationChange]
   );
 
   useEffect(() => {
@@ -301,8 +309,11 @@ export default function Mission({ taxiRef, ...groupProps }: MissionProps) {
       setActive(null);
       setDialog(null);
       setCompletion(null);
+      if (onDestinationChange) {
+        onDestinationChange(null);
+      }
     };
-  }, [setPrompt, setActive, setDialog, setCompletion]);
+  }, [setPrompt, setActive, setDialog, setCompletion, onDestinationChange]);
 
   return (
     <group {...groupProps}>
