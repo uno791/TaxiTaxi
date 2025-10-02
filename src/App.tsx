@@ -29,10 +29,10 @@ export default function App() {
           gravity={[0, -9.81, 0]}
           broadphase="SAP"
           allowSleep
-          iterations={20}
-          tolerance={0.001}
-          stepSize={1 / 180}
-          maxSubSteps={8}
+          iterations={18}
+          tolerance={1e-5}
+          stepSize={1 / 120}
+          maxSubSteps={6}
         >
           <ambientLight intensity={2} />
           <directionalLight position={[10, 5, 2]} castShadow />
