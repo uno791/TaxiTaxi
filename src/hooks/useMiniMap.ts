@@ -148,12 +148,16 @@ export function useMiniMap(
     destinationMarkerRef.current = destinationMarker;
 
     const destination = destinationRef.current;
-    if (destination) {
+    const hasDestination = Number.isFinite(destination.x) && Number.isFinite(destination.z);
+    if (hasDestination) {
       destinationMarker.position.set(
         destination.x,
         DESTINATION_MARKER_HEIGHT,
         destination.z
       );
+      destinationMarker.visible = true;
+    } else {
+      destinationMarker.visible = false;
     }
 
     return () => {
@@ -203,7 +207,9 @@ export function useMiniMap(
     const originalDestinationPosition = TEMP_VEC3.copy(destinationMarker.position);
     const originalDestinationVisible = destinationMarker.visible;
 
-    if (destination) {
+    const hasDestination = Number.isFinite(destination.x) && Number.isFinite(destination.z);
+
+    if (hasDestination) {
       const offset = TEMP_VEC2.set(destination.x - playerPosition.x, destination.z - playerPosition.z);
       if (offset.length() > MINIMAP_VIEW_EXTENT) {
         offset.setLength(MINIMAP_VIEW_EXTENT);

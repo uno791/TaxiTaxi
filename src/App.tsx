@@ -11,8 +11,6 @@ import { NavigationSystem } from "./components/Navigation/NavigationSystem";
 import { DestinationMarker } from "./components/Navigation/DestinationMarker";
 import { MiniMapOverlay } from "./hooks/useMiniMapOverlay";
 
-const DEFAULT_DESTINATION = new THREE.Vector3(48, 0, -30);
-
 import Mission from "./components/Missions/Mission";
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
@@ -35,16 +33,22 @@ function GameWorld() {
   const [isPaused, setIsPaused] = useState(false);
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
-  const destinationRef = useRef(DEFAULT_DESTINATION.clone());
+  const destinationRef = useRef(
+    new THREE.Vector3(Number.NaN, Number.NaN, Number.NaN)
+  );
   const [miniMapCanvas, setMiniMapCanvas] = useState<HTMLCanvasElement | null>(
     null
   );
   const updateDestination = useCallback(
     (position: [number, number, number] | null) => {
       if (position) {
-        destinationRef.current.set(position[0], position[1], position[2]);
+        destinationRef.current.set(
+          position[0],
+          Number.isFinite(position[1]) ? position[1] : 0,
+          position[2]
+        );
       } else {
-        destinationRef.current.copy(DEFAULT_DESTINATION);
+        destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
       }
     },
     [destinationRef]
