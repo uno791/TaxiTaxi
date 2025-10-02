@@ -11,8 +11,9 @@ type Props = {
 };
 
 const CONTROL_OPTIONS: Array<{ mode: ControlMode; label: string }> = [
-  { mode: "mouse", label: "Mouse (Recomeneded)" },
+  { mode: "mouse", label: "Mouse (Recommended)" },
   { mode: "keyboard", label: "Keyboard (WASD)" },
+  { mode: "controller", label: "Controller" },
 ];
 
 export function TaxiControlSettings({
@@ -29,6 +30,8 @@ export function TaxiControlSettings({
         "Hold the right mouse button to accelerate, hold the left button to brake, and move the mouse left/right to steer.",
       keyboard:
         "Use W to accelerate, S to reverse, and A/D (or the arrow keys) to steer left and right.",
+      controller:
+        "Use R2 to accelerate, L2 to brake, hold Circle with R2 to reverse, steer with the left stick, and tap Cross for boost/handbrake.",
     }),
     []
   );

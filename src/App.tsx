@@ -1,14 +1,19 @@
+import { useRef, useState } from "react";
+import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { useRef, useState } from "react";
 import RoadCircuit from "./components/Road/RoadCircuit";
-import * as THREE from "three";
 import { TaxiPhysics } from "./components/Taxi/TaxiPhysics";
 import { CameraChase } from "./components/Taxi/CameraChase";
 import AllBuildings from "./components/City/AllBuildings";
 import Background from "./components/City/Background";
+import { NavigationSystem } from "./components/Navigation/NavigationSystem";
+import { DestinationMarker } from "./components/Navigation/DestinationMarker";
+import { MiniMapOverlay } from "./hooks/useMiniMapOverlay";
+
+const DEFAULT_DESTINATION = new THREE.Vector3(48, 0, -46);
+
 import Mission from "./components/Missions/Mission";
-// NEW UI imports
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
 import { Physics } from "@react-three/cannon";
@@ -16,18 +21,22 @@ import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
 import TaxiSpeedometer from "./components/Taxi/TaxiSpeedometer";
 
-// NEW screens
 import LoginScreen from "./components/UI/LoginScreen";
 import EntranceScreen from "./components/UI/EntranceScreen";
 import CarSelector from "./components/CarSelector/CarSelector";
 
-// NEW context
 import { MetaProvider, useMeta } from "./context/MetaContext";
 
 function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
   const [isPaused, setIsPaused] = useState(false);
+
+  const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
+  const destinationRef = useRef(DEFAULT_DESTINATION.clone());
+  const [miniMapCanvas, setMiniMapCanvas] = useState<HTMLCanvasElement | null>(
+    null
+  );
 
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -55,10 +64,17 @@ function GameWorld() {
             chaseRef={chaseRef}
             controlMode={controlMode}
             isPaused={isPaused}
+            playerPositionRef={playerPositionRef}
           />
-          <Mission position={[0, 0, 0]} taxiRef={chaseRef} />
+          <Mission position={[0, 0, 0]} />
+          <DestinationMarker destinationRef={destinationRef} />
+          <NavigationSystem
+            playerRef={playerPositionRef}
+            destinationRef={destinationRef}
+            onMiniMapCanvasChange={setMiniMapCanvas}
+          />
           {/* Camera */}
-          <CameraChase target={chaseRef} />
+          {<CameraChase target={chaseRef} />}
           <OrbitControls makeDefault />
         </Physics>
       </Canvas>
@@ -75,6 +91,7 @@ function GameWorld() {
       <TaxiSpeedometer />
       <GameUI />
       <GameOverPopup />
+      <MiniMapOverlay canvas={miniMapCanvas} />
     </div>
   );
 }

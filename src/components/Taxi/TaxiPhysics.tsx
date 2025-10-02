@@ -1,5 +1,6 @@
 import { useBox, useRaycastVehicle } from "@react-three/cannon";
 import { useEffect, useRef } from "react";
+import type { MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useControls } from "./useControls";
 import type { ControlMode } from "./useControls";
@@ -21,6 +22,7 @@ type Props = {
   chaseRef?: React.MutableRefObject<THREE.Object3D | null>;
   controlMode: ControlMode;
   isPaused: boolean;
+  playerPositionRef: MutableRefObject<THREE.Vector3>;
 };
 
 function GenericCar({
@@ -43,7 +45,12 @@ function GenericCar({
   );
 }
 
-export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
+export function TaxiPhysics({
+  chaseRef,
+  controlMode,
+  isPaused,
+  playerPositionRef,
+}: Props) {
   const { selectedCar } = useMeta();
 
   // find config or fallback to Taxi
@@ -52,6 +59,7 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
     cars.find((c) => c.name === "Taxi")!;
 
   const position: [number, number, number] = [-3, 0.5, -2];
+  const [initialX, initialY, initialZ] = position;
   const width = 0.5;
   const height = 0.18;
   const front = 0.6;
@@ -79,6 +87,14 @@ export function TaxiPhysics({ chaseRef, controlMode, isPaused }: Props) {
   useEffect(() => {
     if (chaseRef) chaseRef.current = chassisRef.current;
   }, [chaseRef]);
+
+  useEffect(() => {
+    playerPositionRef.current.set(initialX, initialY, initialZ);
+    const unsub = chassisApi?.position?.subscribe?.((next) => {
+      playerPositionRef.current.set(next[0], next[1], next[2]);
+    });
+    return () => unsub?.();
+  }, [chassisApi, playerPositionRef, initialX, initialY, initialZ]);
 
   const [wheels, wheelInfos] = useWheels(width, height, front, wheelRadius);
   const vehicleRef = useRef<THREE.Group>(null);

@@ -35,6 +35,7 @@ export default function RoadBits(props: JSX.IntrinsicElements['group']) {
         material={materials.citybits_texture}
         rotation={[-Math.PI / 2, 0, 0]}
         scale={100}
+        userData={composeRoadUserData()}
       />
       <mesh
         geometry={nodes.road_corner_curved.geometry}
@@ -42,6 +43,7 @@ export default function RoadBits(props: JSX.IntrinsicElements['group']) {
         position={[3, 0, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         scale={100}
+        userData={composeRoadUserData()}
       />
       <mesh
         geometry={nodes.road_junction.geometry}
@@ -49,6 +51,7 @@ export default function RoadBits(props: JSX.IntrinsicElements['group']) {
         position={[6, 0, 0]}
         rotation={[-Math.PI / 2, 0, 0]}
         scale={100}
+        userData={composeRoadUserData()}
       />
       <mesh
         geometry={nodes.road_straight.geometry}
@@ -56,6 +59,7 @@ export default function RoadBits(props: JSX.IntrinsicElements['group']) {
         position={[0, 0, 3]}
         rotation={[-Math.PI / 2, 0, 0]}
         scale={100}
+        userData={composeRoadUserData()}
       />
       <mesh
         geometry={nodes.road_straight_crossing.geometry}
@@ -63,6 +67,7 @@ export default function RoadBits(props: JSX.IntrinsicElements['group']) {
         position={[3, 0, 3]}
         rotation={[-Math.PI / 2, 0, 0]}
         scale={100}
+        userData={composeRoadUserData()}
       />
       <mesh
         geometry={nodes.road_tsplit.geometry}
@@ -70,6 +75,7 @@ export default function RoadBits(props: JSX.IntrinsicElements['group']) {
         position={[6, 0, 3]}
         rotation={[-Math.PI / 2, 0, 0]}
         scale={100}
+        userData={composeRoadUserData()}
       />
     </group>
   )
@@ -85,80 +91,96 @@ type MeshProps = Omit<JSX.IntrinsicElements['mesh'], 'rotation' | 'scale'> & {
   scale?: number
 }
 
+function composeRoadUserData(userData?: Record<string, unknown>) {
+  return { ...(userData ?? {}), isRoadSurface: true }
+}
+
 export function RoadCorner({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
   const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { userData, ...rest } = props
   return (
     <mesh
-      {...props}
+      {...rest}
       geometry={nodes.road_corner.geometry}
       material={materials.citybits_texture}
       scale={scale}
       rotation={rotation}
+      userData={composeRoadUserData(userData as Record<string, unknown> | undefined)}
     />
   )
 }
 
 export function RoadCornerCurved({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
   const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { userData, ...rest } = props
   return (
     <mesh
-      {...props}
+      {...rest}
       geometry={nodes.road_corner_curved.geometry}
       material={materials.citybits_texture}
       scale={scale}
       rotation={rotation}
+      userData={composeRoadUserData(userData as Record<string, unknown> | undefined)}
     />
   )
 }
 
 export function RoadJunction({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
   const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { userData, ...rest } = props
   return (
     <mesh
-      {...props}
+      {...rest}
       geometry={nodes.road_junction.geometry}
       material={materials.citybits_texture}
       scale={scale}
       rotation={rotation}
+      userData={composeRoadUserData(userData as Record<string, unknown> | undefined)}
     />
   )
 }
 
 export function RoadStraight({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
   const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { userData, ...rest } = props
   return (
     <mesh
-      {...props}
+      {...rest}
       geometry={nodes.road_straight.geometry}
       material={materials.citybits_texture}
       scale={scale}
       rotation={rotation}
+      userData={composeRoadUserData(userData as Record<string, unknown> | undefined)}
     />
   )
 }
 
 export function RoadStraightCrossing({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
   const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { userData, ...rest } = props
   return (
     <mesh
-      {...props}
+      {...rest}
       geometry={nodes.road_straight_crossing.geometry}
       material={materials.citybits_texture}
       scale={scale}
       rotation={rotation}
+      userData={composeRoadUserData(userData as Record<string, unknown> | undefined)}
     />
   )
 }
 
 export function RoadTSplit({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
   const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { userData, ...rest } = props
   return (
     <mesh
-      {...props}
+      {...rest}
       geometry={nodes.road_tsplit.geometry}
       material={materials.citybits_texture}
       scale={scale}
       rotation={rotation}
+      userData={composeRoadUserData(userData as Record<string, unknown> | undefined)}
     />
   )
 }
