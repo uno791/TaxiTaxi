@@ -1,12 +1,56 @@
+import { useEffect, useRef, useState } from "react";
+import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
-import { useRef, useState } from "react";
 import RoadCircuit from "./components/Road/RoadCircuit";
-import * as THREE from "three";
 import { TaxiPhysics } from "./components/Taxi/TaxiPhysics";
 import { CameraChase } from "./components/Taxi/CameraChase";
 import AllBuildings from "./components/City/AllBuildings";
 import Background from "./components/City/Background";
+import { NavigationSystem } from "./components/Navigation/NavigationSystem";
+import { DestinationMarker } from "./components/Navigation/DestinationMarker";
+
+function MiniMapOverlay({ canvas }: { canvas: HTMLCanvasElement | null }) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) {
+      return;
+    }
+    container.innerHTML = "";
+    if (canvas) {
+      container.appendChild(canvas);
+    }
+    return () => {
+      if (canvas && canvas.parentElement === container) {
+        container.removeChild(canvas);
+      }
+    };
+  }, [canvas]);
+
+  return (
+    <div
+      ref={containerRef}
+      style={{
+        position: "absolute",
+        bottom: 24,
+        right: 24,
+        width: 220,
+        height: 220,
+        borderRadius: 12,
+        overflow: "hidden",
+        background: "rgba(20, 24, 32, 0.6)",
+        border: "2px solid rgba(255, 255, 255, 0.3)",
+        boxShadow: "0 12px 20px rgba(0, 0, 0, 0.35)",
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
+const DEFAULT_DESTINATION = new THREE.Vector3(48, 0, -46);
+
 import Mission from "./components/Missions/Mission";
 // NEW UI imports
 import GameUI from "./components/UI/GameUI";
@@ -28,6 +72,12 @@ function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
   const [isPaused, setIsPaused] = useState(false);
+
+  const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
+  const destinationRef = useRef(DEFAULT_DESTINATION.clone());
+  const [miniMapCanvas, setMiniMapCanvas] = useState<HTMLCanvasElement | null>(
+    null
+  );
 
   return (
     <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -55,10 +105,17 @@ function GameWorld() {
             chaseRef={chaseRef}
             controlMode={controlMode}
             isPaused={isPaused}
+            playerPositionRef={playerPositionRef}
           />
           <Mission position={[0, 0, 0]} />
+          <DestinationMarker destinationRef={destinationRef} />
+          <NavigationSystem
+            playerRef={playerPositionRef}
+            destinationRef={destinationRef}
+            onMiniMapCanvasChange={setMiniMapCanvas}
+          />
           {/* Camera */}
-          {/* <CameraChase target={chaseRef} /> */}
+          {<CameraChase target={chaseRef} />}
           <OrbitControls makeDefault />
         </Physics>
       </Canvas>
@@ -75,6 +132,7 @@ function GameWorld() {
       <TaxiSpeedometer />
       <GameUI />
       <GameOverPopup />
+      <MiniMapOverlay canvas={miniMapCanvas} />
     </div>
   );
 }
