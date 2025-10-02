@@ -56,9 +56,9 @@ function GameWorld() {
             controlMode={controlMode}
             isPaused={isPaused}
           />
-          <Mission position={[0, 0, 0]} />
+          <Mission position={[0, 0, 0]} taxiRef={chaseRef} />
           {/* Camera */}
-          {/* <CameraChase target={chaseRef} /> */}
+          <CameraChase target={chaseRef} />
           <OrbitControls makeDefault />
         </Physics>
       </Canvas>
