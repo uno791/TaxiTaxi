@@ -11,7 +11,7 @@ import { NavigationSystem } from "./components/Navigation/NavigationSystem";
 import { DestinationMarker } from "./components/Navigation/DestinationMarker";
 import { MiniMapOverlay } from "./hooks/useMiniMapOverlay";
 
-const DEFAULT_DESTINATION = new THREE.Vector3(48, 0, -46);
+const DEFAULT_DESTINATION = new THREE.Vector3(48, 0, -30);
 
 import Mission from "./components/Missions/Mission";
 import GameUI from "./components/UI/GameUI";

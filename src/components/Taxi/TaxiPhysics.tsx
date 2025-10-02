@@ -58,7 +58,7 @@ export function TaxiPhysics({
     cars.find((c) => c.modelPath === selectedCar) ||
     cars.find((c) => c.name === "Taxi")!;
 
-  const position: [number, number, number] = [-3, 0.5, -2];
+  const position: [number, number, number] = [-30, 0.5, -25];
   const [initialX, initialY, initialZ] = position;
   const width = 0.5;
   const height = 0.18;

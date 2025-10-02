@@ -8,9 +8,13 @@ import { useDualSenseControls } from "../Controls/useDualSenseControls";
 export type { ControlMode } from "../Controls/types";
 
 const COUNTER_STEER_RATIO = 0.1 / 0.35;
-const ENGINE_FORCE = 650;
-const BRAKE_FORCE = -900;
-const BOOST_ENGINE_FORCE = 1400;
+//Arcadey Feel
+// const ENGINE_FORCE = 650;
+// const BRAKE_FORCE = -900;
+// const BOOST_ENGINE_FORCE = 1400;
+const ENGINE_FORCE = 200;
+const BRAKE_FORCE = -400;
+const BOOST_ENGINE_FORCE = 600;
 
 type VehicleApi = {
   applyEngineForce: (force: number, wheelIndex: number) => void;
@@ -163,13 +167,7 @@ export const useControls = (
       return;
     }
 
-    const {
-      throttle,
-      brake,
-      steer,
-      reverse,
-      handbrake,
-    } = dualSenseControls;
+    const { throttle, brake, steer, reverse, handbrake } = dualSenseControls;
 
     const wantsBoost = handbrake && boost > 0.01;
     const throttleForce = throttle > 0.001 ? throttle : 0;
@@ -199,13 +197,7 @@ export const useControls = (
     vehicleApi.setSteeringValue(frontSteer, 3);
     vehicleApi.setSteeringValue(rearSteer, 0);
     vehicleApi.setSteeringValue(rearSteer, 1);
-  }, [
-    controlMode,
-    dualSenseControls,
-    vehicleApi,
-    isPaused,
-    boost,
-  ]);
+  }, [controlMode, dualSenseControls, vehicleApi, isPaused, boost]);
 
   return useMemo(
     () => ({
