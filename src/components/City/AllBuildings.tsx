@@ -52,16 +52,47 @@ export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
         angle={-Math.PI}
         scale={[1, 1, 1]}
       />
+      <ColliderBox
+        mapPosition={{ x: 18, y: 0, z: -12 }}
+        width={9.5}
+        height={12}
+        length={13}
+      />
 
       <BuildingRowVariant2
         position={[8.1, 0, -9]}
         angle={-Math.PI}
         scale={[1, 1, 1]}
       />
+
+      <ColliderBox
+        mapPosition={{ x: 38, y: 0, z: -7 }}
+        width={17.5}
+        height={12}
+        length={14.5}
+      />
       <BuildingRowVariant3
         position={[9.3, 0, -8.5]}
         angle={Math.PI / 2}
         scale={[1, 1, 0.9]}
+      />
+      <ColliderBox
+        mapPosition={{ x: 26, y: 0, z: -28 }}
+        width={25}
+        height={12}
+        length={13.5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 26, y: 0, z: -45 }}
+        width={25}
+        height={12}
+        length={15}
+      />
+      <ColliderBox
+        mapPosition={{ x: 50, y: 0, z: -48 }}
+        width={9.5}
+        height={12}
+        length={9}
       />
 
       <BlockBuildings position={[-22.7, 0, 1.5]} scale={[1, 2, 1]} />
