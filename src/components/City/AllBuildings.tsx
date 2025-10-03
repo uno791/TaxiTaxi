@@ -9,7 +9,7 @@ import Resedential from "./Resedential";
 import { BBall } from "./Buildings/BBall";
 import { Tennis } from "./Buildings/Tennis";
 import { Hospital } from "./Buildings/Hospital";
-
+import { ColliderBox } from "../Taxi/ColliderBox";
 export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
@@ -18,15 +18,33 @@ export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
         angle={0}
         scale={[1, 1, 1]}
       />
+      <ColliderBox
+        mapPosition={{ x: -1, y: 0, z: -3.5 }}
+        width={22}
+        height={12}
+        length={12.5}
+      />
       <BuildingRowVariant2
         position={[-0.8, 0, 1.8]}
         angle={0}
         scale={[1, 1, 1]}
       />
+      <ColliderBox
+        mapPosition={{ x: -23, y: 0, z: 1.8 }}
+        width={15}
+        height={12}
+        length={17.5}
+      />
       <BuildingRowVariant3
         position={[-10.8, 0, 1.4]}
         angle={-Math.PI / 2}
         scale={[1, 1, 1]}
+      />
+      <ColliderBox
+        mapPosition={{ x: 18, y: 0, z: 0 }}
+        width={9.5}
+        height={12}
+        length={5.5}
       />
 
       <BuildingRowVariant1
@@ -34,6 +52,7 @@ export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
         angle={-Math.PI}
         scale={[1, 1, 1]}
       />
+
       <BuildingRowVariant2
         position={[8.1, 0, -9]}
         angle={-Math.PI}

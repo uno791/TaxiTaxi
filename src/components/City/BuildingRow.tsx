@@ -6,7 +6,6 @@ import { BrownBuilding } from "./Buildings/BrownBuilding";
 import { CornerBuilding } from "./Buildings/CornerBuilding";
 import { GreenBuilding } from "./Buildings/GreenBuilding";
 import { RedBuilding } from "./Buildings/RedBuilding";
-
 type BuildingEl = {
   Component: (props: JSX.IntrinsicElements["group"]) => JSX.Element;
   /**
@@ -22,7 +21,7 @@ type BuildingEl = {
 };
 
 type BaseRowProps = JSX.IntrinsicElements["group"] & {
-  angle?: number;        // orientation of the row (in radians)
+  angle?: number; // orientation of the row (in radians)
   facingOffset?: number; // adjustment for building orientation
 };
 
@@ -72,10 +71,10 @@ export function BuildingRowVariant1(props: BaseRowProps) {
   return (
     <BuildingRowBase
       sequence={[
-        { Component: BigBuilding, offset: 0, lateral:-1 },
+        { Component: BigBuilding, offset: 0, lateral: -1 },
         { Component: BrownBuilding, offset: 3.3 },
         // Example: push this one slightly left
-        { Component: GreenBuilding, offset: 2.1},
+        { Component: GreenBuilding, offset: 2.1 },
       ]}
       {...props}
     />
@@ -90,7 +89,7 @@ export function BuildingRowVariant2(props: BaseRowProps) {
         { Component: RedBuilding, offset: 1.9 },
         { Component: BrownBuilding, offset: 2.2 },
         // Example: push this one to the right
-        { Component: BigBuilding, offset: 3.1, lateral:-1},
+        { Component: BigBuilding, offset: 3.1, lateral: -1 },
       ]}
       {...props}
     />
@@ -102,10 +101,10 @@ export function BuildingRowVariant3(props: BaseRowProps) {
     <BuildingRowBase
       sequence={[
         { Component: GreenBuilding, offset: 0 },
-        { Component: RedBuilding, offset: 2.4},
-        { Component: BigBuilding, offset: 3.5, lateral:1 },
+        { Component: RedBuilding, offset: 2.4 },
+        { Component: BigBuilding, offset: 3.5, lateral: 1 },
         { Component: BrownBuilding, offset: 3.2 },
-        { Component: CornerBuilding, offset: 1.7},
+        { Component: CornerBuilding, offset: 1.7 },
       ]}
       {...props}
     />

@@ -233,7 +233,6 @@ export default function RoadCircuit(props: JSX.IntrinsicElements["group"]) {
         position={[40, 0, 2]}
         rotation={[Math.PI / 2, Math.PI, Math.PI / 2]}
       />
-      <ColliderBox position={[1.75, 0, -1]} scale={[2, 2, 2]} />
     </group>
   );
 }
