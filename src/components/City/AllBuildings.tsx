@@ -46,7 +46,6 @@ export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
         height={12}
         length={5.5}
       />
-
       <BuildingRowVariant1
         position={[-3.6, 0, -9]}
         angle={-Math.PI}
@@ -58,13 +57,11 @@ export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
         height={12}
         length={13}
       />
-
       <BuildingRowVariant2
         position={[8.1, 0, -9]}
         angle={-Math.PI}
         scale={[1, 1, 1]}
       />
-
       <ColliderBox
         mapPosition={{ x: 38, y: 0, z: -7 }}
         width={17.5}
@@ -94,11 +91,187 @@ export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
         height={12}
         length={9}
       />
-
       <BlockBuildings position={[-22.7, 0, 1.5]} scale={[1, 2, 1]} />
+      <ColliderBox
+        mapPosition={{ x: -2, y: 0, z: -53 }}
+        width={17}
+        height={12}
+        length={15}
+      />
       <BlockBuildings
         position={[37.5, 0, -7.3]}
         rotation={[0, Math.PI / 2, 0]}
+      />
+      //White House //LEFT HOUSES
+      <ColliderBox
+        mapPosition={{ x: 4, y: 0, z: -29 }}
+        width={5}
+        height={5}
+        length={2.8}
+      />
+      <ColliderBox
+        mapPosition={{ x: -5, y: 0, z: -21.7 }}
+        width={5}
+        height={5}
+        length={2.8}
+      />
+      <ColliderBox
+        mapPosition={{ x: -26, y: 0, z: -17 }}
+        width={5}
+        height={5}
+        length={2.8}
+      />
+      //Brick House
+      <ColliderBox
+        mapPosition={{ x: 4, y: 0, z: -19.5 }}
+        width={5}
+        height={5}
+        length={3.2}
+      />
+      <ColliderBox
+        mapPosition={{ x: -13, y: 0, z: -30 }}
+        width={5}
+        height={5}
+        length={3.2}
+      />
+      <ColliderBox
+        mapPosition={{ x: -35, y: 0, z: -25 }}
+        width={3.2}
+        height={5}
+        length={5}
+      />
+      //Small House
+      <ColliderBox
+        mapPosition={{ x: -5, y: 0, z: -29 }}
+        width={3.5}
+        height={5}
+        length={2.5}
+      />
+      <ColliderBox
+        mapPosition={{ x: -13, y: 0, z: -21.5 }}
+        width={3.5}
+        height={5}
+        length={2.5}
+      />
+      <ColliderBox
+        mapPosition={{ x: -26, y: 0, z: -33 }}
+        width={3.5}
+        height={5}
+        length={2.5}
+      />
+      //MIDDLE HOUSES //White House
+      <ColliderBox
+        mapPosition={{ x: 30, y: 0, z: -62 }}
+        width={2.8}
+        height={5}
+        length={5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 22, y: 0, z: -71 }}
+        width={2.8}
+        height={5}
+        length={5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 18, y: 0, z: -92 }}
+        width={2.8}
+        height={5}
+        length={5}
+      />
+      //Brick House
+      <ColliderBox
+        mapPosition={{ x: 20.5, y: 0, z: -61.5 }}
+        width={3.2}
+        height={5}
+        length={5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 31.5, y: 0, z: -79 }}
+        width={3.2}
+        height={5}
+        length={5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 26, y: 0, z: -101.3 }}
+        width={5}
+        height={5}
+        length={3.2}
+      />
+      //Small House
+      <ColliderBox
+        mapPosition={{ x: 22.5, y: 0, z: -79 }}
+        width={2.5}
+        height={5}
+        length={3.5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 30, y: 0, z: -71 }}
+        width={2.5}
+        height={5}
+        length={3.5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 34, y: 0, z: -92 }}
+        width={2.5}
+        height={5}
+        length={3.5}
+      />
+      //RIGHT HOUSES //White House
+      <ColliderBox
+        mapPosition={{ x: 48, y: 0, z: -22 }}
+        width={5}
+        height={5}
+        length={2.8}
+      />
+      <ColliderBox
+        mapPosition={{ x: 57, y: 0, z: -29.5 }}
+        width={5}
+        height={5}
+        length={2.8}
+      />
+      <ColliderBox
+        mapPosition={{ x: 78, y: 0, z: -34 }}
+        width={5}
+        height={5}
+        length={2.8}
+      />
+      //Brick House
+      <ColliderBox
+        mapPosition={{ x: 48, y: 0, z: -31 }}
+        width={5}
+        height={5}
+        length={3.2}
+      />
+      <ColliderBox
+        mapPosition={{ x: 65, y: 0, z: -20.5 }}
+        width={5}
+        height={5}
+        length={3.2}
+      />
+      <ColliderBox
+        mapPosition={{ x: 87, y: 0, z: -26 }}
+        width={3.2}
+        height={5}
+        length={5}
+      />
+      //Small House
+      <ColliderBox
+        mapPosition={{ x: 65, y: 0, z: -29.5 }}
+        width={3.5}
+        height={5}
+        length={2.5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 57, y: 0, z: -22 }}
+        width={3.5}
+        height={5}
+        length={2.5}
+      />
+      <ColliderBox
+        mapPosition={{ x: 78, y: 0, z: -18 }}
+        width={3.5}
+        height={5}
+        length={2.5}
       />
       <BlockBuildings
         position={[-2.5, 0, -53.3]}
@@ -147,7 +320,6 @@ export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
         rotation={[0, -Math.PI / 2, 0]}
         scale={[0.18, 0.18, 0.18]}
       />
-
       {/* <Hospital position={[52,1.6,-58.3]} rotation={[0, -Math.PI/2, 0]} scale={[0.008,0.008,0.008]}/> */}
     </group>
   );
