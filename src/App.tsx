@@ -11,7 +11,7 @@ import { NavigationSystem } from "./components/Navigation/NavigationSystem";
 import { DestinationMarker } from "./components/Navigation/DestinationMarker";
 import { MiniMapOverlay } from "./hooks/useMiniMapOverlay";
 
-import Mission from "./components/Missions/Mission";
+import Mission, { type MissionTargetInfo } from "./components/Missions/Mission";
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
 import { Physics } from "@react-three/cannon";
@@ -39,6 +39,9 @@ function GameWorld() {
   const [miniMapCanvas, setMiniMapCanvas] = useState<HTMLCanvasElement | null>(
     null
   );
+  const [availableMissionTargets, setAvailableMissionTargets] = useState<
+    MissionTargetInfo[]
+  >([]);
   const updateDestination = useCallback(
     (position: [number, number, number] | null) => {
       if (position) {
@@ -52,6 +55,36 @@ function GameWorld() {
       }
     },
     [destinationRef]
+  );
+  const handleAvailableMissionTargetsChange = useCallback(
+    (targets: MissionTargetInfo[]) => {
+      setAvailableMissionTargets((previous) => {
+        if (previous.length === targets.length) {
+          let identical = true;
+          for (let index = 0; index < targets.length; index += 1) {
+            const next = targets[index];
+            const prev = previous[index];
+            if (!prev || prev.id !== next.id) {
+              identical = false;
+              break;
+            }
+            if (
+              prev.position[0] !== next.position[0] ||
+              prev.position[1] !== next.position[1] ||
+              prev.position[2] !== next.position[2]
+            ) {
+              identical = false;
+              break;
+            }
+          }
+          if (identical) {
+            return previous;
+          }
+        }
+        return targets;
+      });
+    },
+    []
   );
 
   return (
@@ -87,6 +120,7 @@ function GameWorld() {
               position={[0, 0, 0]}
               taxiRef={chaseRef}
               onDestinationChange={updateDestination}
+              onAvailableMissionTargetsChange={handleAvailableMissionTargetsChange}
             />
             <DestinationMarker destinationRef={destinationRef} />
             <NavigationSystem
@@ -112,7 +146,12 @@ function GameWorld() {
         <TaxiSpeedometer />
         <GameUI />
         <GameOverPopup />
-        <MiniMapOverlay canvas={miniMapCanvas} />
+        <MiniMapOverlay
+          canvas={miniMapCanvas}
+          missions={availableMissionTargets}
+          playerRef={playerPositionRef}
+          size={220}
+        />
         <MissionOverlay />
       </div>
     </MissionUIProvider>
