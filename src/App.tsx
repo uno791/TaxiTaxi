@@ -120,7 +120,9 @@ function GameWorld() {
               position={[0, 0, 0]}
               taxiRef={chaseRef}
               onDestinationChange={updateDestination}
-              onAvailableMissionTargetsChange={handleAvailableMissionTargetsChange}
+              onAvailableMissionTargetsChange={
+                handleAvailableMissionTargetsChange
+              }
             />
             <DestinationMarker destinationRef={destinationRef} />
             <NavigationSystem

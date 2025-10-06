@@ -163,6 +163,60 @@ export default function Background(props: JSX.IntrinsicElements["group"]) {
           count={3}
           rotationY={Math.PI * 2}
         />
+        {/* otherside boundry */}
+        <BarrierRun
+          name="left-vert"
+          start={[-12.3, 0, -63.1]}
+          step={[1.9, 0, 0]}
+          count={12}
+          rotationY={Math.PI * 2}
+        />
+        <BarrierRun
+          name="horz-top"
+          start={[-13.1, 0, -62.32]}
+          step={[0, 0, 1.9]}
+          count={10}
+          rotationY={Math.PI / 2}
+        />
+        <Barrier
+          position={[-13.1, 0, -43.7]}
+          scale={0.5}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <BarrierRun
+          name="right-hvert-top"
+          start={[-12.3, 0, -42.85]}
+          step={[1.9, 0, 0]}
+          count={4}
+          rotationY={Math.PI}
+        />
+        <Barrier
+          position={[-6, 0, -42.85]}
+          scale={0.5}
+          rotation={[0, Math.PI, 0]}
+        />
+        <Barrier
+          position={[-5.1, 0, -42]}
+          scale={0.5}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <Barrier
+          position={[-5.1, 0, -40.3]}
+          scale={0.5}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <Barrier
+          position={[-5.1, 0, -39.8]}
+          scale={0.5}
+          rotation={[0, Math.PI / 2, 0]}
+        />
+        <BarrierRun
+          name="left-hvert-bottom"
+          start={[9.2, 0, -62]}
+          step={[0, 0, 1.9]}
+          count={3}
+          rotationY={Math.PI * 1.5}
+        />
         <CityObjects position={[0, 0, 0]} />
       </group>
     </group>
