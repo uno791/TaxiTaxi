@@ -23,6 +23,11 @@ type MissionConfig = {
   passengerScale?: number;
 };
 
+export type MissionTargetInfo = {
+  id: string;
+  position: [number, number, number];
+};
+
 const missionConfigs: MissionConfig[] = [
   {
     id: "mission-tennis",
@@ -98,6 +103,7 @@ const missionConfigById: Record<string, MissionConfig> = missionConfigs.reduce(
 type MissionProps = JSX.IntrinsicElements["group"] & {
   taxiRef?: MutableRefObject<Object3D | null>;
   onDestinationChange?: (position: [number, number, number] | null) => void;
+  onAvailableMissionTargetsChange?: (targets: MissionTargetInfo[]) => void;
 };
 
 type CompletionInfo = {
@@ -108,6 +114,7 @@ type CompletionInfo = {
 export default function Mission({
   taxiRef,
   onDestinationChange,
+  onAvailableMissionTargetsChange,
   ...groupProps
 }: MissionProps) {
   const [missionStates, setMissionStates] = useState<
@@ -185,6 +192,22 @@ export default function Mission({
     }
     setPromptMissionId(null);
   }, []);
+
+  useEffect(() => {
+    if (!onAvailableMissionTargetsChange) {
+      return;
+    }
+    const targets: MissionTargetInfo[] = missionConfigs
+      .filter((config) => {
+        const state = missionStates[config.id];
+        return state === "available" || state === "prompt";
+      })
+      .map((config) => ({
+        id: config.id,
+        position: [...config.pickupPosition] as [number, number, number],
+      }));
+    onAvailableMissionTargetsChange(targets);
+  }, [missionStates, onAvailableMissionTargetsChange]);
 
   const handleDropoffEnter = useCallback(
     (missionId: string) => {

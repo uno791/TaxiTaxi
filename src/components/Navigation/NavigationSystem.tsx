@@ -15,7 +15,7 @@ interface NavigationSystemProps {
 }
 
 const BOUNDS_EPSILON = 0.05;
-const PATH_SURFACE_OFFSET = 0.04;
+const PATH_SURFACE_OFFSET = 0;
 
 function boundsApproximatelyEqual(
   a: GridBounds | null,
@@ -79,37 +79,28 @@ export function NavigationSystem({
       color: 0x0d1a8c,
       layer: 2,
     });
-  const { updatePath: updateWorldPathCore, clear: clearWorldPathCore } =
+  const { updatePath: updateWorldPath, clear: clearWorldPath } =
     usePathVisualizer(scene, {
       mode: "line",
-      color: 0xffc857,
-      lineRadius: 0.24,
-      opacity: 1,
-      layer: WORLD_PATH_LAYER,
-    });
-  const { updatePath: updateWorldPathGlow, clear: clearWorldPathGlow } =
-    usePathVisualizer(scene, {
-      mode: "line",
-      color: 0xfff2c2,
-      lineRadius: 0.38,
-      opacity: 0.36,
+      color: 0xbfe5ff,
+      lineRadius: 0.44,
+      lineHeightOffset: 0,
+      opacity: 0.35,
+      blending: THREE.AdditiveBlending,
       layer: WORLD_PATH_LAYER,
     });
 
   const clearPaths = () => {
     clearMiniMapPath();
-    clearWorldPathCore();
-    clearWorldPathGlow();
+    clearWorldPath();
   };
 
   const updatePaths = (points: THREE.Vector3[]) => {
     updateMiniMapPath(points);
     if (SHOW_WORLD_NAV_PATH) {
-      updateWorldPathCore(points);
-      updateWorldPathGlow(points);
+      updateWorldPath(points);
     } else {
-      clearWorldPathCore();
-      clearWorldPathGlow();
+      clearWorldPath();
     }
   };
 
