@@ -26,6 +26,7 @@ import EntranceScreen from "./components/UI/EntranceScreen";
 import CarSelector from "./components/CarSelector/CarSelector";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
+import { useFlightMode } from "./tools/FlightTool";
 
 function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
@@ -87,6 +88,14 @@ function GameWorld() {
     []
   );
 
+  const {
+    enabled: flightEnabled,
+    overlay: flightOverlay,
+    flightControls,
+  } = useFlightMode({
+    onEnable: () => setIsPaused(false),
+  });
+
   return (
     <MissionUIProvider>
       <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -113,7 +122,7 @@ function GameWorld() {
             <TaxiPhysics
               chaseRef={chaseRef}
               controlMode={controlMode}
-              isPaused={isPaused}
+              isPaused={isPaused || flightEnabled}
               playerPositionRef={playerPositionRef}
             />
             <Mission
@@ -131,7 +140,8 @@ function GameWorld() {
               onMiniMapCanvasChange={setMiniMapCanvas}
             />
             {/* Camera */}
-            {<CameraChase target={chaseRef} />}
+            {!flightEnabled && <CameraChase target={chaseRef} />}
+            {flightControls}
             <OrbitControls makeDefault />
           </Physics>
         </Canvas>
@@ -155,6 +165,7 @@ function GameWorld() {
           size={220}
         />
         <MissionOverlay />
+        {flightOverlay}
       </div>
     </MissionUIProvider>
   );
