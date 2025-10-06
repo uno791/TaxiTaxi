@@ -11,7 +11,9 @@ export interface PathVisualizerOptions {
   layer?: number;
   layers?: number[];
   lineRadius?: number;
+  lineHeightOffset?: number;
   opacity?: number;
+  blending?: THREE.Blending;
 }
 
 export interface PathVisualizerHandle {
@@ -39,20 +41,26 @@ export function usePathVisualizer(
     return [0];
   }, [options?.layer, options?.layers]);
 
-  const applyLayers = useCallback((object: THREE.Object3D) => {
-    if (targetLayers.length === 0) {
-      object.layers.set(0);
-      return;
-    }
-    object.layers.disableAll();
-    object.layers.set(targetLayers[0]);
-    for (let index = 1; index < targetLayers.length; index += 1) {
-      object.layers.enable(targetLayers[index]);
-    }
-  }, [targetLayers]);
+  const applyLayers = useCallback(
+    (object: THREE.Object3D) => {
+      if (targetLayers.length === 0) {
+        object.layers.set(0);
+        return;
+      }
+      object.layers.disableAll();
+      object.layers.set(targetLayers[0]);
+      for (let index = 1; index < targetLayers.length; index += 1) {
+        object.layers.enable(targetLayers[index]);
+      }
+    },
+    [targetLayers]
+  );
   const lineRadius = options?.lineRadius ?? DEFAULT_LINE_RADIUS;
+  const lineHeightOffset = options?.lineHeightOffset ?? 0;
   const materialOpacity = options?.opacity ?? 0.92;
-  const materialTransparent = options?.opacity !== undefined ? options.opacity < 1 : true;
+  const materialTransparent =
+    options?.opacity !== undefined ? options.opacity < 1 : true;
+  const materialBlending = options?.blending ?? THREE.NormalBlending;
 
   const groupRef = useRef<THREE.Object3D | null>(null);
   const lineRef = useRef<THREE.Mesh | null>(null);
@@ -75,6 +83,7 @@ export function usePathVisualizer(
         color,
         transparent: materialTransparent,
         opacity: materialOpacity,
+        blending: materialBlending,
       });
       material.depthTest = false;
       material.depthWrite = false;
@@ -120,7 +129,15 @@ export function usePathVisualizer(
       }
       groupRef.current = null;
     };
-  }, [applyLayers, color, materialOpacity, materialTransparent, mode, scene]);
+  }, [
+    applyLayers,
+    color,
+    materialBlending,
+    materialOpacity,
+    materialTransparent,
+    mode,
+    scene,
+  ]);
 
   const updatePath = useCallback(
     (points: THREE.Vector3[]) => {
@@ -137,8 +154,19 @@ export function usePathVisualizer(
           mesh.visible = false;
           return;
         }
+        const elevatedPoints =
+          lineHeightOffset !== 0
+            ? points.map(
+                (point) =>
+                  new THREE.Vector3(
+                    point.x,
+                    point.y + lineHeightOffset,
+                    point.z
+                  )
+              )
+            : points;
         const curve = new THREE.CatmullRomCurve3(
-          points,
+          elevatedPoints,
           false,
           "catmullrom",
           0.05
@@ -199,7 +227,7 @@ export function usePathVisualizer(
         });
       }
     },
-    [breadcrumbRadius, color, lineRadius, mode, scene]
+    [breadcrumbRadius, color, lineHeightOffset, lineRadius, mode, scene]
   );
 
   const clear = useCallback(() => {
