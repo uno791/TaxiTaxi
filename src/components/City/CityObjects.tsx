@@ -20,6 +20,7 @@ import { TrafficLightB } from "../Ground/SceneObjects/TrafficLightB";
 import { TrafficLightC } from "../Ground/SceneObjects/TrafficLightC";
 import TrafficSigns from "../Ground/SceneObjects/TrafficSigns";
 import WorldObjects from "../Ground/SceneObjects/WorldObjects";
+import StreetLights from "../Ground/StreetLights";
 
 export default function CityObjects(props: JSX.IntrinsicElements["group"]) {
   return (
@@ -29,6 +30,7 @@ export default function CityObjects(props: JSX.IntrinsicElements["group"]) {
         <BoxCluster position={[-0.1, 0, 0.7]} rotation={[0, 0, 0]} />
         <WorldObjects position={[0, 0, 0]} />
         <TrafficSigns position={[0, 0, 0]} />
+        <StreetLights />
       </group>
     </group>
   );
