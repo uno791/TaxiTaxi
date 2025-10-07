@@ -60,24 +60,54 @@ export function TaxiPhysics({
 
   const position: [number, number, number] = [-30, 0.5, -25];
   const [initialX, initialY, initialZ] = position;
+
   const width = 0.5;
   const height = 0.18;
   const front = 0.6;
   const wheelRadius = 0.14;
 
+  // -------------------------
+  // Headlights (front, +Z)
+  // -------------------------
   const headlightHeight = height * 0.55 + 0.02;
   const headlightLateralOffset = width * 0.42;
-  const headlightForwardOffset = front - 0.05;
-  const headlightTargetReach = front - 2.3;
+  const headlightForwardOffset = front - 0.05; // +Z (front)
+  const headlightTargetReach = front - 2.3; // aim forward
   const headlightTargets = useMemo(
     () => [new THREE.Object3D(), new THREE.Object3D()] as const,
     []
   );
 
+  // -------------------------
+// Taillights (rear, -Z) — using your current physics
+// -------------------------
+const tailLightHeight = height * 0.85;
+const tailLightLateralOffset = width * 0.3;
+const tailLightBackwardOffset = headlightForwardOffset +0.15; // where the taillight sits (Z)
+
+// --- Direction control (flip here) ---
+const TAIL_AIM: "rear" | "front" = "rear";   // change to "front" to point forward
+const tailAimDistance = -0.1;                 // how far from the light to place the target
+const tailAimOffsetZ = TAIL_AIM === "rear" ? -tailAimDistance : tailAimDistance;
+
+// Final target Z, relative to the taillight's Z position
+const tailLightTargetReach = tailLightBackwardOffset + tailAimOffsetZ;
+
+const tailLightTargets = useMemo(
+  () => [new THREE.Object3D(), new THREE.Object3D()] as const,
+  []
+);
+
+
+  // Easy-to-tweak lens size
+  const tailLensWidth = 0.07;  // <-- change this to make the lens wider/narrower
+  const tailLensHeight = 0.05; // <-- change this to make the lens taller/shorter
+
   const chassisBodyArgs: [number, number, number] = [width, height, front * 2];
 
   const chassisRef = useRef<THREE.Mesh>(null);
   const hitDetection = useHitDetection();
+
   const [chassisBoxRef, chassisApi] = useBox(
     () => ({
       args: chassisBodyArgs,
@@ -97,6 +127,7 @@ export function TaxiPhysics({
     if (chaseRef) chaseRef.current = chassisRef.current;
   }, [chaseRef]);
 
+  // Attach headlight targets to the chassis
   useEffect(() => {
     const parent = chassisRef.current;
     if (!parent) return;
@@ -114,7 +145,6 @@ export function TaxiPhysics({
     );
 
     headlightTargets.forEach((target) => parent.add(target));
-
     return () => {
       headlightTargets.forEach((target) => parent.remove(target));
     };
@@ -126,6 +156,36 @@ export function TaxiPhysics({
     headlightTargetReach,
   ]);
 
+  // Attach taillight targets to the chassis (behind)
+  useEffect(() => {
+    const parent = chassisRef.current;
+    if (!parent) return;
+
+    const [leftTarget, rightTarget] = tailLightTargets;
+    leftTarget.position.set(
+      -tailLightLateralOffset,
+      tailLightHeight,
+      tailLightTargetReach
+    );
+    rightTarget.position.set(
+      tailLightLateralOffset,
+      tailLightHeight,
+      tailLightTargetReach
+    );
+
+    tailLightTargets.forEach((target) => parent.add(target));
+    return () => {
+      tailLightTargets.forEach((target) => parent.remove(target));
+    };
+  }, [
+    chassisRef,
+    tailLightTargets,
+    tailLightHeight,
+    tailLightLateralOffset,
+    tailLightTargetReach,
+  ]);
+
+  // Update external player position ref
   useEffect(() => {
     playerPositionRef.current.set(initialX, initialY, initialZ);
     const unsub = chassisApi?.position?.subscribe?.((next) => {
@@ -136,6 +196,7 @@ export function TaxiPhysics({
 
   const [wheels, wheelInfos] = useWheels(width, height, front, wheelRadius);
   const vehicleRef = useRef<THREE.Group>(null);
+
   const {
     setMoney,
     setKilometers,
@@ -145,6 +206,7 @@ export function TaxiPhysics({
     boost,
     gameOver,
   } = useGame();
+
   const [rvRef, vehicleApi] = useRaycastVehicle(
     () => ({ chassisBody: chassisBoxRef, wheels, wheelInfos }),
     vehicleRef
@@ -156,10 +218,59 @@ export function TaxiPhysics({
     controlMode,
     isPaused || gameOver
   );
+
+  const {
+    keyboardControls: activeKeyboardControls,
+    mouseControls,
+    controllerControls,
+  } = controlStates;
+
   const velocityRef = useRef<[number, number, number]>([0, 0, 0]);
   const velocityVector = useRef(new THREE.Vector3());
   const boostRef = useRef(boost);
   const keyboardStateRef = useRef<Record<string, boolean>>({});
+
+  const brakeStrength = useMemo(() => {
+    if (isPaused || gameOver) return 0;
+    switch (controlMode) {
+      case "keyboard":
+        return activeKeyboardControls?.s || activeKeyboardControls?.arrowdown
+          ? 1
+          : 0;
+      case "mouse":
+        return mouseControls?.brake ? 1 : 0;
+      case "controller": {
+        const brakeValue = controllerControls?.brake ?? 0;
+        return THREE.MathUtils.clamp(brakeValue, 0, 1);
+      }
+      default:
+        return 0;
+    }
+  }, [
+    controlMode,
+    activeKeyboardControls,
+    mouseControls,
+    controllerControls,
+    isPaused,
+    gameOver,
+  ]);
+
+  // Tail light brightness/opacities scale with brake
+  const tailLightIntensity = useMemo(
+    () => 0.25 + brakeStrength * 0.55,
+    [brakeStrength]
+  );
+
+  const tailLightOpacity = useMemo(
+    () => 0.45 + brakeStrength * 0.45,
+    [brakeStrength]
+  );
+
+  // Lens glow (shape) tracks the same brake signal
+  const tailLensEmissive = useMemo(
+    () => 0.3 + brakeStrength * 2.0,
+    [brakeStrength]
+  );
 
   useEffect(() => {
     const unsub = chassisApi?.velocity?.subscribe?.((next) => {
@@ -173,8 +284,8 @@ export function TaxiPhysics({
   }, [boost]);
 
   useEffect(() => {
-    keyboardStateRef.current = controlStates.keyboardControls;
-  }, [controlStates.keyboardControls]);
+    keyboardStateRef.current = activeKeyboardControls ?? {};
+  }, [activeKeyboardControls]);
 
   useEffect(() => {
     return hitDetection.onHit(() => {
@@ -249,6 +360,8 @@ export function TaxiPhysics({
           scale={carConfig.scale}
           offset={carConfig.offset}
         />
+
+        {/* Headlights */}
         <group name="headlights">
           {([-1, 1] as const).map((side, index) => (
             <group
@@ -277,6 +390,46 @@ export function TaxiPhysics({
                 distance={150}
                 decay={0.2}
                 target={headlightTargets[index]}
+                castShadow={false}
+              />
+            </group>
+          ))}
+        </group>
+
+        {/* Taillights */}
+        <group name="tailLights">
+          {([-1, 1] as const).map((side, index) => (
+            <group
+              key={side}
+              position={[
+                side * tailLightLateralOffset,
+                tailLightHeight,
+                tailLightBackwardOffset, // per your setup
+              ]}
+            >
+              {/* The visible lens that glows with brake */}
+              <mesh position={[0, -0.05, -0.12]} rotation={[0, Math.PI, 0]}>
+                <planeGeometry args={[tailLensWidth, tailLensHeight, 1]} />
+                <meshStandardMaterial
+                  color="#3a0000" // dark red base
+                  emissive="#ff2a2a"
+                  emissiveIntensity={tailLensEmissive} // glow follows brake
+                  transparent
+                  opacity={tailLightOpacity} // keep your opacity behavior
+                  toneMapped={false}
+                  side={THREE.DoubleSide}
+                />
+              </mesh>
+
+              {/* The light cast into the world */}
+              <spotLight
+                color="#ff5a4d"
+                intensity={tailLightIntensity}
+                angle={0.4}
+                penumbra={0.7}
+                distance={20}
+                decay={1.6}
+                target={tailLightTargets[index]}
                 castShadow={false}
               />
             </group>
