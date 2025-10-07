@@ -20,6 +20,7 @@ import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
 import TaxiSpeedometer from "./components/Taxi/TaxiSpeedometer";
 import { MissionUIProvider } from "./components/Missions/MissionUIContext";
 import MissionOverlay from "./components/Missions/MissionOverlay";
+import FogEffect from "./components/FogEffect";
 
 import LoginScreen from "./components/UI/LoginScreen";
 import EntranceScreen from "./components/UI/EntranceScreen";
@@ -105,6 +106,7 @@ function GameWorld() {
     <MissionUIProvider>
       <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
         <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
+          <FogEffect />
           <Physics
             gravity={[0, -9.81, 0]}
             broadphase="SAP"
