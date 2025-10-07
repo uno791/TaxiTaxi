@@ -1,5 +1,5 @@
 import { useBox, useRaycastVehicle } from "@react-three/cannon";
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import type { MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useControls } from "./useControls";
@@ -65,6 +65,15 @@ export function TaxiPhysics({
   const front = 0.6;
   const wheelRadius = 0.14;
 
+  const headlightHeight = height * 0.55 + 0.02;
+  const headlightLateralOffset = width * 0.42;
+  const headlightForwardOffset = front - 0.05;
+  const headlightTargetReach = front - 2.3;
+  const headlightTargets = useMemo(
+    () => [new THREE.Object3D(), new THREE.Object3D()] as const,
+    []
+  );
+
   const chassisBodyArgs: [number, number, number] = [width, height, front * 2];
 
   const chassisRef = useRef<THREE.Mesh>(null);
@@ -87,6 +96,35 @@ export function TaxiPhysics({
   useEffect(() => {
     if (chaseRef) chaseRef.current = chassisRef.current;
   }, [chaseRef]);
+
+  useEffect(() => {
+    const parent = chassisRef.current;
+    if (!parent) return;
+
+    const [leftTarget, rightTarget] = headlightTargets;
+    leftTarget.position.set(
+      -headlightLateralOffset,
+      headlightHeight,
+      headlightTargetReach
+    );
+    rightTarget.position.set(
+      headlightLateralOffset,
+      headlightHeight,
+      headlightTargetReach
+    );
+
+    headlightTargets.forEach((target) => parent.add(target));
+
+    return () => {
+      headlightTargets.forEach((target) => parent.remove(target));
+    };
+  }, [
+    chassisRef,
+    headlightTargets,
+    headlightHeight,
+    headlightLateralOffset,
+    headlightTargetReach,
+  ]);
 
   useEffect(() => {
     playerPositionRef.current.set(initialX, initialY, initialZ);
@@ -211,6 +249,39 @@ export function TaxiPhysics({
           scale={carConfig.scale}
           offset={carConfig.offset}
         />
+        <group name="headlights">
+          {([-1, 1] as const).map((side, index) => (
+            <group
+              key={side}
+              position={[
+                side * headlightLateralOffset,
+                headlightHeight,
+                headlightForwardOffset,
+              ]}
+            >
+              <mesh position={[0, -0.1, -1.2]} rotation={[0, Math.PI, 0]}>
+                <planeGeometry args={[0.05, 0.01, 1]} />
+                <meshBasicMaterial
+                  color="#fff7d1"
+                  transparent
+                  opacity={0.9}
+                  toneMapped={false}
+                />
+              </mesh>
+
+              <spotLight
+                color="#fff7e1"
+                intensity={1}
+                angle={0.48}
+                penumbra={0.6}
+                distance={150}
+                decay={0.2}
+                target={headlightTargets[index]}
+                castShadow={false}
+              />
+            </group>
+          ))}
+        </group>
       </mesh>
 
       <WheelDebug wheelRef={wheels[0]} radius={wheelRadius} />
