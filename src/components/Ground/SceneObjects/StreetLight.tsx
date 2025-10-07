@@ -15,7 +15,7 @@ export function StreetLight(props: JSX.IntrinsicElements["group"]) {
 
     const radius = Math.max(size.y * 0.05, 0.08);
     const position: [number, number, number] = [
-      center.x,
+      center.x - 0.1,
       box.max.y - radius * 0.6,
       center.z,
     ];
@@ -30,7 +30,7 @@ export function StreetLight(props: JSX.IntrinsicElements["group"]) {
     <group {...props}>
       <Clone object={scene} />
       <mesh position={bulb.position}>
-        <sphereGeometry args={[bulb.radius, 16, 16]} />
+        <sphereGeometry args={[0.03, 16, 16]} />
         <meshBasicMaterial
           color="#f5d7a5"
           transparent

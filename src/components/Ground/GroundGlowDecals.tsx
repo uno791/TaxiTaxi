@@ -61,7 +61,7 @@ export function GroundGlowDecals({
   useEffect(() => {
     if (!meshRef.current) return;
     positions.forEach((position, index) => {
-      dummy.position.set(position[0], position[1], position[2]);
+      dummy.position.set(position[0], position[1] + 0.021, position[2]);
       dummy.scale.set(radius, radius, 1);
       dummy.rotation.set(-Math.PI / 2, 0, 0);
       dummy.updateMatrix();
