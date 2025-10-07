@@ -32,6 +32,7 @@ function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
   const [isPaused, setIsPaused] = useState(false);
+  const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
   const destinationRef = useRef(
@@ -96,6 +97,10 @@ function GameWorld() {
     onEnable: () => setIsPaused(false),
   });
 
+  const toggleLightingMode = useCallback(() => {
+    setLightingMode((previous) => (previous === "fake" ? "fill" : "fake"));
+  }, []);
+
   return (
     <MissionUIProvider>
       <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
@@ -110,8 +115,9 @@ function GameWorld() {
             maxSubSteps={6}
           >
             {/* Lighting */}
-            <ambientLight intensity={2} />
-            <directionalLight position={[10, 5, 2]} castShadow />
+            {lightingMode === "fill" ? (
+              <hemisphereLight args={["#8aa6ff", "#1b1e25", 0.35]} />
+            ) : null}
 
             {/* World */}
             <AllBuildings />
@@ -166,6 +172,29 @@ function GameWorld() {
         />
         <MissionOverlay />
         {flightOverlay}
+        <button
+          type="button"
+          onClick={toggleLightingMode}
+          style={{
+            position: "absolute",
+            top: 16,
+            left: 16,
+            zIndex: 30,
+            border: "1px solid rgba(255,255,255,0.25)",
+            borderRadius: 8,
+            background: "rgba(24, 28, 35, 0.8)",
+            color: "#f5f5f5",
+            padding: "6px 12px",
+            fontSize: "0.85rem",
+            cursor: "pointer",
+            backdropFilter: "blur(2px)",
+          }}
+          title="Toggle between fake decal lighting and a global fill light."
+        >
+          {lightingMode === "fake"
+            ? "Lighting: Decals Only"
+            : "Lighting: Global Fill"}
+        </button>
       </div>
     </MissionUIProvider>
   );
