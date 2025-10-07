@@ -100,6 +100,7 @@ function GameWorld() {
     <MissionUIProvider>
       <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
         <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
+          <color attach="background" args={["#000000"]} />
           <Physics
             gravity={[0, -9.81, 0]}
             broadphase="SAP"
@@ -110,7 +111,7 @@ function GameWorld() {
             maxSubSteps={6}
           >
             {/* Lighting */}
-            <ambientLight intensity={2} />
+            <ambientLight intensity={0} />
             <directionalLight position={[10, 5, 2]} castShadow />
 
             {/* World */}
