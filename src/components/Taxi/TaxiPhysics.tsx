@@ -13,7 +13,6 @@ import { useMeta } from "../../context/MetaContext";
 import { useGLTF } from "@react-three/drei";
 import { cars } from "../../utils/cars";
 
-const MAX_BOOST = 100;
 const BOOST_CHARGE_RATE = 5;
 const BOOST_DEPLETION_RATE = 45;
 const MIN_SPEED_FOR_CHARGE = 2;
@@ -204,6 +203,7 @@ const tailLightTargets = useMemo(
     setSpeed,
     setBoost,
     boost,
+    maxBoost,
     gameOver,
   } = useGame();
 
@@ -284,6 +284,12 @@ const tailLightTargets = useMemo(
   }, [boost]);
 
   useEffect(() => {
+    const clamped = Math.min(boostRef.current, maxBoost);
+    boostRef.current = clamped;
+    setBoost((value) => Math.min(value, maxBoost));
+  }, [maxBoost, setBoost]);
+
+  useEffect(() => {
     keyboardStateRef.current = activeKeyboardControls ?? {};
   }, [activeKeyboardControls]);
 
@@ -316,12 +322,13 @@ const tailLightTargets = useMemo(
     if (wantsBoost && nextBoost > 0) {
       nextBoost = Math.max(0, nextBoost - BOOST_DEPLETION_RATE * delta);
     } else if (!boostKeyHeld && speed > MIN_SPEED_FOR_CHARGE) {
-      nextBoost = Math.min(MAX_BOOST, nextBoost + BOOST_CHARGE_RATE * delta);
+      nextBoost = Math.min(maxBoost, nextBoost + BOOST_CHARGE_RATE * delta);
     }
 
     if (Math.abs(nextBoost - boostRef.current) > 0.001) {
-      boostRef.current = nextBoost;
-      setBoost(nextBoost);
+      const capped = Math.min(nextBoost, maxBoost);
+      boostRef.current = capped;
+      setBoost(capped);
     }
 
     if (speed <= 0.0001) {

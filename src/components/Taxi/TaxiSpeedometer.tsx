@@ -8,7 +8,6 @@ import {
 import { useGame } from "../../GameContext";
 
 const MAX_SPEED = 40;
-const MAX_BOOST = 100;
 
 function GaugePointer({ percent }: { percent: number }) {
   const { outerRadius, cx, cy, startAngle, endAngle } = useGaugeState();
@@ -34,15 +33,17 @@ function GaugePointer({ percent }: { percent: number }) {
 }
 
 export default function TaxiSpeedometer() {
-  const { boost, speed } = useGame();
+  const { boost, speed, maxBoost, speedMultiplier } = useGame();
   const boostValue = Number.isFinite(boost) ? boost : 0;
-  const clampedBoost = Math.min(Math.max(boostValue, 0), MAX_BOOST);
-  const boostPercent = (clampedBoost / MAX_BOOST) * 100;
+  const capacity = Math.max(maxBoost, 1);
+  const clampedBoost = Math.min(Math.max(boostValue, 0), capacity);
+  const boostPercent = (clampedBoost / capacity) * 100;
 
   const speedValue = Number.isFinite(speed) ? speed : 0;
   const safeSpeed = Math.max(speedValue, 0);
-  const clampedSpeed = Math.min(safeSpeed, MAX_SPEED);
-  const speedPercent = (clampedSpeed / MAX_SPEED) * 100;
+  const maxSpeedGauge = MAX_SPEED * Math.max(speedMultiplier, 1);
+  const clampedSpeed = Math.min(safeSpeed, maxSpeedGauge);
+  const speedPercent = (clampedSpeed / maxSpeedGauge) * 100;
   const displaySpeed = Math.round(safeSpeed);
 
   return (
@@ -66,7 +67,7 @@ export default function TaxiSpeedometer() {
         endAngle={110}
         value={clampedSpeed}
         valueMin={0}
-        valueMax={MAX_SPEED}
+        valueMax={maxSpeedGauge}
         sx={{
           ".MuiGauge-valueText": { display: "none" },
           ".MuiGauge-valueArc": { stroke: "#ffa000" },
