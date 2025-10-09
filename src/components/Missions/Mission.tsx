@@ -21,6 +21,7 @@ type MissionConfig = {
   passengerDialog: string[];
   passengerRotation?: [number, number, number];
   passengerScale?: number;
+  timeLimit?: number; // seconds
 };
 
 export type MissionTargetInfo = {
@@ -44,6 +45,7 @@ const missionConfigs: MissionConfig[] = [
       "These roads get busier every day, don’t they?",
       "I heard the courts got resurfaced—can’t wait to see them.",
     ],
+    timeLimit: 50,
   },
   {
     id: "mission-docks",
@@ -59,6 +61,7 @@ const missionConfigs: MissionConfig[] = [
       "Could you take the river road? It’s usually quicker.",
       "I hope the tide hasn’t held everyone up again.",
     ],
+    timeLimit: 50,
   },
   {
     id: "mission-museum",
@@ -74,6 +77,7 @@ const missionConfigs: MissionConfig[] = [
       "Do you know any shortcuts through downtown?",
       "The plaza should be buzzing right about now.",
     ],
+    timeLimit: 50,
   },
   {
     id: "mission-mall",
@@ -89,6 +93,7 @@ const missionConfigs: MissionConfig[] = [
       "Let me know if you spot a faster lane ahead.",
       "I can’t believe how heavy these bags are!",
     ],
+    timeLimit: 50,
   },
 ];
 
@@ -139,8 +144,14 @@ export default function Mission({
   const promptMissionIdRef = useRef(promptMissionId);
   const dialogIntervalRef = useRef<number | null>(null);
 
+  // TIMER: new refs and state
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const timerRef = useRef<number | null>(null);
+
   const { setMoney } = useGame();
-  const { setPrompt, setActive, setDialog, setCompletion } = useMissionUI();
+  // TIMER: include setTimer
+  const { setPrompt, setActive, setDialog, setCompletion, setTimer } =
+    useMissionUI();
 
   useEffect(() => {
     missionStatesRef.current = missionStates;
@@ -174,16 +185,25 @@ export default function Mission({
   const handleStartMission = useCallback(() => {
     const missionId = promptMissionIdRef.current;
     if (!missionId) return;
+
     setMissionStates((prev) => ({ ...prev, [missionId]: "active" }));
     setActiveMissionId(missionId);
     setPromptMissionId(null);
     setDialogIndex(0);
     setDialogVisible(true);
+
     const config = missionConfigById[missionId];
+
+    // Set destination
     if (config && onDestinationChange) {
       onDestinationChange(config.dropoffPosition);
     }
-  }, [onDestinationChange]);
+
+    // Use mission-specific timer if provided
+    const limit = config?.timeLimit ?? 30; // default 30 seconds
+    setTimeLeft(limit); // ✅ start countdown
+    setTimer({ secondsLeft: limit }); // ✅ update UI
+  }, [onDestinationChange, setTimer]);
 
   const handleDeclineMission = useCallback(() => {
     const missionId = promptMissionIdRef.current;
@@ -222,9 +242,57 @@ export default function Mission({
       if (onDestinationChange) {
         onDestinationChange(null);
       }
+
+      // TIMER: stop on success
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setTimer(null);
+      setTimeLeft(null);
     },
-    [setMoney, onDestinationChange]
+    [setMoney, onDestinationChange, setTimer]
   );
+
+  // TIMER: countdown effect
+  useEffect(() => {
+    if (timeLeft === null) return;
+
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+    }
+
+    timerRef.current = window.setInterval(() => {
+      setTimeLeft((prev) => {
+        if (prev === null) return null;
+        if (prev <= 1) {
+          window.clearInterval(timerRef.current!);
+          timerRef.current = null;
+          const activeId = activeMissionIdRef.current;
+          if (activeId) {
+            setMissionStates((prev) => ({ ...prev, [activeId]: "available" }));
+            setActiveMissionId(null);
+            setDialogVisible(false);
+            setCompletionInfo(null);
+            if (onDestinationChange) onDestinationChange(null);
+            setTimer({ secondsLeft: 0 }); // Triggers MissionOverlay popup instead of browser alert
+          }
+          return 0;
+        }
+
+        const next = prev - 1;
+        setTimer({ secondsLeft: next });
+        return next;
+      });
+    }, 1000);
+
+    return () => {
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [timeLeft, onDestinationChange, setTimer]);
 
   useEffect(() => {
     if (!completionInfo) return;
@@ -273,6 +341,11 @@ export default function Mission({
     return () => {
       if (dialogIntervalRef.current) {
         window.clearInterval(dialogIntervalRef.current);
+      }
+      // TIMER: cleanup
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
       }
     };
   }, []);
@@ -337,11 +410,19 @@ export default function Mission({
       setActive(null);
       setDialog(null);
       setCompletion(null);
+      setTimer(null); // TIMER: reset on unmount
       if (onDestinationChange) {
         onDestinationChange(null);
       }
     };
-  }, [setPrompt, setActive, setDialog, setCompletion, onDestinationChange]);
+  }, [
+    setPrompt,
+    setActive,
+    setDialog,
+    setCompletion,
+    setTimer,
+    onDestinationChange,
+  ]);
 
   return (
     <group {...groupProps}>

@@ -20,15 +20,23 @@ type MissionCompletionState = {
   reward: number;
 };
 
+type MissionTimerState = {
+  secondsLeft: number;
+};
+
 type MissionUIContextValue = {
   prompt: MissionPromptState | null;
   active: MissionActiveState | null;
   dialog: MissionDialogState | null;
   completion: MissionCompletionState | null;
+  timer: MissionTimerState | null;
   setPrompt: React.Dispatch<React.SetStateAction<MissionPromptState | null>>;
   setActive: React.Dispatch<React.SetStateAction<MissionActiveState | null>>;
   setDialog: React.Dispatch<React.SetStateAction<MissionDialogState | null>>;
-  setCompletion: React.Dispatch<React.SetStateAction<MissionCompletionState | null>>;
+  setCompletion: React.Dispatch<
+    React.SetStateAction<MissionCompletionState | null>
+  >;
+  setTimer: React.Dispatch<React.SetStateAction<MissionTimerState | null>>;
 };
 
 const MissionUIContext = createContext<MissionUIContextValue | undefined>(
@@ -42,6 +50,7 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
   const [completion, setCompletion] = useState<MissionCompletionState | null>(
     null
   );
+  const [timer, setTimer] = useState<MissionTimerState | null>(null);
 
   const value = useMemo(
     () => ({
@@ -49,12 +58,14 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       active,
       dialog,
       completion,
+      timer,
       setPrompt,
       setActive,
       setDialog,
       setCompletion,
+      setTimer,
     }),
-    [prompt, active, dialog, completion]
+    [prompt, active, dialog, completion, timer]
   );
 
   return (

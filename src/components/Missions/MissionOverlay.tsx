@@ -1,9 +1,21 @@
 import { useMissionUI } from "./MissionUIContext";
+import { useEffect, useState } from "react";
 
 export default function MissionOverlay() {
-  const { prompt, active, dialog, completion } = useMissionUI();
+  const { prompt, active, dialog, completion, timer } = useMissionUI();
+  const [missionFailed, setMissionFailed] = useState(false);
 
-  const shouldRender = prompt || active || dialog || completion;
+  // Watch for timer reaching zero → show mission failed popup
+  useEffect(() => {
+    if (timer && timer.secondsLeft === 0) {
+      setMissionFailed(true);
+      const timeout = setTimeout(() => setMissionFailed(false), 3000);
+      return () => clearTimeout(timeout);
+    }
+  }, [timer]);
+
+  const shouldRender =
+    prompt || active || dialog || completion || missionFailed;
   if (!shouldRender) return null;
 
   return (
@@ -15,6 +27,7 @@ export default function MissionOverlay() {
         zIndex: 30,
       }}
     >
+      {/* PROMPT OVERLAY */}
       {prompt && (
         <div
           style={{
@@ -49,9 +62,16 @@ export default function MissionOverlay() {
               Start Mission?
             </div>
             <div style={{ lineHeight: 1.5, marginBottom: "18px" }}>
-              Drive the passenger to {prompt.dropoffHint}. Reward: R{prompt.reward}.
+              Drive the passenger to {prompt.dropoffHint}. Reward: R
+              {prompt.reward}.
             </div>
-            <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+            <div
+              style={{
+                display: "flex",
+                gap: "12px",
+                justifyContent: "flex-end",
+              }}
+            >
               <button
                 type="button"
                 onClick={prompt.onDecline}
@@ -86,6 +106,7 @@ export default function MissionOverlay() {
         </div>
       )}
 
+      {/* ACTIVE INSTRUCTION */}
       {active && (
         <div
           style={{
@@ -114,6 +135,32 @@ export default function MissionOverlay() {
         </div>
       )}
 
+      {/* TIMER DISPLAY */}
+      {active && timer && timer.secondsLeft > 0 && (
+        <div
+          style={{
+            position: "absolute",
+            top: 24,
+            right: 24,
+            background:
+              timer.secondsLeft <= 5
+                ? "rgba(183, 28, 28, 0.85)"
+                : "rgba(0, 0, 0, 0.65)",
+            color: "#fff",
+            padding: "10px 18px",
+            borderRadius: "10px",
+            fontFamily: "Arial, sans-serif",
+            fontWeight: 700,
+            fontSize: "20px",
+            boxShadow: "0 4px 10px rgba(0,0,0,0.3)",
+            transition: "background 0.3s ease",
+          }}
+        >
+          Time left: {timer.secondsLeft}s
+        </div>
+      )}
+
+      {/* PASSENGER DIALOG */}
       {dialog && (
         <div
           style={{
@@ -142,6 +189,7 @@ export default function MissionOverlay() {
         </div>
       )}
 
+      {/* MISSION COMPLETE */}
       {completion && (
         <div
           style={{
@@ -164,6 +212,36 @@ export default function MissionOverlay() {
             }}
           >
             Mission complete! Earned R{completion.reward}.
+          </div>
+        </div>
+      )}
+
+      {/* MISSION FAILED POPUP */}
+      {missionFailed && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            background: "rgba(0, 0, 0, 0.5)",
+          }}
+        >
+          <div
+            style={{
+              pointerEvents: "auto",
+              background: "rgba(183, 28, 28, 0.95)",
+              color: "#fff",
+              fontFamily: "Arial, sans-serif",
+              fontSize: "22px",
+              fontWeight: 700,
+              padding: "24px 40px",
+              borderRadius: "14px",
+              boxShadow: "0 18px 36px rgba(0,0,0,0.5)",
+            }}
+          >
+            Mission Failed! Time ran out.
           </div>
         </div>
       )}
