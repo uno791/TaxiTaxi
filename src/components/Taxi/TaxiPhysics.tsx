@@ -1,5 +1,5 @@
 import { useBox, useRaycastVehicle } from "@react-three/cannon";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useCallback } from "react";
 import type { MutableRefObject } from "react";
 import { useFrame } from "@react-three/fiber";
 import { useControls } from "./useControls";
@@ -79,34 +79,64 @@ export function TaxiPhysics({
   );
 
   // -------------------------
-// Taillights (rear, -Z) — using your current physics
-// -------------------------
-const tailLightHeight = height * 0.85;
-const tailLightLateralOffset = width * 0.3;
-const tailLightBackwardOffset = headlightForwardOffset +0.15; // where the taillight sits (Z)
+  // Taillights (rear, -Z) — using your current physics
+  // -------------------------
+  const tailLightHeight = height * 0.85;
+  const tailLightLateralOffset = width * 0.3;
+  const tailLightBackwardOffset = headlightForwardOffset + 0.15; // where the taillight sits (Z)
 
-// --- Direction control (flip here) ---
-const TAIL_AIM: "rear" | "front" = "rear";   // change to "front" to point forward
-const tailAimDistance = -0.1;                 // how far from the light to place the target
-const tailAimOffsetZ = TAIL_AIM === "rear" ? -tailAimDistance : tailAimDistance;
+  // --- Direction control (flip here) ---
+  const TAIL_AIM: "rear" | "front" = "rear"; // change to "front" to point forward
+  const tailAimDistance = -0.1; // how far from the light to place the target
+  const tailAimOffsetZ =
+    TAIL_AIM === "rear" ? -tailAimDistance : tailAimDistance;
 
-// Final target Z, relative to the taillight's Z position
-const tailLightTargetReach = tailLightBackwardOffset + tailAimOffsetZ;
+  // Final target Z, relative to the taillight's Z position
+  const tailLightTargetReach = tailLightBackwardOffset + tailAimOffsetZ;
 
-const tailLightTargets = useMemo(
-  () => [new THREE.Object3D(), new THREE.Object3D()] as const,
-  []
-);
-
+  const tailLightTargets = useMemo(
+    () => [new THREE.Object3D(), new THREE.Object3D()] as const,
+    []
+  );
 
   // Easy-to-tweak lens size
-  const tailLensWidth = 0.07;  // <-- change this to make the lens wider/narrower
+  const tailLensWidth = 0.07; // <-- change this to make the lens wider/narrower
   const tailLensHeight = 0.05; // <-- change this to make the lens taller/shorter
 
   const chassisBodyArgs: [number, number, number] = [width, height, front * 2];
 
   const chassisRef = useRef<THREE.Mesh>(null);
   const hitDetection = useHitDetection();
+
+  const {
+    setMoney,
+    setKilometers,
+    setGameOver,
+    setSpeed,
+    setBoost,
+    boost,
+    gameOver,
+  } = useGame();
+
+  const velocityRef = useRef<[number, number, number]>([0, 0, 0]);
+  const velocityVector = useRef(new THREE.Vector3());
+
+  // Add this ABOVE the useBox() call
+  const lastCollisionTime = useRef(0);
+
+  const handleMoneyLossOnCollision = useCallback(() => {
+    const now = Date.now();
+    if (now - lastCollisionTime.current < 1000) return; // 1 second cooldown
+    lastCollisionTime.current = now;
+
+    // Get current speed (in km/h from GameContext)
+    const carSpeed = velocityVector.current.length() * 3.6; // convert from m/s
+    if (carSpeed < 5) return; // ignore light taps
+
+    // Calculate loss based on speed
+    const loss = Math.min(carSpeed * 1.2, 200); // tune multiplier and cap
+    setMoney((prev) => Math.max(prev - loss, 0));
+  }, [setMoney]);
 
   const [chassisBoxRef, chassisApi] = useBox(
     () => ({
@@ -118,7 +148,11 @@ const tailLightTargets = useMemo(
       allowSleep: true,
       sleepSpeedLimit: 0.25,
       sleepTimeLimit: 1,
-      onCollide: hitDetection.onCollide,
+      // onCollide: hitDetection.onCollide,
+      onCollide: (e) => {
+        hitDetection.onCollide(e);
+        handleMoneyLossOnCollision();
+      },
     }),
     chassisRef
   );
@@ -197,16 +231,6 @@ const tailLightTargets = useMemo(
   const [wheels, wheelInfos] = useWheels(width, height, front, wheelRadius);
   const vehicleRef = useRef<THREE.Group>(null);
 
-  const {
-    setMoney,
-    setKilometers,
-    setGameOver,
-    setSpeed,
-    setBoost,
-    boost,
-    gameOver,
-  } = useGame();
-
   const [rvRef, vehicleApi] = useRaycastVehicle(
     () => ({ chassisBody: chassisBoxRef, wheels, wheelInfos }),
     vehicleRef
@@ -225,8 +249,6 @@ const tailLightTargets = useMemo(
     controllerControls,
   } = controlStates;
 
-  const velocityRef = useRef<[number, number, number]>([0, 0, 0]);
-  const velocityVector = useRef(new THREE.Vector3());
   const boostRef = useRef(boost);
   const keyboardStateRef = useRef<Record<string, boolean>>({});
 
