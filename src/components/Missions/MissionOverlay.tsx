@@ -160,31 +160,45 @@ export default function MissionOverlay() {
         </div>
       )}
 
-      {/* PASSENGER DIALOG */}
+      {/* BLOCKING DIALOG MODE */}
       {dialog && (
         <div
           style={{
             position: "absolute",
-            bottom: 80,
-            left: "50%",
-            transform: "translateX(-50%)",
+            inset: 0,
+            background: "rgba(0,0,0,0.7)",
+            display: "flex",
+            alignItems: "flex-end",
+            paddingBottom: "80px",
+            justifyContent: "center",
+            pointerEvents: "auto",
+            zIndex: 40,
           }}
         >
           <div
             style={{
-              pointerEvents: "auto",
-              maxWidth: "480px",
-              background: "rgba(30, 30, 30, 0.9)",
-              padding: "14px 18px",
+              maxWidth: "600px",
+              background: "rgba(20,20,20,0.95)",
+              padding: "24px 30px",
               borderRadius: "12px",
               color: "#f0f0f0",
               fontFamily: "Arial, sans-serif",
-              fontSize: "16px",
-              lineHeight: 1.5,
-              boxShadow: "0 12px 24px rgba(0,0,0,0.35)",
+              fontSize: "18px",
+              lineHeight: 1.6,
+              textAlign: "center",
+              boxShadow: "0 12px 24px rgba(0,0,0,0.4)",
             }}
           >
             {dialog.text}
+            <div
+              style={{
+                marginTop: "18px",
+                fontSize: "14px",
+                opacity: 0.8,
+              }}
+            >
+              Press SPACE to continue
+            </div>
           </div>
         </div>
       )}

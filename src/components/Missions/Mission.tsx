@@ -7,7 +7,7 @@ import { MissionZone } from "./MissionZone";
 import { Woman } from "../Ground/SceneObjects/Woman";
 import { useMissionUI } from "./MissionUIContext";
 
-type MissionState = "available" | "prompt" | "active" | "completed";
+type MissionState = "available" | "prompt" | "dialog" | "active" | "completed";
 
 type MissionConfig = {
   id: string;
@@ -109,6 +109,7 @@ type MissionProps = JSX.IntrinsicElements["group"] & {
   taxiRef?: MutableRefObject<Object3D | null>;
   onDestinationChange?: (position: [number, number, number] | null) => void;
   onAvailableMissionTargetsChange?: (targets: MissionTargetInfo[]) => void;
+  onPauseChange?: (paused: boolean) => void;
 };
 
 type CompletionInfo = {
@@ -120,6 +121,7 @@ export default function Mission({
   taxiRef,
   onDestinationChange,
   onAvailableMissionTargetsChange,
+  onPauseChange,
   ...groupProps
 }: MissionProps) {
   const [missionStates, setMissionStates] = useState<
@@ -186,24 +188,19 @@ export default function Mission({
     const missionId = promptMissionIdRef.current;
     if (!missionId) return;
 
-    setMissionStates((prev) => ({ ...prev, [missionId]: "active" }));
+    const config = missionConfigById[missionId];
+    if (!config) return;
+
+    // Set to dialog mode first
+    setMissionStates((prev) => ({ ...prev, [missionId]: "dialog" }));
     setActiveMissionId(missionId);
     setPromptMissionId(null);
     setDialogIndex(0);
     setDialogVisible(true);
+    onPauseChange?.(true); // Pause game
 
-    const config = missionConfigById[missionId];
-
-    // Set destination
-    if (config && onDestinationChange) {
-      onDestinationChange(config.dropoffPosition);
-    }
-
-    // Use mission-specific timer if provided
-    const limit = config?.timeLimit ?? 30; // default 30 seconds
-    setTimeLeft(limit); // ✅ start countdown
-    setTimer({ secondsLeft: limit }); // ✅ update UI
-  }, [onDestinationChange, setTimer]);
+    // Destination is set only after dialog ends
+  }, [onPauseChange]);
 
   const handleDeclineMission = useCallback(() => {
     const missionId = promptMissionIdRef.current;
@@ -301,43 +298,6 @@ export default function Mission({
   }, [completionInfo]);
 
   useEffect(() => {
-    if (dialogIntervalRef.current) {
-      window.clearInterval(dialogIntervalRef.current);
-      dialogIntervalRef.current = null;
-    }
-
-    const currentActive = activeMissionIdRef.current;
-    if (!currentActive) {
-      setDialogVisible(false);
-      return;
-    }
-
-    const config = missionConfigById[currentActive];
-    if (!config || config.passengerDialog.length === 0) {
-      setDialogVisible(false);
-      return;
-    }
-
-    setDialogVisible(true);
-    setDialogIndex(0);
-
-    dialogIntervalRef.current = window.setInterval(() => {
-      setDialogIndex((prev) => {
-        const lines = config.passengerDialog.length;
-        if (lines === 0) return 0;
-        return (prev + 1) % lines;
-      });
-    }, 5000);
-
-    return () => {
-      if (dialogIntervalRef.current) {
-        window.clearInterval(dialogIntervalRef.current);
-        dialogIntervalRef.current = null;
-      }
-    };
-  }, [activeMissionId]);
-
-  useEffect(() => {
     return () => {
       if (dialogIntervalRef.current) {
         window.clearInterval(dialogIntervalRef.current);
@@ -349,6 +309,45 @@ export default function Mission({
       }
     };
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        event.stopPropagation();
+        const missionId = activeMissionIdRef.current;
+        if (!missionId) return;
+
+        const currentState = missionStatesRef.current[missionId];
+        if (currentState !== "dialog") return;
+
+        const config = missionConfigById[missionId];
+        if (!config) return;
+
+        setDialogIndex((prev) => {
+          const next = prev + 1;
+          if (next >= config.passengerDialog.length) {
+            // end of dialog
+            setDialogVisible(false);
+            onPauseChange?.(false); // resume game
+            setMissionStates((p) => ({ ...p, [missionId]: "active" }));
+
+            // Set destination and start timer
+            if (onDestinationChange)
+              onDestinationChange(config.dropoffPosition);
+            const limit = config?.timeLimit ?? 30;
+            setTimeLeft(limit);
+            setTimer({ secondsLeft: limit });
+            return prev;
+          }
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onDestinationChange, onPauseChange, setTimer]);
 
   const promptConfig = promptMissionId
     ? missionConfigById[promptMissionId] ?? null
@@ -389,12 +388,18 @@ export default function Mission({
   }, [activeConfig, setActive]);
 
   useEffect(() => {
-    if (dialogVisible && activeDialog) {
-      setDialog({ text: activeDialog });
+    const missionId = activeMissionIdRef.current;
+    if (!missionId) return;
+
+    const config = missionConfigById[missionId];
+    if (!config) return;
+
+    if (dialogVisible && config.passengerDialog[dialogIndex]) {
+      setDialog({ text: config.passengerDialog[dialogIndex] });
     } else {
       setDialog(null);
     }
-  }, [dialogVisible, activeDialog, setDialog]);
+  }, [dialogVisible, dialogIndex, setDialog]);
 
   useEffect(() => {
     if (completionInfo && completionConfig) {
