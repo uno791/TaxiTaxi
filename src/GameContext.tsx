@@ -1,4 +1,4 @@
-import { createContext, useContext, useState } from "react";
+import { createContext, useContext, useCallback, useState } from "react";
 import type { ReactNode } from "react";
 import {
   MAX_UPGRADE_LEVEL,
@@ -40,15 +40,42 @@ type GameContextType = {
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
+type EconomyState = {
+  money: number;
+  speedLevel: number;
+  brakeLevel: number;
+  boostLevel: number;
+};
+
+const initialEconomyState: EconomyState = {
+  money: 1000,
+  speedLevel: 0,
+  brakeLevel: 0,
+  boostLevel: 0,
+};
+
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [money, setMoney] = useState(1000);
+  const [economy, setEconomy] = useState<EconomyState>(initialEconomyState);
   const [kilometers, setKilometers] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [boost, setBoost] = useState(0);
   const [gameOver, setGameOver] = useState(false);
-  const [speedLevel, setSpeedLevel] = useState(0);
-  const [brakeLevel, setBrakeLevel] = useState(0);
-  const [boostLevel, setBoostLevel] = useState(0);
+
+  const { money, speedLevel, brakeLevel, boostLevel } = economy;
+
+  const setMoney = useCallback(
+    (update: React.SetStateAction<number>) => {
+      setEconomy((previous) => {
+        const nextMoney =
+          typeof update === "function"
+            ? (update as (value: number) => number)(previous.money)
+            : update;
+        if (nextMoney === previous.money) return previous;
+        return { ...previous, money: nextMoney };
+      });
+    },
+    [setEconomy]
+  );
 
   const speedMultiplier = 1 + speedLevel * speedIncreasePerLevel;
   const brakeMultiplier = 1 + brakeLevel * brakeIncreasePerLevel;
@@ -57,50 +84,53 @@ export function GameProvider({ children }: { children: ReactNode }) {
     baseMaxBoost * (1 + boostLevel * boostCapacityIncreasePerLevel);
 
   const upgradeSpeed = () => {
-    setSpeedLevel((previous) => {
-      if (previous >= MAX_UPGRADE_LEVEL) return previous;
+    setEconomy((previous) => {
+      if (
+        previous.speedLevel >= MAX_UPGRADE_LEVEL ||
+        previous.money < speedUpgradePrice
+      ) {
+        return previous;
+      }
 
-      let applied = false;
-      setMoney((currentMoney) => {
-        if (currentMoney < speedUpgradePrice) return currentMoney;
-        applied = true;
-        return currentMoney - speedUpgradePrice;
-      });
-
-      if (!applied) return previous;
-      return previous + 1;
+      return {
+        ...previous,
+        speedLevel: previous.speedLevel + 1,
+        money: previous.money - speedUpgradePrice,
+      };
     });
   };
 
   const upgradeBrakes = () => {
-    setBrakeLevel((previous) => {
-      if (previous >= MAX_UPGRADE_LEVEL) return previous;
+    setEconomy((previous) => {
+      if (
+        previous.brakeLevel >= MAX_UPGRADE_LEVEL ||
+        previous.money < brakeUpgradePrice
+      ) {
+        return previous;
+      }
 
-      let applied = false;
-      setMoney((currentMoney) => {
-        if (currentMoney < brakeUpgradePrice) return currentMoney;
-        applied = true;
-        return currentMoney - brakeUpgradePrice;
-      });
-
-      if (!applied) return previous;
-      return previous + 1;
+      return {
+        ...previous,
+        brakeLevel: previous.brakeLevel + 1,
+        money: previous.money - brakeUpgradePrice,
+      };
     });
   };
 
   const upgradeBoost = () => {
-    setBoostLevel((previous) => {
-      if (previous >= MAX_UPGRADE_LEVEL) return previous;
+    setEconomy((previous) => {
+      if (
+        previous.boostLevel >= MAX_UPGRADE_LEVEL ||
+        previous.money < boostUpgradePrice
+      ) {
+        return previous;
+      }
 
-      let applied = false;
-      setMoney((currentMoney) => {
-        if (currentMoney < boostUpgradePrice) return currentMoney;
-        applied = true;
-        return currentMoney - boostUpgradePrice;
-      });
-
-      if (!applied) return previous;
-      return previous + 1;
+      return {
+        ...previous,
+        boostLevel: previous.boostLevel + 1,
+        money: previous.money - boostUpgradePrice,
+      };
     });
   };
 
