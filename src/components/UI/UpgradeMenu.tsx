@@ -1,0 +1,269 @@
+import { useState } from "react";
+import { useGame } from "../../GameContext";
+import upgradeIcon from "../../assets/upgrade-svgrepo-com.svg";
+import {
+  MAX_UPGRADE_LEVEL,
+  brakeIncreasePerLevel,
+  brakeUpgradePrice,
+  boostCapacityIncreasePerLevel,
+  boostForceIncreasePerLevel,
+  boostUpgradePrice,
+  speedIncreasePerLevel,
+  speedUpgradePrice,
+} from "../../constants/upgrades";
+
+type UpgradeEntry = {
+  key: "speed" | "brakes" | "boost";
+  label: string;
+  level: number;
+  cost: number;
+  onUpgrade: () => void;
+  descriptor: string;
+  disabled: boolean;
+};
+
+const levelBoxes = Array.from({ length: MAX_UPGRADE_LEVEL }, (_, index) => index);
+
+export default function UpgradeMenu() {
+  const [open, setOpen] = useState(false);
+  const {
+    money,
+    speedLevel,
+    brakeLevel,
+    boostLevel,
+    upgradeSpeed,
+    upgradeBrakes,
+    upgradeBoost,
+  } = useGame();
+
+  const upgrades: UpgradeEntry[] = [
+    {
+      key: "speed",
+      label: "Speed",
+      level: speedLevel,
+      cost: speedUpgradePrice,
+      onUpgrade: upgradeSpeed,
+      descriptor: `+${Math.round(speedIncreasePerLevel * 100)}% engine force`,
+      disabled:
+        speedLevel >= MAX_UPGRADE_LEVEL || money < speedUpgradePrice,
+    },
+    {
+      key: "brakes",
+      label: "Brakes",
+      level: brakeLevel,
+      cost: brakeUpgradePrice,
+      onUpgrade: upgradeBrakes,
+      descriptor: `+${Math.round(brakeIncreasePerLevel * 100)}% braking`,
+      disabled:
+        brakeLevel >= MAX_UPGRADE_LEVEL || money < brakeUpgradePrice,
+    },
+    {
+      key: "boost",
+      label: "Boost",
+      level: boostLevel,
+      cost: boostUpgradePrice,
+      onUpgrade: upgradeBoost,
+      descriptor: `+${Math.round(
+        boostForceIncreasePerLevel * 100
+      )}% power / +${Math.round(boostCapacityIncreasePerLevel * 100)}% capacity`,
+      disabled:
+        boostLevel >= MAX_UPGRADE_LEVEL || money < boostUpgradePrice,
+    },
+  ];
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: 16,
+        left: 16,
+        zIndex: 40,
+        display: "flex",
+        flexDirection: "column",
+        gap: "12px",
+      }}
+    >
+      <button
+        type="button"
+        onClick={() => setOpen((prev) => !prev)}
+        style={{
+          width: 48,
+          height: 48,
+          border: "1px solid rgba(255,255,255,0.15)",
+          borderRadius: 12,
+          background: open
+            ? "linear-gradient(145deg, rgba(255, 215, 64, 0.95), rgba(255, 145, 0, 0.9))"
+            : "rgba(24, 28, 35, 0.85)",
+          cursor: "pointer",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 6,
+          boxShadow: open
+            ? "0 6px 16px rgba(255, 145, 0, 0.35)"
+            : "0 6px 16px rgba(0, 0, 0, 0.35)",
+          backdropFilter: "blur(3px)",
+        }}
+        title="Open car upgrades"
+      >
+        <img
+          src={upgradeIcon}
+          alt="Upgrades"
+          style={{ width: "100%", height: "100%" }}
+        />
+      </button>
+
+      {open ? (
+        <div
+          style={{
+            width: 280,
+            padding: "16px 18px",
+            borderRadius: 16,
+            background: "rgba(18, 20, 26, 0.93)",
+            border: "1px solid rgba(255,255,255,0.12)",
+            boxShadow: "0 14px 32px rgba(0, 0, 0, 0.45)",
+            color: "#f5f5f5",
+            fontFamily: "Arial, sans-serif",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              marginBottom: 12,
+              fontSize: "0.95rem",
+              fontWeight: 700,
+              letterSpacing: "0.05em",
+            }}
+          >
+            <span>Upgrades</span>
+            <span
+              style={{
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                color: "rgba(255,255,255,0.8)",
+              }}
+            >
+              Wallet: R{money.toFixed(0)}
+            </span>
+          </div>
+
+          <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+            {upgrades.map(
+              ({
+                key,
+                label,
+                level,
+                cost,
+                onUpgrade,
+                descriptor,
+                disabled,
+              }) => (
+                <div
+                  key={key}
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 6,
+                    padding: "10px 12px",
+                    borderRadius: 12,
+                    background: "rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                    }}
+                  >
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                        {label}
+                      </div>
+                      <div
+                        style={{
+                          fontSize: "0.75rem",
+                          color: "rgba(255,255,255,0.7)",
+                        }}
+                      >
+                        {descriptor}
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={onUpgrade}
+                      disabled={disabled}
+                      style={{
+                        border: "none",
+                        borderRadius: 999,
+                        padding: "6px 14px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        cursor: disabled ? "not-allowed" : "pointer",
+                        color: disabled ? "rgba(255,255,255,0.4)" : "#1c1304",
+                        background: disabled
+                          ? "rgba(255,255,255,0.12)"
+                          : "linear-gradient(135deg, #ffca28, #ff8f00)",
+                        boxShadow: disabled
+                          ? "none"
+                          : "0 4px 12px rgba(255, 138, 0, 0.35)",
+                        transition: "transform 0.1s ease",
+                      }}
+                    >
+                      {level >= MAX_UPGRADE_LEVEL ? "MAX" : `+ R${cost}`}
+                    </button>
+                  </div>
+
+                  <div
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 6,
+                      marginTop: 4,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        gap: 4,
+                        flex: 1,
+                      }}
+                    >
+                      {levelBoxes.map((index) => (
+                        <div
+                          key={index}
+                          style={{
+                            flex: 1,
+                            height: 10,
+                            borderRadius: 4,
+                            background:
+                              index < level
+                                ? "linear-gradient(90deg, #ff6f00, #ffa000)"
+                                : "rgba(255,255,255,0.15)",
+                            transition: "background 0.2s ease",
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <div
+                      style={{
+                        fontSize: "0.75rem",
+                        color: "rgba(255,255,255,0.7)",
+                        minWidth: 48,
+                        textAlign: "right",
+                      }}
+                    >
+                      {level}/{MAX_UPGRADE_LEVEL}
+                    </div>
+                  </div>
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      ) : null}
+    </div>
+  );
+}

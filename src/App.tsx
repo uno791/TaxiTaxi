@@ -18,6 +18,7 @@ import { Physics } from "@react-three/cannon";
 import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
 import TaxiSpeedometer from "./components/Taxi/TaxiSpeedometer";
+import UpgradeMenu from "./components/UI/UpgradeMenu";
 import { MissionUIProvider } from "./components/Missions/MissionUIContext";
 import MissionOverlay from "./components/Missions/MissionOverlay";
 import FogEffect from "./components/FogEffect";
@@ -166,6 +167,7 @@ function GameWorld() {
         <TaxiSpeedometer />
         <GameUI />
         <GameOverPopup />
+        <UpgradeMenu />
         <MiniMapOverlay
           canvas={miniMapCanvas}
           missions={availableMissionTargets}
@@ -180,7 +182,7 @@ function GameWorld() {
           style={{
             position: "absolute",
             top: 16,
-            left: 16,
+            left: 84,
             zIndex: 30,
             border: "1px solid rgba(255,255,255,0.25)",
             borderRadius: 8,

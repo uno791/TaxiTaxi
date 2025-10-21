@@ -8,13 +8,10 @@ import { useDualSenseControls } from "../Controls/useDualSenseControls";
 export type { ControlMode } from "../Controls/types";
 
 const COUNTER_STEER_RATIO = 0.1 / 0.35;
-//Arcadey Feel
-// const ENGINE_FORCE = 650;
-// const BRAKE_FORCE = -900;
-// const BOOST_ENGINE_FORCE = 1400;
-const ENGINE_FORCE = 200;
-const BRAKE_FORCE = -400;
-const BOOST_ENGINE_FORCE = 600;
+// Arcadey feel (base values, modified by upgrades)
+const BASE_ENGINE_FORCE = 200;
+const BASE_BRAKE_FORCE = -400;
+const BASE_BOOST_ENGINE_FORCE = 600;
 
 type VehicleApi = {
   applyEngineForce: (force: number, wheelIndex: number) => void;
@@ -50,8 +47,16 @@ export const useControls = (
     isPaused
   );
   const dualSenseControls = useDualSenseControls();
-  const gameState = useGame();
-  const { boost } = gameState;
+  const {
+    boost,
+    speedMultiplier,
+    brakeMultiplier,
+    boostForceMultiplier,
+  } = useGame();
+
+  const engineForce = BASE_ENGINE_FORCE * speedMultiplier;
+  const brakeForce = BASE_BRAKE_FORCE * brakeMultiplier;
+  const boostEngineForce = BASE_BOOST_ENGINE_FORCE * boostForceMultiplier;
 
   const outputKeyboardControls = useMemo<KeyboardState>(() => {
     if (controlMode === "controller") {
@@ -94,13 +99,13 @@ export const useControls = (
 
     if (keyboardControls.w || keyboardControls.arrowup) {
       const force = boostActive
-        ? ENGINE_FORCE + BOOST_ENGINE_FORCE
-        : ENGINE_FORCE;
+        ? engineForce + boostEngineForce
+        : engineForce;
       vehicleApi.applyEngineForce(force, 2);
       vehicleApi.applyEngineForce(force, 3);
     } else if (keyboardControls.s || keyboardControls.arrowdown) {
-      vehicleApi.applyEngineForce(BRAKE_FORCE, 2);
-      vehicleApi.applyEngineForce(BRAKE_FORCE, 3);
+      vehicleApi.applyEngineForce(brakeForce, 2);
+      vehicleApi.applyEngineForce(brakeForce, 3);
     } else {
       vehicleApi.applyEngineForce(0, 2);
       vehicleApi.applyEngineForce(0, 3);
@@ -128,6 +133,9 @@ export const useControls = (
     isPaused,
     boost,
     spacePressed,
+    engineForce,
+    brakeForce,
+    boostEngineForce,
   ]);
 
   useEffect(() => {
@@ -141,14 +149,14 @@ export const useControls = (
       mouseControls.accelerate && spacePressed && boost > 0.01
     );
 
-    const engineForce = mouseControls.accelerate
-      ? ENGINE_FORCE + (boostActive ? BOOST_ENGINE_FORCE : 0)
+    const appliedForce = mouseControls.accelerate
+      ? engineForce + (boostActive ? boostEngineForce : 0)
       : mouseControls.brake
-      ? BRAKE_FORCE
+      ? brakeForce
       : 0;
 
-    vehicleApi.applyEngineForce(engineForce, 2);
-    vehicleApi.applyEngineForce(engineForce, 3);
+    vehicleApi.applyEngineForce(appliedForce, 2);
+    vehicleApi.applyEngineForce(appliedForce, 3);
 
     const maxFrontSteer = 0.35;
     const frontSteer = maxFrontSteer * mouseControls.steer;
@@ -158,7 +166,17 @@ export const useControls = (
     vehicleApi.setSteeringValue(frontSteer, 3);
     vehicleApi.setSteeringValue(rearSteer, 0);
     vehicleApi.setSteeringValue(rearSteer, 1);
-  }, [mouseControls, controlMode, vehicleApi, isPaused, spacePressed, boost]);
+  }, [
+    mouseControls,
+    controlMode,
+    vehicleApi,
+    isPaused,
+    spacePressed,
+    boost,
+    engineForce,
+    brakeForce,
+    boostEngineForce,
+  ]);
 
   useEffect(() => {
     if (controlMode !== "controller") return;
@@ -170,24 +188,24 @@ export const useControls = (
     const { throttle, brake, steer, reverse, handbrake } = dualSenseControls;
 
     const wantsBoost = handbrake && boost > 0.01;
-    const throttleForce = throttle > 0.001 ? throttle : 0;
-    const brakeForce = brake > 0.001 ? brake : 0;
+    const throttleInput = throttle > 0.001 ? throttle : 0;
+    const brakeInput = brake > 0.001 ? brake : 0;
 
-    let engineForce = 0;
+    let appliedForce = 0;
 
     if (reverse) {
-      const reverseForce = Math.max(throttleForce, brakeForce);
-      engineForce = BRAKE_FORCE * reverseForce;
-    } else if (throttleForce > 0) {
-      const baseForce = ENGINE_FORCE * throttleForce;
-      const boostForce = wantsBoost ? BOOST_ENGINE_FORCE * throttleForce : 0;
-      engineForce = baseForce + boostForce;
-    } else if (brakeForce > 0) {
-      engineForce = BRAKE_FORCE * brakeForce;
+      const reverseForce = Math.max(throttleInput, brakeInput);
+      appliedForce = brakeForce * reverseForce;
+    } else if (throttleInput > 0) {
+      const baseForce = engineForce * throttleInput;
+      const boostForce = wantsBoost ? boostEngineForce * throttleInput : 0;
+      appliedForce = baseForce + boostForce;
+    } else if (brakeInput > 0) {
+      appliedForce = brakeForce * brakeInput;
     }
 
-    vehicleApi.applyEngineForce(engineForce, 2);
-    vehicleApi.applyEngineForce(engineForce, 3);
+    vehicleApi.applyEngineForce(appliedForce, 2);
+    vehicleApi.applyEngineForce(appliedForce, 3);
 
     const maxFrontSteer = 0.35;
     const frontSteer = maxFrontSteer * steer;
@@ -197,7 +215,16 @@ export const useControls = (
     vehicleApi.setSteeringValue(frontSteer, 3);
     vehicleApi.setSteeringValue(rearSteer, 0);
     vehicleApi.setSteeringValue(rearSteer, 1);
-  }, [controlMode, dualSenseControls, vehicleApi, isPaused, boost]);
+  }, [
+    controlMode,
+    dualSenseControls,
+    vehicleApi,
+    isPaused,
+    boost,
+    engineForce,
+    brakeForce,
+    boostEngineForce,
+  ]);
 
   return useMemo(
     () => ({
