@@ -17,6 +17,10 @@ const BOOST_CHARGE_RATE = 5;
 const BOOST_DEPLETION_RATE = 45;
 const MIN_SPEED_FOR_CHARGE = 2;
 const START_SOUND_SPEED_THRESHOLD = 0.5; // m/s (~1.8 km/h)
+const BRAKE_SOUND_SPEED_THRESHOLD = 30; // km/h
+const BRAKE_SMOKE_PARTICLE_COUNT = 60;
+const BRAKE_SMOKE_SPAWN_INTERVAL = 0.045; // seconds between particles
+const BRAKE_SMOKE_MAX_LIFE = 0.65; // seconds
 const COLLISION_SOUND_COOLDOWN_MS = 350;
 
 type Props = {
@@ -24,6 +28,14 @@ type Props = {
   controlMode: ControlMode;
   isPaused: boolean;
   playerPositionRef: MutableRefObject<THREE.Vector3>;
+};
+
+type BrakeSmokeParticle = {
+  position: THREE.Vector3;
+  velocity: THREE.Vector3;
+  life: number;
+  maxLife: number;
+  active: boolean;
 };
 
 function GenericCar({
@@ -60,16 +72,62 @@ export function TaxiPhysics({
     cars.find((c) => c.name === "Taxi")!;
 
   const carStartSoundRef = useRef<HTMLAudioElement | null>(null);
+  const engineSoundRef = useRef<HTMLAudioElement | null>(null);
+  const boostSoundRef = useRef<HTMLAudioElement | null>(null);
+  const brakeSoundRef = useRef<HTMLAudioElement | null>(null);
   const glassBreakSoundRef = useRef<HTMLAudioElement | null>(null);
   const hasPlayedStartSoundRef = useRef(false);
   const lastGlassSoundTimeRef = useRef(0);
+  const isBoostSoundPlayingRef = useRef(false);
+  const wasBrakingRef = useRef(false);
+  const brakeSmokeMeshRef = useRef<THREE.InstancedMesh>(null);
+  const brakeSmokeSpawnTimerRef = useRef(0);
+  const brakeSmokeSpawnIndexRef = useRef(0);
+  const initialBrakeSmokeParticles = useMemo(
+    () =>
+      Array.from({ length: BRAKE_SMOKE_PARTICLE_COUNT }, () => ({
+        position: new THREE.Vector3(),
+        velocity: new THREE.Vector3(),
+        life: 0,
+        maxLife: 0,
+        active: false,
+      })),
+    []
+  );
+  const brakeSmokeParticlesRef = useRef<BrakeSmokeParticle[]>(
+    initialBrakeSmokeParticles
+  );
+  const brakeSmokeTempObject = useMemo(() => new THREE.Object3D(), []);
+
+  const startEngineLoop = useCallback(() => {
+    const engineAudio = engineSoundRef.current;
+    if (!engineAudio) return;
+    if (!engineAudio.paused) return;
+    engineAudio.currentTime = 0;
+    void engineAudio.play().catch(() => undefined);
+  }, []);
+
+  const stopEngineLoop = useCallback(() => {
+    const engineAudio = engineSoundRef.current;
+    if (!engineAudio) return;
+    engineAudio.pause();
+    engineAudio.currentTime = 0;
+  }, []);
 
   const playCarStartSound = useCallback(() => {
     const audio = carStartSoundRef.current;
     if (!audio) return;
+    stopEngineLoop();
     audio.currentTime = 0;
-    void audio.play().catch(() => undefined);
-  }, []);
+    audio.onended = () => {
+      audio.onended = null;
+      startEngineLoop();
+    };
+    void audio.play().catch(() => {
+      startEngineLoop();
+      return undefined;
+    });
+  }, [startEngineLoop, stopEngineLoop]);
 
   const playGlassBreakSound = useCallback(() => {
     const audio = glassBreakSoundRef.current;
@@ -86,6 +144,41 @@ export function TaxiPhysics({
     void audio.play().catch(() => undefined);
   }, []);
 
+  const startBoostSound = useCallback(() => {
+    const audio = boostSoundRef.current;
+    if (!audio) return;
+    if (isBoostSoundPlayingRef.current) return;
+    audio.currentTime = 0;
+    isBoostSoundPlayingRef.current = true;
+    void audio.play().catch(() => {
+      isBoostSoundPlayingRef.current = false;
+      return undefined;
+    });
+  }, []);
+
+  const stopBoostSound = useCallback(() => {
+    const audio = boostSoundRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    isBoostSoundPlayingRef.current = false;
+  }, []);
+
+  const playBrakeSound = useCallback(() => {
+    const audio = brakeSoundRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    void audio.play().catch(() => undefined);
+  }, []);
+
+  const stopBrakeSound = useCallback(() => {
+    const audio = brakeSoundRef.current;
+    if (!audio) return;
+    audio.pause();
+    audio.currentTime = 0;
+    wasBrakingRef.current = false;
+  }, []);
+
   useEffect(() => {
     if (typeof Audio === "undefined") return;
 
@@ -93,19 +186,43 @@ export function TaxiPhysics({
     carStart.preload = "auto";
     carStart.volume = 0.7;
 
-    const glassBreak = new Audio(
-      "/sounds/mixkit-car-window-breaking-1551.wav"
+    const engineLoop = new Audio("/sounds/diesel-car-engine-sound-111994.mp3");
+    engineLoop.preload = "auto";
+    engineLoop.loop = true;
+    engineLoop.volume = 0.1;
+
+    const boostLoop = new Audio("/sounds/audi-v8-acceleration-sound-6067.mp3");
+    boostLoop.preload = "auto";
+    boostLoop.loop = true;
+    boostLoop.volume = 0.6;
+
+    const brakeSound = new Audio(
+      "/sounds/fast-car-braking-sound-effect-3-11000.mp3"
     );
+    brakeSound.preload = "auto";
+    brakeSound.volume = 0.65;
+
+    const glassBreak = new Audio("/sounds/mixkit-car-window-breaking-1551.wav");
     glassBreak.preload = "auto";
     glassBreak.volume = 0.8;
 
     carStartSoundRef.current = carStart;
+    engineSoundRef.current = engineLoop;
+    boostSoundRef.current = boostLoop;
+    brakeSoundRef.current = brakeSound;
     glassBreakSoundRef.current = glassBreak;
 
     return () => {
       carStart.pause();
+      carStart.onended = null;
+      engineLoop.pause();
+      boostLoop.pause();
+      brakeSound.pause();
       glassBreak.pause();
       carStartSoundRef.current = null;
+      engineSoundRef.current = null;
+      boostSoundRef.current = null;
+      brakeSoundRef.current = null;
       glassBreakSoundRef.current = null;
     };
   }, []);
@@ -117,6 +234,13 @@ export function TaxiPhysics({
   const height = 0.18;
   const front = 0.6;
   const wheelRadius = 0.14;
+  const brakeSmokeSpawnOffsets = useMemo(
+    () => [
+      new THREE.Vector3(-width * 0.32, wheelRadius * 0.65, -front - 0.12),
+      new THREE.Vector3(width * 0.32, wheelRadius * 0.65, -front - 0.12),
+    ],
+    [front, wheelRadius, width]
+  );
 
   // -------------------------
   // Headlights (front, +Z)
@@ -173,8 +297,31 @@ export function TaxiPhysics({
   useEffect(() => {
     if (gameOver) {
       hasPlayedStartSoundRef.current = false;
+      stopEngineLoop();
+      stopBoostSound();
+      stopBrakeSound();
     }
-  }, [gameOver]);
+  }, [gameOver, stopBoostSound, stopBrakeSound, stopEngineLoop]);
+
+  useEffect(() => {
+    if (gameOver) return;
+    if (isPaused) {
+      stopEngineLoop();
+      stopBoostSound();
+      stopBrakeSound();
+      return;
+    }
+    if (hasPlayedStartSoundRef.current) {
+      startEngineLoop();
+    }
+  }, [
+    gameOver,
+    isPaused,
+    startEngineLoop,
+    stopBrakeSound,
+    stopBoostSound,
+    stopEngineLoop,
+  ]);
 
   const velocityRef = useRef<[number, number, number]>([0, 0, 0]);
   const velocityVector = useRef(new THREE.Vector3());
@@ -341,6 +488,12 @@ export function TaxiPhysics({
     gameOver,
   ]);
 
+  const brakeStrengthRef = useRef(brakeStrength);
+
+  useEffect(() => {
+    brakeStrengthRef.current = brakeStrength;
+  }, [brakeStrength]);
+
   // Tail light brightness/opacities scale with brake
   const tailLightIntensity = useMemo(
     () => 0.25 + brakeStrength * 0.55,
@@ -387,8 +540,21 @@ export function TaxiPhysics({
     });
   }, [hitDetection, setBoost]);
 
-  useFrame((_, delta) => {
+  useFrame((state, delta) => {
     if (gameOver || isPaused) {
+      stopBoostSound();
+      stopBrakeSound();
+      brakeSmokeSpawnTimerRef.current = 0;
+      brakeSmokeSpawnIndexRef.current = 0;
+      brakeSmokeParticlesRef.current.forEach((particle) => {
+        particle.active = false;
+      });
+      const smokeMesh = brakeSmokeMeshRef.current;
+      if (smokeMesh) {
+        smokeMesh.count = 0;
+        smokeMesh.visible = false;
+        smokeMesh.instanceMatrix.needsUpdate = true;
+      }
       if (boostRef.current !== 0) {
         boostRef.current = 0;
         setBoost(0);
@@ -400,7 +566,10 @@ export function TaxiPhysics({
     velocityVector.current.fromArray(velocityRef.current);
     const speed = velocityVector.current.length();
 
-    if (!hasPlayedStartSoundRef.current && speed > START_SOUND_SPEED_THRESHOLD) {
+    if (
+      !hasPlayedStartSoundRef.current &&
+      speed > START_SOUND_SPEED_THRESHOLD
+    ) {
       hasPlayedStartSoundRef.current = true;
       playCarStartSound();
     }
@@ -416,10 +585,17 @@ export function TaxiPhysics({
       nextBoost = Math.min(maxBoost, nextBoost + BOOST_CHARGE_RATE * delta);
     }
 
-    if (Math.abs(nextBoost - boostRef.current) > 0.001) {
-      const capped = Math.min(nextBoost, maxBoost);
+    const capped = Math.min(nextBoost, maxBoost);
+
+    if (Math.abs(capped - boostRef.current) > 0.001) {
       boostRef.current = capped;
       setBoost(capped);
+    }
+
+    if (boostKeyHeld && capped > 0.01) {
+      startBoostSound();
+    } else {
+      stopBoostSound();
     }
 
     if (speed <= 0.0001) {
@@ -429,6 +605,90 @@ export function TaxiPhysics({
 
     const speedInKmh = speed * 3.6;
     setSpeed(speedInKmh);
+
+    const brakingPressed = brakeStrengthRef.current > 0.2;
+    const shouldPlayBrake =
+      brakingPressed && speedInKmh > BRAKE_SOUND_SPEED_THRESHOLD;
+    if (shouldPlayBrake && !wasBrakingRef.current) {
+      playBrakeSound();
+    }
+    wasBrakingRef.current = shouldPlayBrake;
+
+    const smokeParticles = brakeSmokeParticlesRef.current;
+    const smokeMesh = brakeSmokeMeshRef.current;
+    if (smokeMesh) {
+      if (shouldPlayBrake && chassisRef.current) {
+        brakeSmokeSpawnTimerRef.current += delta;
+        const offsetsLength = brakeSmokeSpawnOffsets.length;
+        while (brakeSmokeSpawnTimerRef.current >= BRAKE_SMOKE_SPAWN_INTERVAL) {
+          brakeSmokeSpawnTimerRef.current -= BRAKE_SMOKE_SPAWN_INTERVAL;
+
+          const offset =
+            brakeSmokeSpawnOffsets[
+              brakeSmokeSpawnIndexRef.current % offsetsLength
+            ];
+          brakeSmokeSpawnIndexRef.current += 1;
+
+          const spawnPoint = offset.clone();
+          chassisRef.current.localToWorld(spawnPoint);
+
+          const backDirection = new THREE.Vector3(0, 0, -1)
+            .applyQuaternion(chassisRef.current.quaternion)
+            .normalize();
+          const lateralDirection = new THREE.Vector3(1, 0, 0)
+            .applyQuaternion(chassisRef.current.quaternion)
+            .normalize();
+
+          const particle =
+            smokeParticles.find((item) => !item.active) ?? smokeParticles[0];
+          particle.active = true;
+          particle.life = 0;
+          particle.maxLife =
+            BRAKE_SMOKE_MAX_LIFE * (0.75 + Math.random() * 0.5);
+          particle.position.copy(spawnPoint);
+          particle.velocity
+            .copy(backDirection)
+            .multiplyScalar(2.4 + Math.random() * 1.2)
+            .addScaledVector(lateralDirection, (Math.random() - 0.5) * 0.8);
+          particle.velocity.y += 1.1 + Math.random() * 0.5;
+        }
+      } else {
+        brakeSmokeSpawnTimerRef.current = 0;
+        brakeSmokeSpawnIndexRef.current = 0;
+      }
+
+      const cameraQuaternion = state.camera.quaternion;
+      let activeCount = 0;
+
+      for (let i = 0; i < smokeParticles.length; i += 1) {
+        const particle = smokeParticles[i];
+        if (!particle.active) continue;
+
+        particle.life += delta;
+        if (particle.life >= particle.maxLife) {
+          particle.active = false;
+          continue;
+        }
+
+        particle.position.addScaledVector(particle.velocity, delta);
+        particle.velocity.multiplyScalar(0.88);
+        particle.velocity.y += 0.55 * delta;
+
+        const lifeRatio = particle.life / particle.maxLife;
+        const scale = THREE.MathUtils.lerp(0.05, 0.35, lifeRatio);
+
+        brakeSmokeTempObject.position.copy(particle.position);
+        brakeSmokeTempObject.scale.setScalar(scale);
+        brakeSmokeTempObject.quaternion.copy(cameraQuaternion);
+        brakeSmokeTempObject.updateMatrix();
+        smokeMesh.setMatrixAt(activeCount, brakeSmokeTempObject.matrix);
+        activeCount += 1;
+      }
+
+      smokeMesh.count = activeCount;
+      smokeMesh.visible = activeCount > 0;
+      smokeMesh.instanceMatrix.needsUpdate = true;
+    }
 
     const metersTravelled = speed * delta;
     const kilometers = metersTravelled * 0.001;
@@ -448,97 +708,112 @@ export function TaxiPhysics({
   });
 
   return (
-    <group ref={rvRef} name="vehicle">
-      <mesh ref={chassisRef} castShadow receiveShadow>
-        <boxGeometry args={chassisBodyArgs} />
-        <meshBasicMaterial transparent opacity={0} />
-
-        <GenericCar
-          modelPath={carConfig.modelPath}
-          scale={carConfig.scale}
-          offset={carConfig.offset}
+    <group>
+      <instancedMesh
+        ref={brakeSmokeMeshRef}
+        args={[undefined, undefined, BRAKE_SMOKE_PARTICLE_COUNT]}
+        frustumCulled={false}
+      >
+        <planeGeometry args={[0.32, 0.32]} />
+        <meshBasicMaterial
+          color="#111111"
+          transparent
+          opacity={0.45}
+          depthWrite={false}
         />
+      </instancedMesh>
+      <group ref={rvRef} name="vehicle">
+        <mesh ref={chassisRef} castShadow receiveShadow>
+          <boxGeometry args={chassisBodyArgs} />
+          <meshBasicMaterial transparent opacity={0} />
 
-        {/* Headlights */}
-        <group name="headlights">
-          {([-1, 1] as const).map((side, index) => (
-            <group
-              key={side}
-              position={[
-                side * headlightLateralOffset,
-                headlightHeight,
-                headlightForwardOffset,
-              ]}
-            >
-              <mesh position={[0, -0.1, -1.2]} rotation={[0, Math.PI, 0]}>
-                <planeGeometry args={[0.05, 0.01, 1]} />
-                <meshBasicMaterial
-                  color="#fff7d1"
-                  transparent
-                  opacity={0.9}
-                  toneMapped={false}
+          <GenericCar
+            modelPath={carConfig.modelPath}
+            scale={carConfig.scale}
+            offset={carConfig.offset}
+          />
+
+          {/* Headlights */}
+          <group name="headlights">
+            {([-1, 1] as const).map((side, index) => (
+              <group
+                key={side}
+                position={[
+                  side * headlightLateralOffset,
+                  headlightHeight,
+                  headlightForwardOffset,
+                ]}
+              >
+                <mesh position={[0, -0.1, -1.2]} rotation={[0, Math.PI, 0]}>
+                  <planeGeometry args={[0.05, 0.01, 1]} />
+                  <meshBasicMaterial
+                    color="#fff7d1"
+                    transparent
+                    opacity={0.9}
+                    toneMapped={false}
+                  />
+                </mesh>
+
+                <spotLight
+                  color="#fff7e1"
+                  intensity={1}
+                  angle={0.48}
+                  penumbra={0.6}
+                  distance={150}
+                  decay={0.2}
+                  target={headlightTargets[index]}
+                  castShadow={false}
                 />
-              </mesh>
+              </group>
+            ))}
+          </group>
 
-              <spotLight
-                color="#fff7e1"
-                intensity={1}
-                angle={0.48}
-                penumbra={0.6}
-                distance={150}
-                decay={0.2}
-                target={headlightTargets[index]}
-                castShadow={false}
-              />
-            </group>
-          ))}
-        </group>
+          {/* Taillights */}
+          <group name="tailLights">
+            {([-1, 1] as const).map((side, index) => (
+              <group
+                key={side}
+                position={[
+                  side * tailLightLateralOffset,
+                  tailLightHeight,
+                  tailLightBackwardOffset, // per your setup
+                ]}
+              >
+                {/* The visible lens that glows with brake */}
+                <mesh position={[0, -0.05, -0.12]} rotation={[0, Math.PI, 0]}>
+                  <planeGeometry args={[tailLensWidth, tailLensHeight, 1]} />
+                  <meshStandardMaterial
+                    color="#3a0000" // dark red base
+                    emissive="#ff2a2a"
+                    emissiveIntensity={tailLensEmissive} // glow follows brake
+                    transparent
+                    opacity={tailLightOpacity} // keep your opacity behavior
+                    toneMapped={false}
+                    side={THREE.DoubleSide}
+                  />
+                </mesh>
 
-        {/* Taillights */}
-        <group name="tailLights">
-          {([-1, 1] as const).map((side, index) => (
-            <group
-              key={side}
-              position={[
-                side * tailLightLateralOffset,
-                tailLightHeight,
-                tailLightBackwardOffset, // per your setup
-              ]}
-            >
-              {/* The visible lens that glows with brake */}
-              <mesh position={[0, -0.05, -0.12]} rotation={[0, Math.PI, 0]}>
-                <planeGeometry args={[tailLensWidth, tailLensHeight, 1]} />
-                <meshStandardMaterial
-                  color="#3a0000" // dark red base
-                  emissive="#ff2a2a"
-                  emissiveIntensity={tailLensEmissive} // glow follows brake
-                  transparent
-                  opacity={tailLightOpacity} // keep your opacity behavior
-                  toneMapped={false}
-                  side={THREE.DoubleSide}
+                {/* The light cast into the world */}
+                <spotLight
+                  color="#ff5a4d"
+                  intensity={tailLightIntensity}
+                  angle={0.4}
+                  penumbra={0.7}
+                  distance={20}
+                  decay={1.6}
+                  target={tailLightTargets[index]}
+                  castShadow={false}
                 />
-              </mesh>
+              </group>
+            ))}
+          </group>
+        </mesh>
 
-              {/* The light cast into the world */}
-              <spotLight
-                color="#ff5a4d"
-                intensity={tailLightIntensity}
-                angle={0.4}
-                penumbra={0.7}
-                distance={20}
-                decay={1.6}
-                target={tailLightTargets[index]}
-                castShadow={false}
-              />
-            </group>
-          ))}
-        </group>
-      </mesh>
-
-      <WheelDebug wheelRef={wheels[0]} radius={wheelRadius} />
-      <WheelDebug wheelRef={wheels[1]} radius={wheelRadius} />
-      <WheelDebug wheelRef={wheels[2]} radius={wheelRadius} />
-      <WheelDebug wheelRef={wheels[3]} radius={wheelRadius} />
+        <WheelDebug wheelRef={wheels[0]} radius={wheelRadius} />
+        <WheelDebug wheelRef={wheels[1]} radius={wheelRadius} />
+        <WheelDebug wheelRef={wheels[2]} radius={wheelRadius} />
+        <WheelDebug wheelRef={wheels[3]} radius={wheelRadius} />
+      </group>
     </group>
   );
 }
