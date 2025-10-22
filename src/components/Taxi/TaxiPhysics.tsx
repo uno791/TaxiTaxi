@@ -16,6 +16,8 @@ import { cars } from "../../utils/cars";
 const BOOST_CHARGE_RATE = 5;
 const BOOST_DEPLETION_RATE = 45;
 const MIN_SPEED_FOR_CHARGE = 2;
+const START_SOUND_SPEED_THRESHOLD = 0.5; // m/s (~1.8 km/h)
+const COLLISION_SOUND_COOLDOWN_MS = 350;
 
 type Props = {
   chaseRef?: React.MutableRefObject<THREE.Object3D | null>;
@@ -56,6 +58,57 @@ export function TaxiPhysics({
   const carConfig =
     cars.find((c) => c.modelPath === selectedCar) ||
     cars.find((c) => c.name === "Taxi")!;
+
+  const carStartSoundRef = useRef<HTMLAudioElement | null>(null);
+  const glassBreakSoundRef = useRef<HTMLAudioElement | null>(null);
+  const hasPlayedStartSoundRef = useRef(false);
+  const lastGlassSoundTimeRef = useRef(0);
+
+  const playCarStartSound = useCallback(() => {
+    const audio = carStartSoundRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    void audio.play().catch(() => undefined);
+  }, []);
+
+  const playGlassBreakSound = useCallback(() => {
+    const audio = glassBreakSoundRef.current;
+    if (!audio) return;
+
+    const now =
+      typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (now - lastGlassSoundTimeRef.current < COLLISION_SOUND_COOLDOWN_MS) {
+      return;
+    }
+
+    lastGlassSoundTimeRef.current = now;
+    audio.currentTime = 0;
+    void audio.play().catch(() => undefined);
+  }, []);
+
+  useEffect(() => {
+    if (typeof Audio === "undefined") return;
+
+    const carStart = new Audio("/sounds/mixkit-car-start-ignition-1559.wav");
+    carStart.preload = "auto";
+    carStart.volume = 0.7;
+
+    const glassBreak = new Audio(
+      "/sounds/mixkit-car-window-breaking-1551.wav"
+    );
+    glassBreak.preload = "auto";
+    glassBreak.volume = 0.8;
+
+    carStartSoundRef.current = carStart;
+    glassBreakSoundRef.current = glassBreak;
+
+    return () => {
+      carStart.pause();
+      glassBreak.pause();
+      carStartSoundRef.current = null;
+      glassBreakSoundRef.current = null;
+    };
+  }, []);
 
   const position: [number, number, number] = [-30, 0.5, -25];
   const [initialX, initialY, initialZ] = position;
@@ -117,6 +170,12 @@ export function TaxiPhysics({
     gameOver,
   } = useGame();
 
+  useEffect(() => {
+    if (gameOver) {
+      hasPlayedStartSoundRef.current = false;
+    }
+  }, [gameOver]);
+
   const velocityRef = useRef<[number, number, number]>([0, 0, 0]);
   const velocityVector = useRef(new THREE.Vector3());
 
@@ -150,6 +209,10 @@ export function TaxiPhysics({
       // onCollide: hitDetection.onCollide,
       onCollide: (e) => {
         hitDetection.onCollide(e);
+        const currentSpeedKmh = velocityVector.current.length() * 3.6;
+        if (currentSpeedKmh > 10) {
+          playGlassBreakSound();
+        }
         handleMoneyLossOnCollision();
       },
     }),
@@ -336,6 +399,11 @@ export function TaxiPhysics({
 
     velocityVector.current.fromArray(velocityRef.current);
     const speed = velocityVector.current.length();
+
+    if (!hasPlayedStartSoundRef.current && speed > START_SOUND_SPEED_THRESHOLD) {
+      hasPlayedStartSoundRef.current = true;
+      playCarStartSound();
+    }
 
     const keyboardControls = keyboardStateRef.current;
     const boostKeyHeld = Boolean(keyboardControls?.space);
