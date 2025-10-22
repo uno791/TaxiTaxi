@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useGame } from "../../GameContext";
 import upgradeIcon from "../../assets/upgrade-svgrepo-com.svg";
 import {
@@ -22,10 +22,14 @@ type UpgradeEntry = {
   disabled: boolean;
 };
 
-const levelBoxes = Array.from({ length: MAX_UPGRADE_LEVEL }, (_, index) => index);
+const levelBoxes = Array.from(
+  { length: MAX_UPGRADE_LEVEL },
+  (_, index) => index
+);
 
 export default function UpgradeMenu() {
   const [open, setOpen] = useState(false);
+  const levelUpSoundRef = useRef<HTMLAudioElement | null>(null);
   const {
     money,
     speedLevel,
@@ -36,6 +40,46 @@ export default function UpgradeMenu() {
     upgradeBoost,
   } = useGame();
 
+  useEffect(() => {
+    if (typeof Audio === "undefined") return;
+    const audio = new Audio("/sounds/level-up.wav");
+    audio.preload = "auto";
+    audio.volume = 0.7;
+    levelUpSoundRef.current = audio;
+    return () => {
+      audio.pause();
+      audio.currentTime = 0;
+      levelUpSoundRef.current = null;
+    };
+  }, []);
+
+  const playUpgradeSound = useCallback(() => {
+    const base = levelUpSoundRef.current;
+    if (!base) return;
+
+    const clone = base.cloneNode(true) as HTMLAudioElement;
+    const cleanup = () => {
+      clone.pause();
+      clone.removeEventListener("ended", cleanup);
+      clone.src = "";
+    };
+    clone.addEventListener("ended", cleanup, { once: true });
+    const start = () => {
+      clone.currentTime = 0;
+      clone.volume = base.volume;
+      clone.muted = false;
+      void clone.play().catch(() => undefined);
+    };
+
+    if (clone.readyState >= 2) {
+      start();
+      return;
+    }
+
+    clone.addEventListener("canplaythrough", start, { once: true });
+    clone.load();
+  }, []);
+
   const upgrades: UpgradeEntry[] = [
     {
       key: "speed",
@@ -44,8 +88,7 @@ export default function UpgradeMenu() {
       cost: speedUpgradePrice,
       onUpgrade: upgradeSpeed,
       descriptor: `+${Math.round(speedIncreasePerLevel * 100)}% engine force`,
-      disabled:
-        speedLevel >= MAX_UPGRADE_LEVEL || money < speedUpgradePrice,
+      disabled: speedLevel >= MAX_UPGRADE_LEVEL || money < speedUpgradePrice,
     },
     {
       key: "brakes",
@@ -54,8 +97,7 @@ export default function UpgradeMenu() {
       cost: brakeUpgradePrice,
       onUpgrade: upgradeBrakes,
       descriptor: `+${Math.round(brakeIncreasePerLevel * 100)}% braking`,
-      disabled:
-        brakeLevel >= MAX_UPGRADE_LEVEL || money < brakeUpgradePrice,
+      disabled: brakeLevel >= MAX_UPGRADE_LEVEL || money < brakeUpgradePrice,
     },
     {
       key: "boost",
@@ -65,9 +107,10 @@ export default function UpgradeMenu() {
       onUpgrade: upgradeBoost,
       descriptor: `+${Math.round(
         boostForceIncreasePerLevel * 100
-      )}% power / +${Math.round(boostCapacityIncreasePerLevel * 100)}% capacity`,
-      disabled:
-        boostLevel >= MAX_UPGRADE_LEVEL || money < boostUpgradePrice,
+      )}% power / +${Math.round(
+        boostCapacityIncreasePerLevel * 100
+      )}% capacity`,
+      disabled: boostLevel >= MAX_UPGRADE_LEVEL || money < boostUpgradePrice,
     },
   ];
 
@@ -93,7 +136,7 @@ export default function UpgradeMenu() {
           borderRadius: 12,
           background: open
             ? "linear-gradient(145deg, rgba(255, 215, 64, 0.95), rgba(255, 145, 0, 0.9))"
-            : "rgba(24, 28, 35, 0.85)",
+            : "#ffffff",
           cursor: "pointer",
           display: "flex",
           alignItems: "center",
@@ -193,7 +236,11 @@ export default function UpgradeMenu() {
                     </div>
                     <button
                       type="button"
-                      onClick={onUpgrade}
+                      onClick={() => {
+                        if (disabled) return;
+                        playUpgradeSound();
+                        onUpgrade();
+                      }}
                       disabled={disabled}
                       style={{
                         border: "none",
