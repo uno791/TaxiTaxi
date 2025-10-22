@@ -29,6 +29,7 @@ import CarSelector from "./components/CarSelector/CarSelector";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
 import { useFlightMode } from "./tools/FlightTool";
+import NewCityRoad from "./components/Ground/NewCityRoad";
 
 function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
@@ -125,6 +126,7 @@ function GameWorld() {
             {/* World */}
             <AllBuildings />
             <RoadCircuit position={[0, 0, 0]} />
+            <NewCityRoad />
             <Background position={[0, 0, 0]} />
 
             {/* Taxi — unchanged from original */}
