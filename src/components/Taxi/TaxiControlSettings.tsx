@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import settingsIcon from "../../assets/settings-svgrepo-com.svg";
 import infoIcon from "../../assets/info-circle-svgrepo-com.svg";
 import type { ControlMode } from "./useControls";
+import { MusicToggleButton } from "../UI/MusicToggleButton";
 
 type Props = {
   controlMode: ControlMode;
@@ -59,30 +60,40 @@ export function TaxiControlSettings({
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => onPauseChange(true)}
+      <div
         style={{
           position: "absolute",
           top: 16,
           right: 16,
-          width: 44,
-          height: 44,
-          borderRadius: "50%",
-          border: "none",
-          padding: 8,
-          background: "rgba(255, 255, 255, 0.85)",
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
-          cursor: "pointer",
+          display: "flex",
+          gap: 12,
+          alignItems: "center",
+          zIndex: 11,
         }}
-        aria-label="Open driving settings"
       >
-        <img
-          src={settingsIcon}
-          alt="Settings"
-          style={{ width: "100%", height: "100%" }}
-        />
-      </button>
+        <MusicToggleButton />
+        <button
+          type="button"
+          onClick={() => onPauseChange(true)}
+          style={{
+            width: 44,
+            height: 44,
+            borderRadius: "50%",
+            border: "none",
+            padding: 8,
+            background: "rgba(255, 255, 255, 0.85)",
+            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
+            cursor: "pointer",
+          }}
+          aria-label="Open driving settings"
+        >
+          <img
+            src={settingsIcon}
+            alt="Settings"
+            style={{ width: "100%", height: "100%" }}
+          />
+        </button>
+      </div>
 
       {isPaused && (
         <div

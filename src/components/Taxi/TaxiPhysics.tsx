@@ -189,7 +189,7 @@ export function TaxiPhysics({
     const engineLoop = new Audio("/sounds/diesel-car-engine-sound-111994.mp3");
     engineLoop.preload = "auto";
     engineLoop.loop = true;
-    engineLoop.volume = 0.1;
+    engineLoop.volume = 0.05;
 
     const boostLoop = new Audio("/sounds/audi-v8-acceleration-sound-6067.mp3");
     boostLoop.preload = "auto";
