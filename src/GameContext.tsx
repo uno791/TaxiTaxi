@@ -1,4 +1,4 @@
-import { createContext, useContext, useCallback, useState } from "react";
+import { createContext, useContext, useCallback, useEffect, useRef, useState } from "react";
 import type { ReactNode } from "react";
 import {
   MAX_UPGRADE_LEVEL,
@@ -60,6 +60,26 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [speed, setSpeed] = useState(0);
   const [boost, setBoost] = useState(0);
   const [gameOver, setGameOver] = useState(false);
+  const levelUpSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  useEffect(() => {
+    if (typeof Audio === "undefined") return;
+    const audio = new Audio("/sounds/level-up.wav");
+    audio.preload = "auto";
+    audio.volume = 0.7;
+    levelUpSoundRef.current = audio;
+    return () => {
+      audio.pause();
+      levelUpSoundRef.current = null;
+    };
+  }, []);
+
+  const playLevelUpSound = useCallback(() => {
+    const audio = levelUpSoundRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    void audio.play().catch(() => undefined);
+  }, []);
 
   const { money, speedLevel, brakeLevel, boostLevel } = economy;
 
@@ -83,7 +103,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const maxBoost =
     baseMaxBoost * (1 + boostLevel * boostCapacityIncreasePerLevel);
 
-  const upgradeSpeed = () => {
+  const upgradeSpeed = useCallback(() => {
+    let upgraded = false;
     setEconomy((previous) => {
       if (
         previous.speedLevel >= MAX_UPGRADE_LEVEL ||
@@ -92,15 +113,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return previous;
       }
 
+      upgraded = true;
       return {
         ...previous,
         speedLevel: previous.speedLevel + 1,
         money: previous.money - speedUpgradePrice,
       };
     });
-  };
+    if (upgraded) playLevelUpSound();
+  }, [playLevelUpSound]);
 
-  const upgradeBrakes = () => {
+  const upgradeBrakes = useCallback(() => {
+    let upgraded = false;
     setEconomy((previous) => {
       if (
         previous.brakeLevel >= MAX_UPGRADE_LEVEL ||
@@ -109,15 +133,18 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return previous;
       }
 
+      upgraded = true;
       return {
         ...previous,
         brakeLevel: previous.brakeLevel + 1,
         money: previous.money - brakeUpgradePrice,
       };
     });
-  };
+    if (upgraded) playLevelUpSound();
+  }, [playLevelUpSound]);
 
-  const upgradeBoost = () => {
+  const upgradeBoost = useCallback(() => {
+    let upgraded = false;
     setEconomy((previous) => {
       if (
         previous.boostLevel >= MAX_UPGRADE_LEVEL ||
@@ -126,13 +153,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return previous;
       }
 
+      upgraded = true;
       return {
         ...previous,
         boostLevel: previous.boostLevel + 1,
         money: previous.money - boostUpgradePrice,
       };
     });
-  };
+    if (upgraded) playLevelUpSound();
+  }, [playLevelUpSound]);
 
   return (
     <GameContext.Provider
