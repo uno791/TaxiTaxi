@@ -138,6 +138,30 @@ export default function Mission({
   );
   const [dialogIndex, setDialogIndex] = useState(0);
   const [dialogVisible, setDialogVisible] = useState(false);
+  const missionStartSoundRef = useRef<HTMLAudioElement | null>(null);
+  const missionWinSoundRef = useRef<HTMLAudioElement | null>(null);
+  const missionLoseSoundRef = useRef<HTMLAudioElement | null>(null);
+
+  const playMissionStartSound = useCallback(() => {
+    const audio = missionStartSoundRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    void audio.play().catch(() => undefined);
+  }, []);
+
+  const playMissionWinSound = useCallback(() => {
+    const audio = missionWinSoundRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    void audio.play().catch(() => undefined);
+  }, []);
+
+  const playMissionLoseSound = useCallback(() => {
+    const audio = missionLoseSoundRef.current;
+    if (!audio) return;
+    audio.currentTime = 0;
+    void audio.play().catch(() => undefined);
+  }, []);
 
   const missionStatesRef = useRef(missionStates);
   const activeMissionIdRef = useRef(activeMissionId);
@@ -148,10 +172,43 @@ export default function Mission({
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const timerRef = useRef<number | null>(null);
 
-  const { setMoney } = useGame();
+  const { setMoney, gameOver } = useGame();
   // TIMER: include setTimer
   const { setPrompt, setActive, setDialog, setCompletion, setTimer } =
     useMissionUI();
+  const lastGameOverRef = useRef(gameOver);
+
+  useEffect(() => {
+    if (typeof Audio === "undefined") return;
+
+    const startSound = new Audio("/sounds/start-mission.wav");
+    startSound.preload = "auto";
+    startSound.volume = 0.7;
+
+    const winSound = new Audio("/sounds/win-mission.wav");
+    winSound.preload = "auto";
+    winSound.volume = 0.75;
+
+    const loseSound = new Audio("/sounds/lose-mission.wav");
+    loseSound.preload = "auto";
+    loseSound.volume = 0.75;
+
+    missionStartSoundRef.current = startSound;
+    missionWinSoundRef.current = winSound;
+    missionLoseSoundRef.current = loseSound;
+
+    return () => {
+      startSound.pause();
+      winSound.pause();
+      loseSound.pause();
+      startSound.currentTime = 0;
+      winSound.currentTime = 0;
+      loseSound.currentTime = 0;
+      missionStartSoundRef.current = null;
+      missionWinSoundRef.current = null;
+      missionLoseSoundRef.current = null;
+    };
+  }, []);
 
   useEffect(() => {
     missionStatesRef.current = missionStates;
@@ -165,53 +222,145 @@ export default function Mission({
     promptMissionIdRef.current = promptMissionId;
   }, [promptMissionId]);
 
-  const handlePickupEnter = useCallback((missionId: string) => {
-    const currentState = missionStatesRef.current[missionId];
-    if (currentState !== "available") return;
-    const currentActive = activeMissionIdRef.current;
-    if (currentActive && currentActive !== missionId) return;
-    setMissionStates((prev) => ({ ...prev, [missionId]: "prompt" }));
-    setPromptMissionId(missionId);
-  }, []);
+  useEffect(() => {
+    if (gameOver && !lastGameOverRef.current) {
+      playMissionLoseSound();
+      setMissionStates((prev) => {
+        let mutated = false;
+        const next: Record<string, MissionState> = { ...prev };
+        for (const key of Object.keys(next)) {
+          if (next[key] !== "available") {
+            next[key] = "available";
+            mutated = true;
+          }
+        }
+        if (mutated) {
+          missionStatesRef.current = next;
+          return next;
+        }
+        return prev;
+      });
+      setActiveMissionId(null);
+      activeMissionIdRef.current = null;
+      setPromptMissionId(null);
+      promptMissionIdRef.current = null;
+      setDialogVisible(false);
+      setCompletionInfo(null);
+      setTimeLeft(null);
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+      setTimer(null);
+      if (onDestinationChange) {
+        onDestinationChange(null);
+      }
+    }
+    lastGameOverRef.current = gameOver;
+  }, [
+    gameOver,
+    onDestinationChange,
+    playMissionLoseSound,
+    setMissionStates,
+    setActiveMissionId,
+    setPromptMissionId,
+    setDialogVisible,
+    setCompletionInfo,
+    setTimeLeft,
+    setTimer,
+  ]);
 
-  const handlePickupExit = useCallback((missionId: string) => {
-    setPromptMissionId((current) => (current === missionId ? null : current));
-    setMissionStates((prev) => {
-      if (prev[missionId] !== "prompt") return prev;
-      return { ...prev, [missionId]: "available" };
-    });
-  }, []);
+  const handlePickupEnter = useCallback(
+    (missionId: string) => {
+      const currentState = missionStatesRef.current[missionId];
+      if (currentState !== "available") return;
+      const currentActive = activeMissionIdRef.current;
+      if (currentActive && currentActive !== missionId) return;
+      setMissionStates((prev) => {
+        if (prev[missionId] === "prompt") return prev;
+        const next = { ...prev, [missionId]: "prompt" };
+        missionStatesRef.current = next;
+        return next;
+      });
+      setPromptMissionId(missionId);
+      promptMissionIdRef.current = missionId;
+    },
+    [setMissionStates, setPromptMissionId]
+  );
+
+  const handlePickupExit = useCallback(
+    (missionId: string) => {
+      setPromptMissionId((current) => {
+        if (current === missionId) {
+          promptMissionIdRef.current = null;
+          return null;
+        }
+        return current;
+      });
+      setMissionStates((prev) => {
+        if (prev[missionId] !== "prompt") return prev;
+        const next = { ...prev, [missionId]: "available" };
+        missionStatesRef.current = next;
+        return next;
+      });
+    },
+    [setMissionStates, setPromptMissionId]
+  );
 
   const handleStartMission = useCallback(() => {
     const missionId = promptMissionIdRef.current;
     if (!missionId) return;
 
-    setMissionStates((prev) => ({ ...prev, [missionId]: "active" }));
+    const config = missionConfigById[missionId];
+    if (!config) return;
+
+    setMissionStates((prev) => {
+      const current = prev[missionId];
+      if (current === "active") return prev;
+      const next = { ...prev, [missionId]: "active" };
+      missionStatesRef.current = next;
+      return next;
+    });
     setActiveMissionId(missionId);
+    activeMissionIdRef.current = missionId;
     setPromptMissionId(null);
+    promptMissionIdRef.current = null;
     setDialogIndex(0);
     setDialogVisible(true);
 
-    const config = missionConfigById[missionId];
-
-    // Set destination
-    if (config && onDestinationChange) {
+    if (onDestinationChange) {
       onDestinationChange(config.dropoffPosition);
     }
 
-    // Use mission-specific timer if provided
-    const limit = config?.timeLimit ?? 30; // default 30 seconds
-    setTimeLeft(limit); // ✅ start countdown
-    setTimer({ secondsLeft: limit }); // ✅ update UI
-  }, [onDestinationChange, setTimer]);
+    const limit = config.timeLimit ?? 30;
+    setTimeLeft(limit);
+    setTimer({ secondsLeft: limit });
+    playMissionStartSound();
+  }, [
+    onDestinationChange,
+    playMissionStartSound,
+    setMissionStates,
+    setActiveMissionId,
+    setPromptMissionId,
+    setDialogVisible,
+    setDialogIndex,
+    setTimeLeft,
+    setTimer,
+  ]);
 
   const handleDeclineMission = useCallback(() => {
     const missionId = promptMissionIdRef.current;
     if (missionId) {
-      setMissionStates((prev) => ({ ...prev, [missionId]: "available" }));
+      setMissionStates((prev) => {
+        if (prev[missionId] === "available") return prev;
+        const next = { ...prev, [missionId]: "available" };
+        missionStatesRef.current = next;
+        return next;
+      });
     }
     setPromptMissionId(null);
-  }, []);
+    promptMissionIdRef.current = null;
+  }, [setMissionStates, setPromptMissionId]);
 
   useEffect(() => {
     if (!onAvailableMissionTargetsChange) {
@@ -234,8 +383,19 @@ export default function Mission({
       if (missionStatesRef.current[missionId] !== "active") return;
       const config = missionConfigById[missionId];
       if (!config) return;
-      setMissionStates((prev) => ({ ...prev, [missionId]: "completed" }));
+      let completionApplied = false;
+      setMissionStates((prev) => {
+        if (prev[missionId] !== "active") return prev;
+        const next = { ...prev, [missionId]: "completed" };
+        missionStatesRef.current = next;
+        completionApplied = true;
+        return next;
+      });
+      if (!completionApplied) return;
       setActiveMissionId(null);
+      activeMissionIdRef.current = null;
+      setPromptMissionId(null);
+      promptMissionIdRef.current = null;
       setDialogVisible(false);
       setMoney((value) => value + config.reward);
       setCompletionInfo({ missionId, reward: config.reward });
@@ -250,13 +410,25 @@ export default function Mission({
       }
       setTimer(null);
       setTimeLeft(null);
+      playMissionWinSound();
     },
-    [setMoney, onDestinationChange, setTimer]
+    [
+      onDestinationChange,
+      playMissionWinSound,
+      setActiveMissionId,
+      setCompletionInfo,
+      setDialogVisible,
+      setPromptMissionId,
+      setMissionStates,
+      setMoney,
+      setTimeLeft,
+      setTimer,
+    ]
   );
 
   // TIMER: countdown effect
   useEffect(() => {
-    if (timeLeft === null) return;
+    if (timeLeft === null || timeLeft <= 0) return;
 
     if (timerRef.current) {
       window.clearInterval(timerRef.current);
@@ -270,14 +442,23 @@ export default function Mission({
           timerRef.current = null;
           const activeId = activeMissionIdRef.current;
           if (activeId) {
-            setMissionStates((prev) => ({ ...prev, [activeId]: "available" }));
+            setMissionStates((prevStates) => {
+              if (prevStates[activeId] === "available") return prevStates;
+              const nextStates = { ...prevStates, [activeId]: "available" };
+              missionStatesRef.current = nextStates;
+              return nextStates;
+            });
             setActiveMissionId(null);
+            activeMissionIdRef.current = null;
+            setPromptMissionId(null);
+            promptMissionIdRef.current = null;
             setDialogVisible(false);
             setCompletionInfo(null);
             if (onDestinationChange) onDestinationChange(null);
             setTimer({ secondsLeft: 0 }); // Triggers MissionOverlay popup instead of browser alert
+            playMissionLoseSound();
           }
-          return 0;
+          return null;
         }
 
         const next = prev - 1;
@@ -292,7 +473,17 @@ export default function Mission({
         timerRef.current = null;
       }
     };
-  }, [timeLeft, onDestinationChange, setTimer]);
+  }, [
+    timeLeft,
+    onDestinationChange,
+    playMissionLoseSound,
+    setActiveMissionId,
+    setCompletionInfo,
+    setDialogVisible,
+    setMissionStates,
+    setPromptMissionId,
+    setTimer,
+  ]);
 
   useEffect(() => {
     if (!completionInfo) return;
