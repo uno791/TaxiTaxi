@@ -30,6 +30,7 @@ import CarSelector from "./components/CarSelector/CarSelector";
 import { MetaProvider, useMeta } from "./context/MetaContext";
 import { useFlightMode } from "./tools/FlightTool";
 import NewCityRoad from "./components/Ground/NewCityRoad";
+import Level2 from "./components/City2/Level2";
 
 function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
@@ -108,7 +109,7 @@ function GameWorld() {
     <MissionUIProvider>
       <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
         <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
-          <FogEffect />
+          {/* <FogEffect /> */}
           <Physics
             gravity={[0, -9.81, 0]}
             broadphase="SAP"
@@ -128,6 +129,8 @@ function GameWorld() {
             <RoadCircuit position={[0, 0, 0]} />
             <NewCityRoad />
             <Background position={[0, 0, 0]} />
+
+            <Level2/>
 
             {/* Taxi — unchanged from original */}
             <TaxiPhysics
@@ -203,6 +206,7 @@ function GameWorld() {
         </button>
       </div>
     </MissionUIProvider>
+    
   );
 }
 
