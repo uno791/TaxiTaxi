@@ -36,6 +36,7 @@ function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
   const [isPaused, setIsPaused] = useState(false);
+  const [dialogPaused, setDialogPaused] = useState(false); // ✅ added
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
@@ -48,6 +49,7 @@ function GameWorld() {
   const [availableMissionTargets, setAvailableMissionTargets] = useState<
     MissionTargetInfo[]
   >([]);
+
   const updateDestination = useCallback(
     (position: [number, number, number] | null) => {
       if (position) {
@@ -62,6 +64,7 @@ function GameWorld() {
     },
     [destinationRef]
   );
+
   const handleAvailableMissionTargetsChange = useCallback(
     (targets: MissionTargetInfo[]) => {
       setAvailableMissionTargets((previous) => {
@@ -130,15 +133,16 @@ function GameWorld() {
             <NewCityRoad />
             <Background position={[0, 0, 0]} />
 
-            <Level2/>
+            <Level2 />
 
-            {/* Taxi — unchanged from original */}
+            {/* Taxi */}
             <TaxiPhysics
               chaseRef={chaseRef}
               controlMode={controlMode}
-              isPaused={isPaused || flightEnabled}
+              isPaused={isPaused || dialogPaused || flightEnabled} // ✅ includes dialog pause
               playerPositionRef={playerPositionRef}
             />
+
             <Mission
               position={[0, 0, 0]}
               taxiRef={chaseRef}
@@ -146,13 +150,16 @@ function GameWorld() {
               onAvailableMissionTargetsChange={
                 handleAvailableMissionTargetsChange
               }
+              onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
             />
+
             <DestinationMarker destinationRef={destinationRef} />
             <NavigationSystem
               playerRef={playerPositionRef}
               destinationRef={destinationRef}
               onMiniMapCanvasChange={setMiniMapCanvas}
             />
+
             {/* Camera */}
             {!flightEnabled && <CameraChase target={chaseRef} />}
             {flightControls}
@@ -181,6 +188,7 @@ function GameWorld() {
         />
         <MissionOverlay />
         {flightOverlay}
+
         <button
           type="button"
           onClick={toggleLightingMode}
@@ -206,7 +214,6 @@ function GameWorld() {
         </button>
       </div>
     </MissionUIProvider>
-    
   );
 }
 
@@ -217,7 +224,6 @@ function AppContent() {
   if (appStage === "entrance") return <EntranceScreen />;
   if (appStage === "car") return <CarSelector />;
 
-  // Game stage → identical GameWorld
   return <GameWorld />;
 }
 

@@ -1,6 +1,6 @@
 // CameraChase.tsx
 import { useFrame, useThree } from "@react-three/fiber";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 
 export function CameraChase({
@@ -32,24 +32,69 @@ export function CameraChase({
   const up = useRef(new THREE.Vector3(0, 1, 0));
   const initialized = useRef(false);
 
+  const [viewIndex, setViewIndex] = useState(0);
+
+  const views = [
+    { distance: 3, height: 1.6, lookAhead: 1.8, lookUp: 0.5 }, // Default chase
+    { distance: 1.2, height: 1.3, lookAhead: 2.5, lookUp: 0.6 }, // Hood
+    { distance: 0, height: 10, lookAhead: 0, lookUp: 0 }, // Top-down (rotates yaw only, reversed)
+    { distance: 6, height: 2.5, lookAhead: 2, lookUp: 0.5 }, // Far chase
+  ];
+
+  // Switch camera view with "C"
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key.toLowerCase() === "c") {
+        setViewIndex((prev) => (prev + 1) % views.length);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [views.length]);
+
   useFrame((_, dt) => {
     const t = target.current;
     if (!t) return;
+
+    const { distance, height, lookAhead, lookUp } = views[viewIndex];
 
     t.getWorldPosition(pos.current);
     t.getWorldQuaternion(quat.current);
 
     forward.current.set(0, 0, -1).applyQuaternion(quat.current).normalize();
 
-    desiredPos.current
-      .copy(pos.current)
-      .addScaledVector(forward.current, -distance)
-      .addScaledVector(up.current, height);
+    if (viewIndex === 2) {
+      // --- STABLE ROTATING TOP-DOWN CAMERA (REVERSED) ---
+      const euler = new THREE.Euler().setFromQuaternion(quat.current, "YXZ");
+      const yaw = euler.y;
 
-    desiredTarget.current
-      .copy(pos.current)
-      .addScaledVector(forward.current, lookAhead)
-      .addScaledVector(up.current, lookUp);
+      desiredPos.current.set(
+        pos.current.x,
+        pos.current.y + height,
+        pos.current.z
+      );
+
+      // Reverse top view orientation (forward appears downward)
+      const sinY = Math.sin(yaw + Math.PI);
+      const cosY = Math.cos(yaw + Math.PI);
+      camera.up.set(sinY, 0, cosY);
+
+      desiredTarget.current.copy(pos.current);
+    } else {
+      // --- NORMAL CHASE CAMERA ---
+      desiredPos.current
+        .copy(pos.current)
+        .addScaledVector(forward.current, -distance)
+        .addScaledVector(up.current, height);
+
+      desiredTarget.current
+        .copy(pos.current)
+        .addScaledVector(forward.current, lookAhead)
+        .addScaledVector(up.current, lookUp);
+
+      // Reset camera orientation for all other views
+      camera.up.set(0, 1, 0);
+    }
 
     if (!initialized.current) {
       filteredPos.current.copy(desiredPos.current);
