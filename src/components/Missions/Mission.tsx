@@ -7,7 +7,7 @@ import { MissionZone } from "./MissionZone";
 import { Woman } from "../Ground/SceneObjects/Woman";
 import { useMissionUI } from "./MissionUIContext";
 
-type MissionState = "available" | "prompt" | "active" | "completed";
+type MissionState = "available" | "prompt" | "dialog" | "active" | "completed";
 
 type MissionConfig = {
   id: string;
@@ -109,6 +109,7 @@ type MissionProps = JSX.IntrinsicElements["group"] & {
   taxiRef?: MutableRefObject<Object3D | null>;
   onDestinationChange?: (position: [number, number, number] | null) => void;
   onAvailableMissionTargetsChange?: (targets: MissionTargetInfo[]) => void;
+  onPauseChange?: (paused: boolean) => void;
 };
 
 type CompletionInfo = {
@@ -120,6 +121,7 @@ export default function Mission({
   taxiRef,
   onDestinationChange,
   onAvailableMissionTargetsChange,
+  onPauseChange,
   ...groupProps
 }: MissionProps) {
   const [missionStates, setMissionStates] = useState<
@@ -314,38 +316,37 @@ export default function Mission({
     const config = missionConfigById[missionId];
     if (!config) return;
 
+    // Enter dialog mode first (do NOT start mission/timer yet)
     setMissionStates((prev) => {
       const current = prev[missionId];
-      if (current === "active") return prev;
-      const next = { ...prev, [missionId]: "active" };
+      if (current === "active" || current === "dialog") return prev;
+      const next = { ...prev, [missionId]: "dialog" };
       missionStatesRef.current = next;
       return next;
     });
+
     setActiveMissionId(missionId);
     activeMissionIdRef.current = missionId;
+
     setPromptMissionId(null);
     promptMissionIdRef.current = null;
+
     setDialogIndex(0);
     setDialogVisible(true);
 
-    if (onDestinationChange) {
-      onDestinationChange(config.dropoffPosition);
-    }
+    // Pause gameplay while dialog is showing
+    onPauseChange?.(true);
 
-    const limit = config.timeLimit ?? 30;
-    setTimeLeft(limit);
-    setTimer({ secondsLeft: limit });
+    // Play start sound now; actual driving begins after dialog finishes
     playMissionStartSound();
   }, [
-    onDestinationChange,
     playMissionStartSound,
     setMissionStates,
     setActiveMissionId,
     setPromptMissionId,
-    setDialogVisible,
     setDialogIndex,
-    setTimeLeft,
-    setTimer,
+    setDialogVisible,
+    onPauseChange,
   ]);
 
   const handleDeclineMission = useCallback(() => {
@@ -485,6 +486,49 @@ export default function Mission({
     setTimer,
   ]);
 
+  // DIALOG: handle Spacebar to progress dialog
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code === "Space") {
+        event.preventDefault();
+        event.stopPropagation();
+        const missionId = activeMissionIdRef.current;
+        if (!missionId) return;
+
+        const currentState = missionStatesRef.current[missionId];
+        if (currentState !== "dialog") return;
+
+        const config = missionConfigById[missionId];
+        if (!config) return;
+
+        setDialogIndex((prev) => {
+          const next = prev + 1;
+          if (next >= config.passengerDialog.length) {
+            // End of dialog: start mission
+            setDialogVisible(false);
+            onPauseChange?.(false); // resume game
+            setMissionStates((p) => {
+              const updated = { ...p, [missionId]: "active" };
+              missionStatesRef.current = updated;
+              return updated;
+            });
+
+            if (onDestinationChange)
+              onDestinationChange(config.dropoffPosition);
+            const limit = config?.timeLimit ?? 30;
+            setTimeLeft(limit);
+            setTimer({ secondsLeft: limit });
+            return prev;
+          }
+          return next;
+        });
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [onDestinationChange, onPauseChange, setTimer]);
+
   useEffect(() => {
     if (!completionInfo) return;
     const timeout = window.setTimeout(() => setCompletionInfo(null), 3500);
@@ -492,41 +536,18 @@ export default function Mission({
   }, [completionInfo]);
 
   useEffect(() => {
-    if (dialogIntervalRef.current) {
-      window.clearInterval(dialogIntervalRef.current);
-      dialogIntervalRef.current = null;
+    const missionId = activeMissionIdRef.current;
+    if (!missionId) return;
+
+    const config = missionConfigById[missionId];
+    if (!config) return;
+
+    if (dialogVisible && config.passengerDialog[dialogIndex]) {
+      setDialog({ text: config.passengerDialog[dialogIndex] });
+    } else {
+      setDialog(null);
     }
-
-    const currentActive = activeMissionIdRef.current;
-    if (!currentActive) {
-      setDialogVisible(false);
-      return;
-    }
-
-    const config = missionConfigById[currentActive];
-    if (!config || config.passengerDialog.length === 0) {
-      setDialogVisible(false);
-      return;
-    }
-
-    setDialogVisible(true);
-    setDialogIndex(0);
-
-    dialogIntervalRef.current = window.setInterval(() => {
-      setDialogIndex((prev) => {
-        const lines = config.passengerDialog.length;
-        if (lines === 0) return 0;
-        return (prev + 1) % lines;
-      });
-    }, 5000);
-
-    return () => {
-      if (dialogIntervalRef.current) {
-        window.clearInterval(dialogIntervalRef.current);
-        dialogIntervalRef.current = null;
-      }
-    };
-  }, [activeMissionId]);
+  }, [dialogVisible, dialogIndex, setDialog]);
 
   useEffect(() => {
     return () => {
@@ -578,14 +599,6 @@ export default function Mission({
       setActive(null);
     }
   }, [activeConfig, setActive]);
-
-  useEffect(() => {
-    if (dialogVisible && activeDialog) {
-      setDialog({ text: activeDialog });
-    } else {
-      setDialog(null);
-    }
-  }, [dialogVisible, activeDialog, setDialog]);
 
   useEffect(() => {
     if (completionInfo && completionConfig) {
