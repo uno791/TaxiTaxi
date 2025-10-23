@@ -1,6 +1,8 @@
 import type { JSX } from "react/jsx-runtime";
 import { RoadLevel2 } from "./Road/RoadLevel2";
 import { BuildingsLevel2 } from "./Buildings/BuildingsLevel2";
+import { ResLevel2 } from "./Buildings/ResLevel2";
+
 export default function Level2(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
@@ -13,6 +15,13 @@ export default function Level2(props: JSX.IntrinsicElements["group"]) {
         position={[100.4, 0, -150.5]}
         scale={[0.4,0.35,0.4]}
         rotation={[0, 0, 0]}/>
+
+        <ResLevel2
+        position={[100, 0.1, -150]}
+        scale={0.4}
+        rotation={[0, 0, 0]}/>
+
+        
       
     </group>
   );
