@@ -62,7 +62,7 @@ const GLOW_POSITIONS: Vec3[] = STREET_LIGHTS.map(({ position }) => [
 export default function StreetLights(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
-      <GroundGlowDecals positions={GLOW_POSITIONS} radius={3.2} intensity={1} />
+      <GroundGlowDecals positions={GLOW_POSITIONS} radius={3.3} intensity={1} />
       {STREET_LIGHTS.map((config) => (
         <StreetLight
           key={`${config.position.join(",")}`}
