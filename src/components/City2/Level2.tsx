@@ -10,8 +10,8 @@ export default function Level2(props: JSX.IntrinsicElements["group"]) {
         rotation={[0, 0, 0]}/>
 
         <BuildingsLevel2
-        position={[259.5, 0.1, -120]}
-        scale={0.4}
+        position={[100.4, 0, -150.5]}
+        scale={[0.4,0.35,0.4]}
         rotation={[0, 0, 0]}/>
       
     </group>

@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function BuildingsLevel2(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/buildingsV1.glb");
+  const { scene } = useGLTF("/models/buildingsV2.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function BuildingsLevel2(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/buildingsV1.glb");
+useGLTF.preload("/models/buildingsV2.glb");
