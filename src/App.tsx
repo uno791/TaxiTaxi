@@ -108,7 +108,7 @@ function GameWorld() {
     <MissionUIProvider>
       <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
         <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
-          <FogEffect />
+          {/* <FogEffect /> */}
           <Physics
             gravity={[0, -9.81, 0]}
             broadphase="SAP"
