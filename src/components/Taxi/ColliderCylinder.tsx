@@ -2,7 +2,7 @@ import { useMemo } from "react";
 import { useTrimesh } from "@react-three/cannon";
 import { CylinderGeometry } from "three";
 
-const DEBUG_VISUALIZATION = true;
+const DEBUG_VISUALIZATION = false;
 
 type Vector3Tuple = [number, number, number];
 

@@ -12,8 +12,25 @@ type MissionActiveState = {
   dropoffHint: string;
 };
 
-type MissionDialogState = {
+export type MissionDialogSpeaker =
+  | "driver"
+  | "passenger"
+  | "narration"
+  | "internal"
+  | "radio";
+
+export type MissionDialogOption = {
+  id: string;
+  label: string;
+  onSelect: () => void;
+};
+
+export type MissionDialogState = {
+  speaker: MissionDialogSpeaker;
+  speakerLabel: string;
   text: string;
+  options?: MissionDialogOption[];
+  onContinue?: () => void;
 };
 
 type MissionCompletionState = {

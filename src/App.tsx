@@ -43,6 +43,7 @@ import {
   CITY_SEQUENCE,
   CITY_SPAWN_POINTS,
   CITY_STORY_DIALOGS,
+  CITY_INTRO_DIALOGS,
   type CityId,
 } from "./constants/cities";
 import CityStoryOverlay from "./components/UI/CityStoryOverlay";
@@ -59,8 +60,10 @@ function GameWorld() {
     city2: false,
     city3: false,
   });
+  const initialIntroCity = CITY_SEQUENCE[0] ?? null;
+  const [introCity, setIntroCity] = useState<CityId | null>(initialIntroCity);
   const [storyCity, setStoryCity] = useState<CityId | null>(null);
-  const [storyPaused, setStoryPaused] = useState(false);
+  const [storyPaused, setStoryPaused] = useState(initialIntroCity !== null);
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
   const destinationRef = useRef(
@@ -121,6 +124,7 @@ function GameWorld() {
 
   const missions = MISSIONS_BY_CITY[activeCity];
   const spawnPosition = CITY_SPAWN_POINTS[activeCity];
+  const introData = introCity ? CITY_INTRO_DIALOGS[introCity] : null;
   const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
   const [testMode, setTestMode] = useState(false);
 
@@ -136,6 +140,11 @@ function GameWorld() {
     setLightingMode((previous) => (previous === "fake" ? "fill" : "fake"));
   }, []);
 
+  const handleIntroOverlayContinue = useCallback(() => {
+    setIntroCity(null);
+    setStoryPaused(false);
+  }, []);
+
   const handleAllMissionsCompleted = useCallback((cityId: CityId) => {
     if (completedCitiesRef.current[cityId]) return;
     completedCitiesRef.current = {
@@ -147,27 +156,42 @@ function GameWorld() {
   }, []);
 
   const handleStoryOverlayContinue = useCallback(() => {
-    setStoryPaused(false);
-    setStoryCity((currentCity) => {
-      if (!currentCity) return null;
-      const currentIndex = CITY_SEQUENCE.indexOf(currentCity);
-      const nextCity = CITY_SEQUENCE[currentIndex + 1];
-      if (nextCity) {
-        setActiveCity(nextCity);
-      }
-      return null;
-    });
-    setAvailableMissionTargets([]);
-    destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
-  }, []);
+    if (!storyCity) {
+      setStoryPaused(false);
+      return;
+    }
 
-  const handleTestTravel = useCallback((city: CityId) => {
+    const currentIndex = CITY_SEQUENCE.indexOf(storyCity);
+    const nextCity =
+      currentIndex >= 0 && currentIndex < CITY_SEQUENCE.length - 1
+        ? CITY_SEQUENCE[currentIndex + 1]
+        : null;
+
     setStoryCity(null);
-    setStoryPaused(false);
-    setActiveCity(city);
+
+    if (nextCity) {
+      setActiveCity(nextCity);
+      setIntroCity(nextCity);
+      setStoryPaused(true);
+    } else {
+      setStoryPaused(false);
+    }
+
     setAvailableMissionTargets([]);
     destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
-  }, []);
+  }, [storyCity, setAvailableMissionTargets, setIntroCity]);
+
+  const handleTestTravel = useCallback(
+    (city: CityId) => {
+      setStoryCity(null);
+      setIntroCity(city);
+      setStoryPaused(true);
+      setActiveCity(city);
+      setAvailableMissionTargets([]);
+      destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
+    },
+    [setAvailableMissionTargets, setIntroCity]
+  );
 
   const toggleTestMode = useCallback(() => {
     setTestMode((prev) => !prev);
@@ -275,6 +299,11 @@ function GameWorld() {
           size={220}
         />
         <MissionOverlay />
+        <CityStoryOverlay
+          cityId={introCity}
+          story={introData}
+          onContinue={handleIntroOverlayContinue}
+        />
         <CityStoryOverlay
           cityId={storyCity}
           story={storyData}

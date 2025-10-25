@@ -177,28 +177,143 @@ export default function MissionOverlay() {
         >
           <div
             style={{
-              maxWidth: "600px",
+              maxWidth: "640px",
+              width: "90%",
               background: "rgba(20,20,20,0.95)",
-              padding: "24px 30px",
-              borderRadius: "12px",
+              padding: "26px 34px 28px",
+              borderRadius: "14px",
               color: "#f0f0f0",
               fontFamily: "Arial, sans-serif",
               fontSize: "18px",
               lineHeight: 1.6,
               textAlign: "center",
-              boxShadow: "0 12px 24px rgba(0,0,0,0.4)",
+              boxShadow: "0 16px 30px rgba(0,0,0,0.45)",
             }}
           >
-            {dialog.text}
             <div
               style={{
-                marginTop: "18px",
-                fontSize: "14px",
-                opacity: 0.8,
+                fontSize: "15px",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.65)",
+                marginBottom: "12px",
               }}
             >
-              Press SPACE to continue
+              {dialog.speakerLabel}
             </div>
+            <div style={{ whiteSpace: "pre-wrap" }}>{dialog.text}</div>
+            {dialog.options && dialog.options.length > 0 ? (
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "12px",
+                  marginTop: "24px",
+                }}
+              >
+                {dialog.options.map((option) => (
+                  <button
+                    key={option.id}
+                    type="button"
+                    onClick={option.onSelect}
+                    style={{
+                      padding: "12px 18px",
+                      borderRadius: "10px",
+                      border: "1px solid rgba(255,255,255,0.2)",
+                      background: "rgba(60, 68, 82, 0.65)",
+                      color: "#f5f5f5",
+                      cursor: "pointer",
+                      fontSize: "17px",
+                      transition: "background 0.15s ease, transform 0.15s ease",
+                    }}
+                    onMouseDown={(event) => {
+                      event.currentTarget.style.transform = "scale(0.97)";
+                      event.currentTarget.style.background =
+                        "rgba(60, 68, 82, 0.8)";
+                    }}
+                    onMouseUp={(event) => {
+                      event.currentTarget.style.transform = "scale(1)";
+                      event.currentTarget.style.background =
+                        "rgba(60, 68, 82, 0.65)";
+                    }}
+                    onMouseLeave={(event) => {
+                      event.currentTarget.style.transform = "scale(1)";
+                      event.currentTarget.style.background =
+                        "rgba(60, 68, 82, 0.65)";
+                    }}
+                  >
+                    {option.label}
+                  </button>
+                ))}
+                <div
+                  style={{
+                    marginTop: "4px",
+                    fontSize: "13px",
+                    letterSpacing: "0.05em",
+                    textTransform: "uppercase",
+                    color: "rgba(255,255,255,0.6)",
+                  }}
+                >
+                  Choose an option to continue
+                </div>
+              </div>
+            ) : (
+              dialog.onContinue && (
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "14px",
+                    marginTop: "26px",
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={dialog.onContinue}
+                    style={{
+                      padding: "10px 26px",
+                      borderRadius: "999px",
+                      border: "none",
+                      background: "#f5f5f5",
+                      color: "#111",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                      fontSize: "16px",
+                      boxShadow: "0 10px 18px rgba(0,0,0,0.35)",
+                      transition: "transform 0.15s ease, box-shadow 0.15s ease",
+                    }}
+                    onMouseDown={(event) => {
+                      event.currentTarget.style.transform = "scale(0.97)";
+                      event.currentTarget.style.boxShadow =
+                        "0 8px 14px rgba(0,0,0,0.4)";
+                    }}
+                    onMouseUp={(event) => {
+                      event.currentTarget.style.transform = "scale(1)";
+                      event.currentTarget.style.boxShadow =
+                        "0 10px 18px rgba(0,0,0,0.35)";
+                    }}
+                    onMouseLeave={(event) => {
+                      event.currentTarget.style.transform = "scale(1)";
+                      event.currentTarget.style.boxShadow =
+                        "0 10px 18px rgba(0,0,0,0.35)";
+                    }}
+                  >
+                    Continue
+                  </button>
+                  <div
+                    style={{
+                      fontSize: "13px",
+                      opacity: 0.75,
+                      letterSpacing: "0.04em",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Press Space or click Continue
+                  </div>
+                </div>
+              )
+            )}
           </div>
         </div>
       )}

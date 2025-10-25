@@ -6,8 +6,8 @@ import { useColliderPainter } from "./ColliderPainterContext";
 import type { ColliderPreview } from "./types";
 
 const DEFAULT_COLLIDER_HEIGHT = 10;
-const MIN_SIZE = 0.5;
-const DEFAULT_SEGMENTS = 32;
+const MIN_SIZE = 0.05;
+const DEFAULT_SEGMENTS = 16;
 
 type Props = {
   playerPositionRef: MutableRefObject<THREE.Vector3>;
@@ -126,7 +126,7 @@ export function ColliderPainterRuntime({ playerPositionRef }: Props) {
       }
 
       if (shape === "box") {
-        if (width < MIN_SIZE || length < MIN_SIZE) return;
+        if (width < MIN_SIZE && length < MIN_SIZE) return;
         addCollider({
           cityId: activeCity,
           shape: "box",

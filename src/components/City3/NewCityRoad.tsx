@@ -29,7 +29,7 @@ export default function NewCityRoad(props: JSX.IntrinsicElements["group"]) {
         scale={0.3}
         rotation={[0, 0, 0]}
       />
-      <City3Colliders debug />
+      <City3Colliders />
       <Grass position={[0, -1, 0]} scale={[1000, 1, 1000]} />
     </group>
   );
