@@ -10,7 +10,7 @@ export const CITY_SEQUENCE: CityId[] = ["city1", "city2", "city3"];
 export const CITY_SPAWN_POINTS: Record<CityId, [number, number, number]> = {
   city1: [-30, 0.5, -25],
   city2: [102, 3, -150],
-  city3: [26, 0.5, -448],
+  city3: [60, 0.5, -448],
 };
 
 export const CITY_STORY_DIALOGS: Record<CityId, CityStory> = {
