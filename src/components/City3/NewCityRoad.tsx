@@ -8,7 +8,6 @@ import { Grass } from "../Ground/Grass";
 export default function NewCityRoad(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
-      <Grass position={[28, -1, -450]} scale={[600, 1, 600]} />
       <NewRoadtest
         position={[28, 0.1, -450]}
         scale={0.3}
@@ -29,6 +28,7 @@ export default function NewCityRoad(props: JSX.IntrinsicElements["group"]) {
         scale={0.3}
         rotation={[0, 0, 0]}
       />
+      <Grass position={[0, -1, 0]} scale={[1000, 1, 1000]} />
     </group>
   );
 }

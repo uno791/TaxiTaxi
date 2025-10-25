@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -29,8 +29,16 @@ import CarSelector from "./components/CarSelector/CarSelector";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
 import { useFlightMode } from "./tools/FlightTool";
-import NewCityRoad from "./components/Ground/NewCityRoad";
+import NewCityRoad from "./components/City3/NewCityRoad";
 import Level2 from "./components/City2/Level2";
+import { MISSIONS_BY_CITY } from "./components/Missions/missionConfig";
+import {
+  CITY_SEQUENCE,
+  CITY_SPAWN_POINTS,
+  CITY_STORY_DIALOGS,
+  type CityId,
+} from "./constants/cities";
+import CityStoryOverlay from "./components/UI/CityStoryOverlay";
 
 function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
@@ -38,6 +46,14 @@ function GameWorld() {
   const [isPaused, setIsPaused] = useState(false);
   const [dialogPaused, setDialogPaused] = useState(false); // ✅ added
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
+  const [activeCity, setActiveCity] = useState<CityId>("city1");
+  const completedCitiesRef = useRef<Record<CityId, boolean>>({
+    city1: false,
+    city2: false,
+    city3: false,
+  });
+  const [storyCity, setStoryCity] = useState<CityId | null>(null);
+  const [storyPaused, setStoryPaused] = useState(false);
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
   const destinationRef = useRef(
@@ -96,6 +112,11 @@ function GameWorld() {
     []
   );
 
+  const missions = MISSIONS_BY_CITY[activeCity];
+  const spawnPosition = CITY_SPAWN_POINTS[activeCity];
+  const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
+  const [testMode, setTestMode] = useState(false);
+
   const {
     enabled: flightEnabled,
     overlay: flightOverlay,
@@ -108,11 +129,53 @@ function GameWorld() {
     setLightingMode((previous) => (previous === "fake" ? "fill" : "fake"));
   }, []);
 
+  const handleAllMissionsCompleted = useCallback((cityId: CityId) => {
+    if (completedCitiesRef.current[cityId]) return;
+    completedCitiesRef.current = {
+      ...completedCitiesRef.current,
+      [cityId]: true,
+    };
+    setStoryCity(cityId);
+    setStoryPaused(true);
+  }, []);
+
+  const handleStoryOverlayContinue = useCallback(() => {
+    setStoryPaused(false);
+    setStoryCity((currentCity) => {
+      if (!currentCity) return null;
+      const currentIndex = CITY_SEQUENCE.indexOf(currentCity);
+      const nextCity = CITY_SEQUENCE[currentIndex + 1];
+      if (nextCity) {
+        setActiveCity(nextCity);
+      }
+      return null;
+    });
+    setAvailableMissionTargets([]);
+    destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
+  }, []);
+
+  const handleTestTravel = useCallback((city: CityId) => {
+    setStoryCity(null);
+    setStoryPaused(false);
+    setActiveCity(city);
+    setAvailableMissionTargets([]);
+    destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
+  }, []);
+
+  const toggleTestMode = useCallback(() => {
+    setTestMode((prev) => !prev);
+  }, []);
+
+  useEffect(() => {
+    setAvailableMissionTargets([]);
+    destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
+  }, [activeCity]);
+
   return (
     <MissionUIProvider>
       <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
         <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
-          <FogEffect />
+          {/* <FogEffect /> */}
           <Physics
             gravity={[0, -9.81, 0]}
             broadphase="SAP"
@@ -124,33 +187,42 @@ function GameWorld() {
           >
             {/* Lighting */}
             {lightingMode === "fill" ? (
-              <hemisphereLight args={["#8aa6ff", "#1b1e25", 0.35]} />
+              <hemisphereLight args={["#8aa6ff", "#1b1e25", 4.35]} />
             ) : null}
 
             {/* World */}
-            <AllBuildings />
-            <RoadCircuit position={[0, 0, 0]} />
-            <NewCityRoad />
-            <Background position={[0, 0, 0]} />
-
-            <Level2 />
+            {activeCity === "city1" ? (
+              <>
+                <AllBuildings />
+                <RoadCircuit position={[0, 0, 0]} />
+                <Background position={[0, 0, 0]} />
+              </>
+            ) : null}
+            {activeCity === "city2" ? <Level2 /> : null}
+            {activeCity === "city3" ? <NewCityRoad /> : null}
 
             {/* Taxi */}
             <TaxiPhysics
               chaseRef={chaseRef}
               controlMode={controlMode}
-              isPaused={isPaused || dialogPaused || flightEnabled} // ✅ includes dialog pause
+              isPaused={
+                isPaused || dialogPaused || storyPaused || flightEnabled
+              } // ✅ includes dialog pause & story overlay
               playerPositionRef={playerPositionRef}
+              spawnPosition={spawnPosition}
             />
 
             <Mission
               position={[0, 0, 0]}
               taxiRef={chaseRef}
+              missions={missions}
+              cityId={activeCity}
               onDestinationChange={updateDestination}
               onAvailableMissionTargetsChange={
                 handleAvailableMissionTargetsChange
               }
               onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
+              onAllMissionsCompleted={handleAllMissionsCompleted}
             />
 
             <DestinationMarker destinationRef={destinationRef} />
@@ -187,6 +259,71 @@ function GameWorld() {
           size={220}
         />
         <MissionOverlay />
+        <CityStoryOverlay
+          cityId={storyCity}
+          story={storyData}
+          onContinue={handleStoryOverlayContinue}
+        />
+        <div
+          style={{
+            position: "absolute",
+            bottom: 20,
+            left: 20,
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            zIndex: 40,
+            pointerEvents: "auto",
+          }}
+        >
+          <button
+            type="button"
+            onClick={toggleTestMode}
+            style={{
+              padding: "8px 14px",
+              borderRadius: "8px",
+              background: testMode
+                ? "rgba(46, 125, 50, 0.85)"
+                : "rgba(24, 28, 35, 0.85)",
+              color: "#f5f5f5",
+              border: "1px solid rgba(255,255,255,0.25)",
+              fontSize: "0.85rem",
+              cursor: "pointer",
+            }}
+          >
+            {testMode ? "Test Travel: On" : "Enable Test Travel"}
+          </button>
+          {testMode ? (
+            <div
+              style={{
+                display: "flex",
+                gap: "8px",
+              }}
+            >
+              {CITY_SEQUENCE.map((city) => (
+                <button
+                  key={city}
+                  type="button"
+                  onClick={() => handleTestTravel(city)}
+                  style={{
+                    padding: "8px 12px",
+                    borderRadius: "8px",
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    background:
+                      activeCity === city
+                        ? "rgba(46, 125, 50, 0.85)"
+                        : "rgba(24, 28, 35, 0.75)",
+                    color: "#f5f5f5",
+                    cursor: "pointer",
+                    fontSize: "0.8rem",
+                  }}
+                >
+                  Travel to {city.toUpperCase()}
+                </button>
+              ))}
+            </div>
+          ) : null}
+        </div>
         {flightOverlay}
 
         <button

@@ -28,6 +28,7 @@ type Props = {
   controlMode: ControlMode;
   isPaused: boolean;
   playerPositionRef: MutableRefObject<THREE.Vector3>;
+  spawnPosition: [number, number, number];
 };
 
 type BrakeSmokeParticle = {
@@ -63,6 +64,7 @@ export function TaxiPhysics({
   controlMode,
   isPaused,
   playerPositionRef,
+  spawnPosition,
 }: Props) {
   const { selectedCar } = useMeta();
 
@@ -227,7 +229,7 @@ export function TaxiPhysics({
     };
   }, []);
 
-  const position: [number, number, number] = [-30, 0.5, -25];
+  const position = spawnPosition;
   const [initialX, initialY, initialZ] = position;
 
   const width = 0.5;
@@ -369,6 +371,21 @@ export function TaxiPhysics({
   useEffect(() => {
     if (chaseRef) chaseRef.current = chassisRef.current;
   }, [chaseRef]);
+
+  useEffect(() => {
+    if (!chassisApi?.position || !chassisApi?.velocity || !chassisApi?.angularVelocity)
+      return;
+    const [x, y, z] = spawnPosition;
+    chassisApi.position.set(x, y, z);
+    chassisApi.velocity.set(0, 0, 0);
+    chassisApi.angularVelocity.set(0, 0, 0);
+    if (typeof chassisApi.quaternion?.set === "function") {
+      chassisApi.quaternion.set(0, 0, 0, 1);
+    }
+    velocityRef.current = [0, 0, 0];
+    velocityVector.current.set(0, 0, 0);
+    playerPositionRef.current.set(x, y, z);
+  }, [chassisApi, spawnPosition, playerPositionRef, velocityVector]);
 
   // Attach headlight targets to the chassis
   useEffect(() => {

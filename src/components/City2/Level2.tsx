@@ -8,8 +8,6 @@ import { Grass } from "../Ground/Grass";
 export default function Level2(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
-      <Grass position={[100, 1, -150]} scale={[600, 1, 600]} />
-
       <RoadLevel2
         position={[100, 0.1, -150]}
         scale={0.4}
@@ -28,6 +26,7 @@ export default function Level2(props: JSX.IntrinsicElements["group"]) {
         scale={0.4}
         rotation={[0, 0, 0]}
       />
+      <Grass position={[0, -1, 0]} scale={[1000, 1, 1000]} />
     </group>
   );
 }
