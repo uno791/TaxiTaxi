@@ -198,7 +198,7 @@ function GameWorld() {
                 <Background position={[0, 0, 0]} />
               </>
             ) : null}
-            {activeCity === "city2" ? <Level2 /> : null}
+            {activeCity === "city2" ? <Level2 position={[-130,0,-20]}/> : null}
             {activeCity === "city3" ? <NewCityRoad /> : null}
 
             {/* Taxi */}
