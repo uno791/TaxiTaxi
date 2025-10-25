@@ -9,7 +9,13 @@ import { useMissionUI } from "./MissionUIContext";
 import type { CityId } from "../../constants/cities";
 import type { MissionConfig, MissionDialogueEntry } from "./missionConfig";
 
-type MissionState = "available" | "prompt" | "dialog" | "active" | "completed";
+type MissionState =
+  | "locked"
+  | "available"
+  | "prompt"
+  | "dialog"
+  | "active"
+  | "completed";
 
 export type MissionTargetInfo = {
   id: string;
@@ -20,9 +26,9 @@ const createInitialMissionState = (
   missions: MissionConfig[]
 ): Record<string, MissionState> => {
   const initialState: Record<string, MissionState> = {};
-  for (const config of missions) {
-    initialState[config.id] = "available";
-  }
+  missions.forEach((config, index) => {
+    initialState[config.id] = index === 0 ? "available" : "locked";
+  });
   return initialState;
 };
 
@@ -225,13 +231,27 @@ export default function Mission({
       playMissionLoseSound();
       setMissionStates((prev) => {
         let mutated = false;
-        const next: Record<string, MissionState> = { ...prev };
-        for (const key of Object.keys(next)) {
-          if (next[key] !== "available") {
-            next[key] = "available";
-            mutated = true;
+        const next: Record<string, MissionState> = {};
+        let unlocked = false;
+
+        for (const mission of missions) {
+          const previousState = prev[mission.id];
+          if (previousState === "completed") {
+            next[mission.id] = "completed";
+            if (next[mission.id] !== previousState) mutated = true;
+            continue;
           }
+
+          if (!unlocked) {
+            next[mission.id] = "available";
+            unlocked = true;
+          } else {
+            next[mission.id] = "locked";
+          }
+
+          if (next[mission.id] !== previousState) mutated = true;
         }
+
         if (mutated) {
           missionStatesRef.current = next;
           return next;
@@ -258,6 +278,7 @@ export default function Mission({
   }, [
     gameOver,
     onDestinationChange,
+    missions,
     playMissionLoseSound,
     setMissionStates,
     setActiveMissionId,
@@ -476,10 +497,27 @@ export default function Mission({
       setTimer(null);
       setTimeLeft(null);
       playMissionWinSound();
+
+      const currentIndex = missions.findIndex(
+        (mission) => mission.id === missionId
+      );
+      if (currentIndex >= 0) {
+        const nextMission = missions[currentIndex + 1];
+        if (nextMission) {
+          setMissionStates((prevStates) => {
+            if (prevStates[nextMission.id] !== "locked") return prevStates;
+            const nextStates = { ...prevStates, [nextMission.id]: "available" };
+            missionStatesRef.current = nextStates;
+            return nextStates;
+          });
+        }
+      }
+
       checkForCityCompletion();
     },
     [
       checkForCityCompletion,
+      missions,
       onDestinationChange,
       playMissionWinSound,
       setActiveMissionId,
