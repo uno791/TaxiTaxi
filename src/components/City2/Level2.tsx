@@ -3,31 +3,31 @@ import { RoadLevel2 } from "./Road/RoadLevel2";
 import { BuildingsLevel2 } from "./Buildings/BuildingsLevel2";
 import { ResLevel2 } from "./Buildings/ResLevel2";
 import { BitsLevel2 } from "./Buildings/BitsLevel2";
+import { Grass } from "../Ground/Grass";
 
 export default function Level2(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
-        <RoadLevel2
+      <Grass position={[100, 1, -150]} scale={[600, 1, 600]} />
+
+      <RoadLevel2
         position={[100, 0.1, -150]}
         scale={0.4}
-        rotation={[0, 0, 0]}/>
+        rotation={[0, 0, 0]}
+      />
 
-        <BuildingsLevel2
+      <BuildingsLevel2
         position={[100.4, 0, -150.5]}
-        scale={[0.4,0.35,0.4]}
-        rotation={[0, 0, 0]}/>
+        scale={[0.4, 0.35, 0.4]}
+        rotation={[0, 0, 0]}
+      />
 
-        <ResLevel2
+      <ResLevel2 position={[100, 0.1, -150]} scale={0.4} rotation={[0, 0, 0]} />
+      <BitsLevel2
         position={[100, 0.1, -150]}
         scale={0.4}
-        rotation={[0, 0, 0]}/>
-        <BitsLevel2
-        position={[100, 0.1, -150]}
-        scale={0.4}
-        rotation={[0, 0, 0]}/>
-
-        
-      
+        rotation={[0, 0, 0]}
+      />
     </group>
   );
 }
