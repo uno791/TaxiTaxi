@@ -4,10 +4,10 @@ import type { MutableRefObject } from "react";
 import type { Object3D } from "three";
 import { useGame } from "../../GameContext";
 import { MissionZone } from "./MissionZone";
-import { Woman } from "../Ground/SceneObjects/Woman";
+import { PassengerModel } from "../Ground/SceneObjects/PassengerModel";
 import { useMissionUI } from "./MissionUIContext";
 import type { CityId } from "../../constants/cities";
-import type { MissionConfig } from "./missionConfig";
+import type { MissionConfig, MissionDialogueEntry } from "./missionConfig";
 
 type MissionState = "available" | "prompt" | "dialog" | "active" | "completed";
 
@@ -24,6 +24,38 @@ const createInitialMissionState = (
     initialState[config.id] = "available";
   }
   return initialState;
+};
+
+const getMissionDialogue = (config: MissionConfig): MissionDialogueEntry[] => {
+  if (config.dialogue && config.dialogue.length > 0) {
+    return config.dialogue;
+  }
+  if (config.passengerDialog && config.passengerDialog.length > 0) {
+    return config.passengerDialog.map((text) => ({
+      speaker: "passenger",
+      text,
+    }));
+  }
+  return [];
+};
+
+const getDefaultSpeakerLabel = (
+  entry: MissionDialogueEntry,
+  config: MissionConfig
+) => {
+  switch (entry.speaker) {
+    case "driver":
+      return "Driver";
+    case "passenger":
+      return config.passengerName ?? "Passenger";
+    case "internal":
+      return "Driver (Internal)";
+    case "radio":
+      return "Radio";
+    case "narration":
+    default:
+      return "Narration";
+  }
 };
 
 type MissionProps = JSX.IntrinsicElements["group"] & {
@@ -327,6 +359,64 @@ export default function Mission({
     promptMissionIdRef.current = null;
   }, [setMissionStates, setPromptMissionId]);
 
+  const concludeDialogAndStartMission = useCallback(
+    (missionId: string, config: MissionConfig) => {
+      setDialogVisible(false);
+      onPauseChange?.(false);
+      setMissionStates((current) => {
+        const updated = { ...current, [missionId]: "active" };
+        missionStatesRef.current = updated;
+        return updated;
+      });
+      if (onDestinationChange) {
+        onDestinationChange(config.dropoffPosition);
+      }
+      const hasLimit =
+        typeof config.timeLimit === "number" && config.timeLimit > 0;
+      if (hasLimit) {
+        setTimeLeft(config.timeLimit);
+        setTimer({ secondsLeft: config.timeLimit });
+      } else {
+        setTimeLeft(null);
+        setTimer(null);
+      }
+    },
+    [
+      onDestinationChange,
+      onPauseChange,
+      setMissionStates,
+      setTimeLeft,
+      setTimer,
+    ]
+  );
+
+  const advanceDialog = useCallback(
+    (explicitIndex?: number) => {
+      const missionId = activeMissionIdRef.current;
+      if (!missionId) return;
+
+      const config = missionConfigByIdRef.current[missionId];
+      if (!config) return;
+
+      const entries = getMissionDialogue(config);
+      if (!entries.length) {
+        concludeDialogAndStartMission(missionId, config);
+        return;
+      }
+
+      setDialogIndex((prev) => {
+        const targetIndex =
+          typeof explicitIndex === "number" ? explicitIndex : prev + 1;
+        if (targetIndex >= entries.length) {
+          concludeDialogAndStartMission(missionId, config);
+          return prev;
+        }
+        return targetIndex;
+      });
+    },
+    [concludeDialogAndStartMission]
+  );
+
   useEffect(() => {
     if (!onAvailableMissionTargetsChange) {
       return;
@@ -462,48 +552,33 @@ export default function Mission({
     setTimer,
   ]);
 
-  // DIALOG: handle Spacebar to progress dialog
+  // DIALOG: keyboard advance when no options are present
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code === "Space") {
-        event.preventDefault();
-        event.stopPropagation();
-        const missionId = activeMissionIdRef.current;
-        if (!missionId) return;
+      if (event.code !== "Space" && event.code !== "Enter") return;
 
-        const currentState = missionStatesRef.current[missionId];
-        if (currentState !== "dialog") return;
+      const missionId = activeMissionIdRef.current;
+      if (!missionId) return;
 
-        const config = missionConfigByIdRef.current[missionId];
-        if (!config) return;
+      const currentState = missionStatesRef.current[missionId];
+      if (currentState !== "dialog") return;
 
-        setDialogIndex((prev) => {
-          const next = prev + 1;
-          if (next >= config.passengerDialog.length) {
-            // End of dialog: start mission
-            setDialogVisible(false);
-            onPauseChange?.(false); // resume game
-            setMissionStates((p) => {
-              const updated = { ...p, [missionId]: "active" };
-              missionStatesRef.current = updated;
-              return updated;
-            });
+      const config = missionConfigByIdRef.current[missionId];
+      if (!config) return;
 
-            if (onDestinationChange)
-              onDestinationChange(config.dropoffPosition);
-            const limit = config?.timeLimit ?? 30;
-            setTimeLeft(limit);
-            setTimer({ secondsLeft: limit });
-            return prev;
-          }
-          return next;
-        });
-      }
+      const entries = getMissionDialogue(config);
+      const entry = entries[dialogIndex];
+      if (!entry) return;
+      if (entry.options && entry.options.length > 0) return;
+
+      event.preventDefault();
+      event.stopPropagation();
+      advanceDialog();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [onDestinationChange, onPauseChange, setTimer]);
+  }, [advanceDialog, dialogIndex]);
 
   useEffect(() => {
     if (!completionInfo) return;
@@ -512,18 +587,57 @@ export default function Mission({
   }, [completionInfo]);
 
   useEffect(() => {
+    if (!dialogVisible) {
+      setDialog(null);
+      return;
+    }
+
     const missionId = activeMissionIdRef.current;
-    if (!missionId) return;
+    if (!missionId) {
+      setDialog(null);
+      return;
+    }
 
     const config = missionConfigByIdRef.current[missionId];
-    if (!config) return;
-
-    if (dialogVisible && config.passengerDialog[dialogIndex]) {
-      setDialog({ text: config.passengerDialog[dialogIndex] });
-    } else {
+    if (!config) {
       setDialog(null);
+      return;
     }
-  }, [dialogVisible, dialogIndex, setDialog]);
+
+    const entries = getMissionDialogue(config);
+    const entry = entries[dialogIndex];
+    if (!entry) {
+      setDialog(null);
+      return;
+    }
+
+    const speakerLabel =
+      entry.speakerLabel ?? getDefaultSpeakerLabel(entry, config);
+
+    const options = entry.options
+      ? entry.options.map((option, optionIndex) => ({
+          id: `${missionId}-option-${dialogIndex}-${optionIndex}`,
+          label: option.label,
+          onSelect: () =>
+            advanceDialog(
+              typeof option.nextIndex === "number"
+                ? option.nextIndex
+                : undefined
+            ),
+        }))
+      : undefined;
+
+    setDialog({
+      speaker: entry.speaker,
+      speakerLabel,
+      text: entry.text,
+      options,
+      onContinue:
+        !options || options.length === 0
+          ? () => advanceDialog()
+          : undefined,
+    });
+  }, [advanceDialog, dialogIndex, dialogVisible, setDialog]);
 
   useEffect(() => {
     return () => {
@@ -547,13 +661,6 @@ export default function Mission({
   const completionConfig = completionInfo
     ? missionConfigByIdRef.current[completionInfo.missionId] ?? null
     : null;
-
-  const activeDialog =
-    activeConfig && activeConfig.passengerDialog.length > 0
-      ? activeConfig.passengerDialog[
-          dialogIndex % activeConfig.passengerDialog.length
-        ]
-      : null;
 
   useEffect(() => {
     if (promptConfig) {
@@ -625,8 +732,9 @@ export default function Mission({
               />
             )}
 
-            {pickupActive && (
-              <Woman
+            {pickupActive && config.passengerModel !== "none" && (
+              <PassengerModel
+                modelId={config.passengerModel ?? "generic"}
                 position={config.passengerPosition}
                 scale={config.passengerScale ?? 0.5}
                 rotation={config.passengerRotation ?? [0, Math.PI, 0]}
