@@ -1,6 +1,6 @@
 import { useBox } from "@react-three/cannon";
 
-const DEBUG_VISUALIZATION = false;
+const DEBUG_VISUALIZATION = true;
 
 type Vector3Tuple = [number, number, number];
 
