@@ -28,6 +28,7 @@ import { useLoader } from "@react-three/fiber";
 import LoginScreen from "./components/UI/LoginScreen";
 import EntranceScreen from "./components/UI/EntranceScreen";
 import CarSelector from "./components/CarSelector/CarSelector";
+import MissionTrackerHUD from "./components/UI/MissionTrackerHUD";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
 import { useFlightMode } from "./tools/FlightTool";
@@ -117,11 +118,23 @@ function GameWorld() {
     []
   );
 
+  // ✅ Callback for mission progress updates from <Mission />
+  const handleMissionProgress = useCallback(
+    (remaining: number, nextName: string | null) => {
+      setMissionsRemaining(remaining);
+      setNextMissionName(nextName);
+    },
+    []
+  );
+
   const missions = MISSIONS_BY_CITY[activeCity];
   const spawnPosition = CITY_SPAWN_POINTS[activeCity];
   const introData = introCity ? CITY_INTRO_DIALOGS[introCity] : null;
   const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
   const [testMode, setTestMode] = useState(false);
+  // ✅ Add this here — after missions is defined
+  const [missionsRemaining, setMissionsRemaining] = useState(missions.length);
+  const [nextMissionName, setNextMissionName] = useState<string | null>(null);
 
   const {
     enabled: flightEnabled,
@@ -263,6 +276,7 @@ function GameWorld() {
               }
               onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
               onAllMissionsCompleted={handleAllMissionsCompleted}
+              onMissionProgress={handleMissionProgress}
             />
 
             <DestinationMarker destinationRef={destinationRef} />
@@ -292,6 +306,12 @@ function GameWorld() {
         <GameUI />
         <GameOverPopup />
         <UpgradeMenu />
+
+        <MissionTrackerHUD
+          remaining={missionsRemaining}
+          nextMission={nextMissionName}
+        />
+
         <MiniMapOverlay
           canvas={miniMapCanvas}
           missions={availableMissionTargets}

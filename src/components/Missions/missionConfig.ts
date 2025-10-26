@@ -67,6 +67,7 @@ const city1Missions: MissionConfig[] = [
     passengerScale: 0.5,
     passengerName: "The Accountant",
     passengerModel: "accountant",
+    timeLimit: 50,
     dialogue: [
       {
         speaker: "passenger",

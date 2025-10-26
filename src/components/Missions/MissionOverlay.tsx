@@ -140,7 +140,7 @@ export default function MissionOverlay() {
         <div
           style={{
             position: "absolute",
-            top: 24,
+            top: 70,
             right: 24,
             background:
               timer.secondsLeft <= 5
