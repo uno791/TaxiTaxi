@@ -72,6 +72,7 @@ type MissionProps = JSX.IntrinsicElements["group"] & {
   onAvailableMissionTargetsChange?: (targets: MissionTargetInfo[]) => void;
   onPauseChange?: (paused: boolean) => void;
   onAllMissionsCompleted?: (cityId: CityId) => void;
+  onMissionProgress?: (remaining: number, nextName: string | null) => void;
 };
 
 type CompletionInfo = {
@@ -87,6 +88,7 @@ export default function Mission({
   onAvailableMissionTargetsChange,
   onPauseChange,
   onAllMissionsCompleted,
+  onMissionProgress,
   ...groupProps
 }: MissionProps) {
   const [missionStates, setMissionStates] = useState<
@@ -132,6 +134,19 @@ export default function Mission({
     }
     missionConfigByIdRef.current = map;
   }, [missions]);
+
+  useEffect(() => {
+    if (!onMissionProgress) return;
+
+    const remaining = missions.filter(
+      (m) => missionStates[m.id] !== "completed"
+    ).length;
+
+    const nextMission =
+      missions.find((m) => missionStates[m.id] !== "completed")?.id || null;
+
+    onMissionProgress(remaining, nextMission);
+  }, [missions, missionStates, onMissionProgress]);
 
   const missionStatesRef = useRef(missionStates);
   const activeMissionIdRef = useRef(activeMissionId);
@@ -671,9 +686,7 @@ export default function Mission({
       text: entry.text,
       options,
       onContinue:
-        !options || options.length === 0
-          ? () => advanceDialog()
-          : undefined,
+        !options || options.length === 0 ? () => advanceDialog() : undefined,
     });
   }, [advanceDialog, dialogIndex, dialogVisible, setDialog]);
 

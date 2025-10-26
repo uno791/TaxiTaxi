@@ -23,10 +23,13 @@ import UpgradeMenu from "./components/UI/UpgradeMenu";
 import { MissionUIProvider } from "./components/Missions/MissionUIContext";
 import MissionOverlay from "./components/Missions/MissionOverlay";
 import FogEffect from "./components/FogEffect";
+import { Stars } from "@react-three/drei";
+import { useLoader } from "@react-three/fiber";
 
 import LoginScreen from "./components/UI/LoginScreen";
 import EntranceScreen from "./components/UI/EntranceScreen";
 import CarSelector from "./components/CarSelector/CarSelector";
+import MissionTrackerHUD from "./components/UI/MissionTrackerHUD";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
 import { useFlightMode } from "./tools/FlightTool";
@@ -122,11 +125,23 @@ function GameWorld() {
     []
   );
 
+  // ✅ Callback for mission progress updates from <Mission />
+  const handleMissionProgress = useCallback(
+    (remaining: number, nextName: string | null) => {
+      setMissionsRemaining(remaining);
+      setNextMissionName(nextName);
+    },
+    []
+  );
+
   const missions = MISSIONS_BY_CITY[activeCity];
   const spawnPosition = CITY_SPAWN_POINTS[activeCity];
   const introData = introCity ? CITY_INTRO_DIALOGS[introCity] : null;
   const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
   const [testMode, setTestMode] = useState(false);
+  // ✅ Add this here — after missions is defined
+  const [missionsRemaining, setMissionsRemaining] = useState(missions.length);
+  const [nextMissionName, setNextMissionName] = useState<string | null>(null);
 
   const {
     enabled: flightEnabled,
@@ -207,6 +222,16 @@ function GameWorld() {
       <MissionUIProvider>
         <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
         <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
+          <color attach="background" args={["#0a0f2c"]} />{" "}
+          <Stars
+            radius={200} // spread of the starfield
+            depth={80} // how deep the field goes
+            count={4000} // number of stars
+            factor={6} // ⭐ increase from 4 → 6 to make stars brighter/larger
+            saturation={0} // keep at 0 for white/blue stars
+            fade // enables distance fade
+          />
+          {/* dark blue night sky */}
           {/* <FogEffect /> */}
           <Physics
             gravity={[0, -9.81, 0]}
@@ -219,7 +244,7 @@ function GameWorld() {
           >
             {/* Lighting */}
             {lightingMode === "fill" ? (
-              <hemisphereLight args={["#8aa6ff", "#1b1e25", 4.35]} />
+              <hemisphereLight args={["#223366", "#0a0f2c", 0.4]} />
             ) : null}
 
             {/* World */}
@@ -265,6 +290,7 @@ function GameWorld() {
               }
               onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
               onAllMissionsCompleted={handleAllMissionsCompleted}
+              onMissionProgress={handleMissionProgress}
             />
 
             <DestinationMarker destinationRef={destinationRef} />
@@ -298,6 +324,12 @@ function GameWorld() {
         <GameUI />
         <GameOverPopup />
         <UpgradeMenu />
+
+        <MissionTrackerHUD
+          remaining={missionsRemaining}
+          nextMission={nextMissionName}
+        />
+
         <MiniMapOverlay
           canvas={miniMapCanvas}
           missions={availableMissionTargets}

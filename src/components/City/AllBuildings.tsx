@@ -10,6 +10,9 @@ import { BBall } from "./Buildings/BBall";
 import { Tennis } from "./Buildings/Tennis";
 import { Hospital } from "./Buildings/Hospital";
 import { ColliderBox } from "../Taxi/ColliderBox";
+import FlickeringBillboard from "../Environment/FlickeringBillboard";
+import TrashCan from "../Environment/TrashCan";
+
 export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
   return (
     <group {...props}>
@@ -320,6 +323,12 @@ export default function Allbuildings(props: JSX.IntrinsicElements["group"]) {
         rotation={[0, -Math.PI / 2, 0]}
         scale={[0.18, 0.18, 0.18]}
       />
+      <FlickeringBillboard
+        position={[68, -0.5, -58]}
+        rotation={[0, -Math.PI / 2, 0]} // rotated to face the courts/road
+      />
+      {/* Trashcan with spinning lid */}
+      <TrashCan position={[57, 0.18, -55.2]} scale={0.4} />
       {/* <Hospital position={[52,1.6,-58.3]} rotation={[0, -Math.PI/2, 0]} scale={[0.008,0.008,0.008]}/> */}
     </group>
   );
