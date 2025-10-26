@@ -46,7 +46,7 @@ export default function RestartControl() {
       style={{
         position: "absolute",
         top: 16,
-        right: 72,
+        right: 130,
         zIndex: 30,
         border: "1px solid rgba(255, 255, 255, 0.3)",
         borderRadius: 8,
