@@ -26,6 +26,7 @@ export function useDualSenseControls(): DualSenseControls {
     down: false,
     space: false,
     r: false,
+    restart: false,
   });
 
   const [state, setState] = useState<DualSenseControls>({
@@ -37,6 +38,7 @@ export function useDualSenseControls(): DualSenseControls {
     reverse: false,
     cameraX: 0,
     cameraY: 0,
+    restart: false,
   });
 
   useEffect(() => {
@@ -63,6 +65,13 @@ export function useDualSenseControls(): DualSenseControls {
           break;
         case "KeyR":
           keyboardFallbackRef.current.r = down;
+          keyboardFallbackRef.current.restart = down && event.shiftKey;
+          break;
+        case "ShiftLeft":
+        case "ShiftRight":
+          if (!down) {
+            keyboardFallbackRef.current.restart = false;
+          }
           break;
         default:
           break;
@@ -106,6 +115,8 @@ export function useDualSenseControls(): DualSenseControls {
         const r2 = clamp(pad.buttons[7]?.value ?? 0, 0, 1);
         const handbrake = Boolean(pad.buttons[0]?.pressed);
         const reverse = Boolean(pad.buttons[1]?.pressed);
+        const restartButton =
+          Boolean(pad.buttons[9]?.pressed) || Boolean(pad.buttons[8]?.pressed);
 
         setState({
           connected: true,
@@ -116,6 +127,7 @@ export function useDualSenseControls(): DualSenseControls {
           reverse,
           cameraX: clamp(rightX, -1, 1),
           cameraY: clamp(rightY, -1, 1),
+          restart: restartButton,
         });
       } else {
         const fallback = keyboardFallbackRef.current;
@@ -134,6 +146,7 @@ export function useDualSenseControls(): DualSenseControls {
           reverse: fallback.r,
           cameraX: 0,
           cameraY: 0,
+          restart: fallback.restart,
         });
       }
 

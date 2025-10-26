@@ -15,6 +15,7 @@ import { MiniMapOverlay } from "./hooks/useMiniMapOverlay";
 import Mission, { type MissionTargetInfo } from "./components/Missions/Mission";
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
+import RestartControl from "./components/UI/RestartControl";
 import { Physics } from "@react-three/cannon";
 import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
@@ -32,6 +33,7 @@ import CarSelector from "./components/CarSelector/CarSelector";
 import MissionTrackerHUD from "./components/UI/MissionTrackerHUD";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
+import { useGameLifecycle } from "./GameContext";
 import { useFlightMode } from "./tools/FlightTool";
 import {
   ColliderPainterOverlay,
@@ -57,13 +59,13 @@ function GameWorld() {
   const [isPaused, setIsPaused] = useState(false);
   const [dialogPaused, setDialogPaused] = useState(false); // ✅ added
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
-  const [activeCity, setActiveCity] = useState<CityId>("city1");
+  const { activeCity, setActiveCity } = useGameLifecycle();
   const completedCitiesRef = useRef<Record<CityId, boolean>>({
     city1: false,
     city2: false,
     city3: false,
   });
-  const initialIntroCity = CITY_SEQUENCE[0] ?? null;
+  const initialIntroCity: CityId | null = activeCity;
   const [introCity, setIntroCity] = useState<CityId | null>(initialIntroCity);
   const [storyCity, setStoryCity] = useState<CityId | null>(null);
   const [storyPaused, setStoryPaused] = useState(initialIntroCity !== null);
@@ -194,7 +196,7 @@ function GameWorld() {
 
     setAvailableMissionTargets([]);
     destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
-  }, [storyCity, setAvailableMissionTargets, setIntroCity]);
+  }, [storyCity, setAvailableMissionTargets, setIntroCity, setActiveCity]);
 
   const handleTestTravel = useCallback(
     (city: CityId) => {
@@ -205,7 +207,7 @@ function GameWorld() {
       setAvailableMissionTargets([]);
       destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
     },
-    [setAvailableMissionTargets, setIntroCity]
+    [setAvailableMissionTargets, setIntroCity, setActiveCity]
   );
 
   const toggleTestMode = useCallback(() => {
@@ -318,6 +320,7 @@ function GameWorld() {
           isPaused={isPaused}
           onPauseChange={setIsPaused}
         />
+        <RestartControl />
 
         {/* UI overlay */}
         <TaxiSpeedometer />
@@ -479,12 +482,13 @@ function ColliderAwareOrbitControls({
 
 function AppContent() {
   const { appStage } = useMeta();
+  const { gameInstance } = useGameLifecycle();
 
   if (appStage === "login") return <LoginScreen />;
   if (appStage === "entrance") return <EntranceScreen />;
   if (appStage === "car") return <CarSelector />;
 
-  return <GameWorld />;
+  return <GameWorld key={`game-${gameInstance}`} />;
 }
 
 export default function App() {

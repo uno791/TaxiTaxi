@@ -17,4 +17,5 @@ export type DualSenseControls = {
   reverse: boolean;
   cameraX: number;
   cameraY: number;
+  restart: boolean;
 };

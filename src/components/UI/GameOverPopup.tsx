@@ -1,14 +1,13 @@
-import { useGame } from "../../GameContext";
+import { useGame, useGameLifecycle } from "../../GameContext";
 
 export default function GameOverPopup() {
-  const { gameOver, setGameOver, setMoney, setKilometers } = useGame();
+  const { gameOver } = useGame();
+  const { restartGame } = useGameLifecycle();
 
   if (!gameOver) return null;
 
   const handleRestart = () => {
-    setMoney(1000);
-    setKilometers(0);
-    setGameOver(false);
+    restartGame();
   };
 
   return (
@@ -32,7 +31,7 @@ export default function GameOverPopup() {
         onClick={handleRestart}
         style={{ fontSize: "20px", padding: "10px 20px", marginTop: "20px" }}
       >
-        Try Again
+        Restart (Shift+R / Options)
       </button>
     </div>
   );
