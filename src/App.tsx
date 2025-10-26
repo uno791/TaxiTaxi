@@ -244,7 +244,7 @@ function GameWorld() {
           >
             {/* Lighting */}
             {lightingMode === "fill" ? (
-              <hemisphereLight args={["#223366", "#0a0f2c", 0.4]} />
+              <hemisphereLight args={["#8aa6ff", "#1b1e25", 4.35]} />
             ) : null}
 
             {/* World */}
