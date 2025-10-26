@@ -1,13 +1,21 @@
-import type { ThreeElements } from "@react-three/fiber";
+import { useMemo, useRef, useState } from "react";
+import type { MutableRefObject } from "react";
+import { useFrame, type ThreeElements } from "@react-three/fiber";
+import { useCompoundBody } from "@react-three/cannon";
 import { ColliderBox } from "../Taxi/ColliderBox";
 import { ColliderCylinder } from "../Taxi/ColliderCylinder";
 import {
   useColliderPainter,
   type ColliderDescriptor,
 } from "../../tools/ColliderPainter";
-import type { CityId } from "../../constants/cities";
+import { CITY_SPAWN_POINTS, type CityId } from "../../constants/cities";
+import type { Vector3 } from "three";
+import type { CompoundBodyProps } from "@pmndrs/cannon-worker-api";
 
-export type CityCollidersProps = ThreeElements["group"] & { debug?: boolean };
+export type CityCollidersProps = ThreeElements["group"] & {
+  debug?: boolean;
+  playerPositionRef: MutableRefObject<Vector3>;
+};
 
 const CITY_ID: CityId = "city3";
 const STATIC_COLLIDERS: readonly ColliderDescriptor[] = [
@@ -5136,9 +5144,269 @@ const STATIC_COLLIDERS: readonly ColliderDescriptor[] = [
   },
 ];
 
-export function City3Colliders({ debug, ...groupProps }: CityCollidersProps) {
+type Triplet = [number, number, number];
+
+type ChunkShape = {
+  type: "Box";
+  position: Triplet;
+  args: Triplet;
+};
+
+type DebugBox = {
+  position: Triplet;
+  size: Triplet;
+};
+
+type ChunkData = {
+  key: string;
+  cellX: number;
+  cellZ: number;
+  shapes: ChunkShape[];
+  debugBoxes: DebugBox[];
+};
+
+const CHUNK_SIZE = 30;
+const CHUNK_RADIUS = 1;
+
+const STATIC_COLLIDER_CHUNKS: ReadonlyMap<string, ChunkData> = (() => {
+  const buckets = new Map<string, ChunkData>();
+
+  const getBucket = (cellX: number, cellZ: number, key: string) => {
+    const existing = buckets.get(key);
+    if (existing) return existing;
+    const created: ChunkData = {
+      key,
+      cellX,
+      cellZ,
+      shapes: [],
+      debugBoxes: [],
+    };
+    buckets.set(key, created);
+    return created;
+  };
+
+  for (const collider of STATIC_COLLIDERS) {
+    const {
+      mapPosition: { x, y, z },
+    } = collider;
+    const cellX = Math.floor(x / CHUNK_SIZE);
+    const cellZ = Math.floor(z / CHUNK_SIZE);
+    const key = `${cellX},${cellZ}`;
+    const bucket = getBucket(cellX, cellZ, key);
+
+    const width =
+      collider.shape === "box" ? collider.width : collider.radiusX * 2;
+    const length =
+      collider.shape === "box" ? collider.length : collider.radiusZ * 2;
+    const height = collider.height;
+
+    const position: Triplet = [x, y, z];
+    const size: Triplet = [width, height, length];
+
+    bucket.shapes.push({
+      type: "Box",
+      position,
+      args: size,
+    });
+
+    bucket.debugBoxes.push({
+      position,
+      size,
+    });
+  }
+
+  buckets.forEach((bucket, key) => {
+    bucket.shapes = bucket.shapes.map((shape) => ({
+      type: shape.type,
+      position: [...shape.position] as Triplet,
+      args: [...shape.args] as Triplet,
+    }));
+    bucket.debugBoxes = bucket.debugBoxes.map((box) => ({
+      position: [...box.position] as Triplet,
+      size: [...box.size] as Triplet,
+    }));
+    buckets.set(key, bucket);
+  });
+
+  return buckets;
+})();
+
+const SPAWN_POINT = CITY_SPAWN_POINTS[CITY_ID];
+const INITIAL_CELL_X = Math.floor(SPAWN_POINT[0] / CHUNK_SIZE);
+const INITIAL_CELL_Z = Math.floor(SPAWN_POINT[2] / CHUNK_SIZE);
+
+function collectChunks(centerCellX: number, centerCellZ: number): ChunkData[] {
+  const result: ChunkData[] = [];
+  for (let dz = -CHUNK_RADIUS; dz <= CHUNK_RADIUS; dz += 1) {
+    for (let dx = -CHUNK_RADIUS; dx <= CHUNK_RADIUS; dx += 1) {
+      const key = `${centerCellX + dx},${centerCellZ + dz}`;
+      const chunk = STATIC_COLLIDER_CHUNKS.get(key);
+      if (!chunk) continue;
+      result.push(chunk);
+    }
+  }
+  return result;
+}
+
+const MAX_CHUNKS_PER_FRAME = 1;
+
+type ChunkColliderProps = {
+  chunk: ChunkData;
+  debug?: boolean;
+};
+
+function ChunkCollider({ chunk, debug }: ChunkColliderProps) {
+  const [ref] = useCompoundBody(
+    () => ({
+      type: "Static",
+      allowSleep: true,
+      shapes: chunk.shapes as unknown as CompoundBodyProps["shapes"],
+    }),
+    undefined,
+    [chunk]
+  );
+
+  return (
+    <group ref={ref} name={`City3ColliderChunk-${chunk.key}`}>
+      {debug
+        ? chunk.debugBoxes.map((box, index) => (
+            <mesh
+              key={`${chunk.key}-debug-${index}`}
+              position={box.position}
+            >
+              <boxGeometry args={box.size} />
+              <meshBasicMaterial color="orange" transparent opacity={0.3} />
+            </mesh>
+          ))
+        : null}
+    </group>
+  );
+}
+
+export function City3Colliders({
+  debug,
+  playerPositionRef,
+  ...groupProps
+}: CityCollidersProps) {
   const { getCollidersForCity } = useColliderPainter();
   const dynamicColliders = getCollidersForCity(CITY_ID);
+  const initialChunks = useMemo(
+    () => collectChunks(INITIAL_CELL_X, INITIAL_CELL_Z),
+    []
+  );
+  const [chunkVersion, setChunkVersion] = useState(0);
+  const visibleChunkKeysRef = useRef(
+    new Set(initialChunks.map((chunk) => chunk.key))
+  );
+  const targetChunkKeysRef = useRef(new Set(visibleChunkKeysRef.current));
+  const currentCellRef = useRef<{ x: number; z: number }>({
+    x: INITIAL_CELL_X,
+    z: INITIAL_CELL_Z,
+  });
+  const pendingAdditionsRef = useRef<string[]>([]);
+  const pendingRemovalsRef = useRef<string[]>([]);
+
+  const visibleChunks = useMemo(() => {
+    const chunks: ChunkData[] = [];
+    for (const key of visibleChunkKeysRef.current) {
+      const chunk = STATIC_COLLIDER_CHUNKS.get(key);
+      if (chunk) chunks.push(chunk);
+    }
+    chunks.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
+    return chunks;
+  }, [chunkVersion]);
+
+  useFrame(() => {
+    const position = playerPositionRef.current;
+    if (!position) return;
+    if (!Number.isFinite(position.x) || !Number.isFinite(position.z)) return;
+
+    const cellX = Math.floor(position.x / CHUNK_SIZE);
+    const cellZ = Math.floor(position.z / CHUNK_SIZE);
+
+    const current = currentCellRef.current;
+    if (current.x === cellX && current.z === cellZ) return;
+
+    currentCellRef.current = { x: cellX, z: cellZ };
+    const nextChunks = collectChunks(cellX, cellZ);
+    const nextKeys = new Set(nextChunks.map((chunk) => chunk.key));
+    targetChunkKeysRef.current = nextKeys;
+
+    const visibleKeys = visibleChunkKeysRef.current;
+    const additions: string[] = [];
+    for (const key of nextKeys) {
+      if (!visibleKeys.has(key)) additions.push(key);
+    }
+
+    const removals: string[] = [];
+    for (const key of visibleKeys) {
+      if (!nextKeys.has(key)) removals.push(key);
+    }
+
+    const additionsQueue = pendingAdditionsRef.current;
+    const removalsQueue = pendingRemovalsRef.current;
+
+    for (const key of additions) {
+      if (!additionsQueue.includes(key)) {
+        additionsQueue.push(key);
+      }
+      const removalIndex = removalsQueue.indexOf(key);
+      if (removalIndex >= 0) {
+        removalsQueue.splice(removalIndex, 1);
+      }
+    }
+
+    for (const key of removals) {
+      if (!removalsQueue.includes(key) && !additionsQueue.includes(key)) {
+        removalsQueue.push(key);
+      }
+    }
+  });
+
+  useFrame(() => {
+    const visibleKeys = visibleChunkKeysRef.current;
+    const targetKeys = targetChunkKeysRef.current;
+    const additionsQueue = pendingAdditionsRef.current;
+    const removalsQueue = pendingRemovalsRef.current;
+    let changed = false;
+    let processed = 0;
+
+    while (
+      additionsQueue.length > 0 &&
+      processed < MAX_CHUNKS_PER_FRAME
+    ) {
+      const key = additionsQueue.shift();
+      if (!key) break;
+      if (!targetKeys.has(key)) continue;
+      if (visibleKeys.has(key)) continue;
+      visibleKeys.add(key);
+      changed = true;
+      processed += 1;
+    }
+
+    if (
+      processed < MAX_CHUNKS_PER_FRAME &&
+      additionsQueue.length === 0
+    ) {
+      while (
+        removalsQueue.length > 0 &&
+        processed < MAX_CHUNKS_PER_FRAME
+      ) {
+        const key = removalsQueue.shift();
+        if (!key) break;
+        if (targetKeys.has(key)) continue;
+        if (!visibleKeys.delete(key)) continue;
+        changed = true;
+        processed += 1;
+      }
+    }
+
+    if (changed) {
+      setChunkVersion(
+        (previous) => (previous + 1) % Number.MAX_SAFE_INTEGER
+      );
+    }
+  });
 
   const renderCollider = (collider: ColliderDescriptor, key: string) => {
     if (collider.shape === "box") {
@@ -5169,9 +5437,9 @@ export function City3Colliders({ debug, ...groupProps }: CityCollidersProps) {
 
   return (
     <group name="City3Colliders" {...groupProps}>
-      {STATIC_COLLIDERS.map((collider, index) =>
-        renderCollider(collider, `static-${index}`)
-      )}
+      {visibleChunks.map((chunk) => (
+        <ChunkCollider key={chunk.key} chunk={chunk} debug={debug} />
+      ))}
       {dynamicColliders.map((collider) =>
         renderCollider(collider, collider.id)
       )}

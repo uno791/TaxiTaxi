@@ -212,10 +212,10 @@ function GameWorld() {
             gravity={[0, -9.81, 0]}
             broadphase="SAP"
             allowSleep
-            iterations={18}
-            tolerance={1e-5}
-            stepSize={1 / 120}
-            maxSubSteps={6}
+            iterations={12}
+            tolerance={1e-4}
+            stepSize={1 / 90}
+            maxSubSteps={4}
           >
             {/* Lighting */}
             {lightingMode === "fill" ? (
@@ -234,7 +234,10 @@ function GameWorld() {
               <Level2 position={[-130, 0, -20]} />
             ) : null}
             {activeCity === "city3" ? (
-              <NewCityRoad position={[0, 0, 0]} />
+              <NewCityRoad
+                position={[0, 0, 0]}
+                playerPositionRef={playerPositionRef}
+              />
             ) : null}
 
             {/* Taxi */}
