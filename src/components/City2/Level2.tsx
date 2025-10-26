@@ -1,4 +1,6 @@
+import type { MutableRefObject } from "react";
 import type { JSX } from "react/jsx-runtime";
+import type { Vector3 } from "three";
 import { RoadLevel2 } from "./Road/RoadLevel2";
 import { BuildingsLevel2 } from "./Buildings/BuildingsLevel2";
 import { ResLevel2 } from "./Buildings/ResLevel2";
@@ -6,9 +8,23 @@ import { BitsLevel2 } from "./Buildings/BitsLevel2";
 import { Grass } from "../Ground/Grass";
 import { City2Colliders } from "./City2Colliders";
 
-export default function Level2(props: JSX.IntrinsicElements["group"]) {
+type Level2Props = JSX.IntrinsicElements["group"] & {
+  playerPositionRef: MutableRefObject<Vector3>;
+};
+
+export default function Level2({
+  playerPositionRef,
+  ...groupProps
+}: Level2Props) {
+  const positionProp = groupProps.position;
+  const cityOffset: [number, number, number] = Array.isArray(positionProp)
+    ? [positionProp[0] ?? 0, positionProp[1] ?? 0, positionProp[2] ?? 0]
+    : positionProp
+    ? [positionProp.x, positionProp.y, positionProp.z]
+    : [0, 0, 0];
+
   return (
-    <group {...props}>
+    <group {...groupProps}>
       <RoadLevel2
         position={[100, 0.1, -150]}
         scale={0.4}
@@ -27,7 +43,10 @@ export default function Level2(props: JSX.IntrinsicElements["group"]) {
         scale={0.4}
         rotation={[0, 0, 0]}
       />
-      <City2Colliders debug />
+      <City2Colliders
+        playerPositionRef={playerPositionRef}
+        cityOffset={cityOffset}
+      />
       <Grass position={[0, -1, 0]} scale={[1000, 1, 1000]} />
     </group>
   );

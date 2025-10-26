@@ -13,6 +13,7 @@ export interface ColliderCylinderProps {
   height: number;
   segments?: number;
   debug?: boolean;
+  renderOffset?: { x: number; y: number; z: number };
 }
 
 export function ColliderCylinder({
@@ -22,9 +23,16 @@ export function ColliderCylinder({
   height,
   segments = 16,
   debug,
+  renderOffset,
 }: ColliderCylinderProps) {
   const position: Vector3Tuple = [mapPosition.x, mapPosition.y, mapPosition.z];
   const showDebug = debug ?? DEBUG_VISUALIZATION;
+  const offset = renderOffset ?? { x: 0, y: 0, z: 0 };
+  const renderPosition: Vector3Tuple = [
+    mapPosition.x - offset.x,
+    mapPosition.y - offset.y,
+    mapPosition.z - offset.z,
+  ];
 
   const { vertices, indices } = useMemo(() => {
     const geometry = new CylinderGeometry(1, 1, 1, segments, 1);
@@ -66,7 +74,7 @@ export function ColliderCylinder({
 
   return (
     showDebug && (
-      <mesh position={position} scale={[radiusX, height, radiusZ]}>
+      <mesh position={renderPosition} scale={[radiusX, height, radiusZ]}>
         <cylinderGeometry args={[1, 1, 1, segments]} />
         <meshBasicMaterial color="orange" transparent opacity={0.5} />
       </mesh>

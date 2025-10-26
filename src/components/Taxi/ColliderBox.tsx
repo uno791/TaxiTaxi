@@ -10,6 +10,7 @@ export interface ColliderBoxProps {
   height: number;
   length: number;
   debug?: boolean;
+  renderOffset?: { x: number; y: number; z: number };
 }
 
 export function ColliderBox({
@@ -18,10 +19,17 @@ export function ColliderBox({
   height,
   length,
   debug,
+  renderOffset,
 }: ColliderBoxProps) {
   const position: Vector3Tuple = [mapPosition.x, mapPosition.y, mapPosition.z];
   const size: Vector3Tuple = [width, height, length];
   const showDebug = debug ?? DEBUG_VISUALIZATION;
+  const offset = renderOffset ?? { x: 0, y: 0, z: 0 };
+  const renderPosition: Vector3Tuple = [
+    mapPosition.x - offset.x,
+    mapPosition.y - offset.y,
+    mapPosition.z - offset.z,
+  ];
 
   useBox(() => ({
     args: size,
@@ -31,7 +39,7 @@ export function ColliderBox({
 
   return (
     showDebug && (
-      <mesh position={position}>
+      <mesh position={renderPosition}>
         <boxGeometry args={size} />
         <meshBasicMaterial color="orange" transparent opacity={0.5} />
       </mesh>

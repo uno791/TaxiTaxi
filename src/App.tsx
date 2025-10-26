@@ -231,7 +231,10 @@ function GameWorld() {
               </>
             ) : null}
             {activeCity === "city2" ? (
-              <Level2 position={[-130, 0, -20]} />
+              <Level2
+                position={[-130, 0, -20]}
+                playerPositionRef={playerPositionRef}
+              />
             ) : null}
             {activeCity === "city3" ? (
               <NewCityRoad
