@@ -10,6 +10,7 @@ import {
 import type { ReactNode } from "react";
 import {
   DEFAULT_MUSIC_TRACK_ID,
+  DEFAULT_PLAYLIST,
   MUSIC_TRACKS,
   type MusicTrackConfig,
   type MusicTrackId,
@@ -40,6 +41,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     priority: MUSIC_TRACKS[DEFAULT_MUSIC_TRACK_ID].priority,
   });
 
+  const baseTrackIdRef = useRef<MusicTrackId>(DEFAULT_MUSIC_TRACK_ID);
   const overridesRef = useRef<Map<MusicTrackId, number>>(new Map());
   const audioMapRef = useRef<
     Partial<Record<MusicTrackId, HTMLAudioElement>>
@@ -57,8 +59,12 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
   const evaluateTrack = useCallback(() => {
     setActiveTrack((previous) => {
-      let selectedId: MusicTrackId = DEFAULT_MUSIC_TRACK_ID;
-      let highestPriority = MUSIC_TRACKS[DEFAULT_MUSIC_TRACK_ID].priority;
+      let selectedId = baseTrackIdRef.current;
+      if (!MUSIC_TRACKS[selectedId]) {
+        selectedId = DEFAULT_MUSIC_TRACK_ID;
+        baseTrackIdRef.current = selectedId;
+      }
+      let highestPriority = MUSIC_TRACKS[selectedId].priority;
 
       overridesRef.current.forEach((priority, trackId) => {
         if (priority > highestPriority) {
@@ -77,6 +83,22 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       return { id: selectedId, priority: highestPriority };
     });
   }, []);
+
+  const advanceBasePlaylist = useCallback(() => {
+    if (DEFAULT_PLAYLIST.length === 0) return;
+
+    const currentId = baseTrackIdRef.current;
+    const currentIndex = DEFAULT_PLAYLIST.indexOf(currentId);
+    const nextIndex =
+      currentIndex === -1
+        ? 0
+        : (currentIndex + 1) % DEFAULT_PLAYLIST.length;
+    const nextId = DEFAULT_PLAYLIST[nextIndex];
+
+    if (baseTrackIdRef.current === nextId) return;
+    baseTrackIdRef.current = nextId;
+    evaluateTrack();
+  }, [evaluateTrack]);
 
   const requestTrack = useCallback(
     (id: MusicTrackId, priorityOverride?: number) => {
@@ -111,14 +133,33 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (typeof Audio === "undefined") return undefined;
 
+    const playlistSet = new Set<MusicTrackId>(DEFAULT_PLAYLIST);
+    const playlistListeners: Array<{
+      audio: HTMLAudioElement;
+      handler: () => void;
+    }> = [];
+
     const audioEntries = Object.entries(MUSIC_TRACKS).map(
-      ([trackId, config]) => {
+      ([trackKey, config]) => {
+        const trackId = trackKey as MusicTrackId;
         const audio = new Audio(config.src);
         audio.loop = Boolean(config.loop);
         audio.preload = "auto";
         audio.volume = config.volume ?? 0.6;
         audio.muted = false;
-        return [trackId as MusicTrackId, audio] as const;
+
+        if (playlistSet.has(trackId)) {
+          const handleEnded = () => {
+            if (overridesRef.current.size > 0) return;
+            if (activeTrackIdRef.current !== trackId) return;
+            if (baseTrackIdRef.current !== trackId) return;
+            advanceBasePlaylist();
+          };
+          audio.addEventListener("ended", handleEnded);
+          playlistListeners.push({ audio, handler: handleEnded });
+        }
+
+        return [trackId, audio] as const;
       }
     );
 
@@ -139,13 +180,17 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     }
 
     return () => {
-      audioEntries.forEach(([, audio]) => {
+      playlistListeners.forEach(({ audio, handler }) => {
+        audio.removeEventListener("ended", handler);
+      });
+      audioEntries.forEach(([trackId, audio]) => {
         audio.pause();
+        delete audioMapRef.current[trackId];
       });
       readyRef.current = false;
       audioMapRef.current = {};
     };
-  }, []);
+  }, [advanceBasePlaylist]);
 
   useEffect(() => {
     if (!readyRef.current) return;
