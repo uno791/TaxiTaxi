@@ -18,10 +18,12 @@ const BOOST_DEPLETION_RATE = 45;
 const MIN_SPEED_FOR_CHARGE = 2;
 const START_SOUND_SPEED_THRESHOLD = 0.5; // m/s (~1.8 km/h)
 const BRAKE_SOUND_SPEED_THRESHOLD = 35; // km/h
-const BRAKE_SMOKE_PARTICLE_COUNT = 60;
-const BRAKE_SMOKE_SPAWN_INTERVAL = 0.045; // seconds between particles
+const BRAKE_SMOKE_PARTICLE_COUNT = 32;
+const BRAKE_SMOKE_SPAWN_INTERVAL = 0.075; // seconds between particles
 const BRAKE_SMOKE_MAX_LIFE = 0.65; // seconds
 const COLLISION_SOUND_COOLDOWN_MS = 350;
+const UI_UPDATE_INTERVAL = 0.12; // seconds between UI state publishes
+const DISTANCE_UPDATE_INTERVAL = 0.02; // kilometers aggregated before UI update
 
 type Props = {
   chaseRef?: React.MutableRefObject<THREE.Object3D | null>;
@@ -327,6 +329,9 @@ export function TaxiPhysics({
 
   const velocityRef = useRef<[number, number, number]>([0, 0, 0]);
   const velocityVector = useRef(new THREE.Vector3());
+  const uiTimerRef = useRef(0);
+  const lastSpeedBroadcastRef = useRef(0);
+  const distanceAccumulatorRef = useRef(0);
 
   // Add this ABOVE the useBox() call
   const lastCollisionTime = useRef(0);
@@ -557,6 +562,28 @@ export function TaxiPhysics({
     });
   }, [hitDetection, setBoost]);
 
+  const flushDistanceAndEconomy = useCallback(
+    (kilometers: number) => {
+      if (kilometers <= 0) return;
+      setKilometers((value) => value + kilometers);
+      const fuelCost = kilometers * 20;
+      if (fuelCost <= 0) return;
+      setMoney((value) => {
+        if (fuelCost < 1e-6) return value;
+        const next = value - fuelCost;
+        if (next <= 0 && value > 0) {
+          setGameOver(true);
+          return 0;
+        }
+        if (Math.abs(next - value) < 1e-4) {
+          return value;
+        }
+        return next;
+      });
+    },
+    [setKilometers, setMoney, setGameOver]
+  );
+
   useFrame((state, delta) => {
     if (gameOver || isPaused) {
       stopBoostSound();
@@ -576,7 +603,15 @@ export function TaxiPhysics({
         boostRef.current = 0;
         setBoost(0);
       }
-      setSpeed(0);
+      if (distanceAccumulatorRef.current > 0) {
+        flushDistanceAndEconomy(distanceAccumulatorRef.current);
+        distanceAccumulatorRef.current = 0;
+      }
+      if (lastSpeedBroadcastRef.current !== 0) {
+        lastSpeedBroadcastRef.current = 0;
+        setSpeed(0);
+      }
+      uiTimerRef.current = 0;
       return;
     }
 
@@ -616,12 +651,31 @@ export function TaxiPhysics({
     }
 
     if (speed <= 0.0001) {
-      setSpeed(0);
+      if (distanceAccumulatorRef.current > 0) {
+        flushDistanceAndEconomy(distanceAccumulatorRef.current);
+        distanceAccumulatorRef.current = 0;
+      }
+      if (lastSpeedBroadcastRef.current !== 0) {
+        lastSpeedBroadcastRef.current = 0;
+        setSpeed(0);
+      }
+      uiTimerRef.current = 0;
       return;
     }
 
     const speedInKmh = speed * 3.6;
-    setSpeed(speedInKmh);
+
+    uiTimerRef.current += delta;
+    if (
+      uiTimerRef.current >= UI_UPDATE_INTERVAL ||
+      Math.abs(speedInKmh - lastSpeedBroadcastRef.current) > 3
+    ) {
+      uiTimerRef.current = 0;
+      if (Math.abs(speedInKmh - lastSpeedBroadcastRef.current) > 0.25) {
+        lastSpeedBroadcastRef.current = speedInKmh;
+        setSpeed(speedInKmh);
+      }
+    }
 
     const brakingPressed = brakeStrengthRef.current > 0.2;
     const shouldPlayBrake =
@@ -707,21 +761,14 @@ export function TaxiPhysics({
       smokeMesh.instanceMatrix.needsUpdate = true;
     }
 
-    const metersTravelled = speed * delta;
-    const kilometers = metersTravelled * 0.001;
-
-    if (kilometers <= 0) return;
-
-    setKilometers((value) => value + kilometers);
-    setMoney((value) => {
-      const fuelCost = kilometers * 20;
-      const remaining = value - fuelCost;
-      if (remaining <= 0) {
-        setGameOver(true);
-        return 0;
+    const kilometers = speed * delta * 0.001;
+    if (kilometers > 0) {
+      distanceAccumulatorRef.current += kilometers;
+      if (distanceAccumulatorRef.current >= DISTANCE_UPDATE_INTERVAL) {
+        flushDistanceAndEconomy(distanceAccumulatorRef.current);
+        distanceAccumulatorRef.current = 0;
       }
-      return remaining;
-    });
+    }
   });
 
   return (

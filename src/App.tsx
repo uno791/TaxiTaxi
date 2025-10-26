@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { ComponentProps, MutableRefObject } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
 import { OrbitControls } from "@react-three/drei";
@@ -32,6 +33,12 @@ import MissionTrackerHUD from "./components/UI/MissionTrackerHUD";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
 import { useFlightMode } from "./tools/FlightTool";
+import {
+  ColliderPainterOverlay,
+  ColliderPainterProvider,
+  ColliderPainterRuntime,
+  useColliderPainter,
+} from "./tools/ColliderPainter";
 import NewCityRoad from "./components/City3/NewCityRoad";
 import Level2 from "./components/City2/Level2";
 import { MISSIONS_BY_CITY } from "./components/Missions/missionConfig";
@@ -211,8 +218,9 @@ function GameWorld() {
   }, [activeCity]);
 
   return (
-    <MissionUIProvider>
-      <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+    <ColliderPainterProvider activeCity={activeCity}>
+      <MissionUIProvider>
+        <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
         <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
           <color attach="background" args={["#0a0f2c"]} />{" "}
           <Stars
@@ -229,14 +237,14 @@ function GameWorld() {
             gravity={[0, -9.81, 0]}
             broadphase="SAP"
             allowSleep
-            iterations={18}
-            tolerance={1e-5}
-            stepSize={1 / 120}
-            maxSubSteps={6}
+            iterations={12}
+            tolerance={1e-4}
+            stepSize={1 / 90}
+            maxSubSteps={4}
           >
             {/* Lighting */}
             {lightingMode === "fill" ? (
-              <hemisphereLight args={["#223366", "#0a0f2c", 0.4]} />
+              <hemisphereLight args={["#8aa6ff", "#1b1e25", 4.35]} />
             ) : null}
 
             {/* World */}
@@ -248,21 +256,27 @@ function GameWorld() {
               </>
             ) : null}
             {activeCity === "city2" ? (
-              <Level2 position={[-130, 0, -20]} />
+              <Level2
+                position={[-130, 0, -20]}
+                playerPositionRef={playerPositionRef}
+              />
             ) : null}
             {activeCity === "city3" ? (
-              <NewCityRoad position={[0, 0, 0]} />
+              <NewCityRoad
+                position={[0, 0, 0]}
+                playerPositionRef={playerPositionRef}
+              />
             ) : null}
 
             {/* Taxi */}
-            <TaxiPhysics
+            <ColliderAwareTaxiPhysics
               chaseRef={chaseRef}
               controlMode={controlMode}
-              isPaused={
-                isPaused || dialogPaused || storyPaused || flightEnabled
-              } // ✅ includes dialog pause & story overlay
               playerPositionRef={playerPositionRef}
               spawnPosition={spawnPosition}
+              basePaused={
+                isPaused || dialogPaused || storyPaused || flightEnabled
+              }
             />
 
             <Mission
@@ -287,10 +301,14 @@ function GameWorld() {
             />
 
             {/* Camera */}
-            {!flightEnabled && <CameraChase target={chaseRef} />}
+            <ColliderAwareCameraChase
+              target={chaseRef}
+              flightEnabled={flightEnabled}
+            />
             {flightControls}
-            <OrbitControls makeDefault />
+            <ColliderAwareOrbitControls flightEnabled={flightEnabled} />
           </Physics>
+          <ColliderPainterRuntime playerPositionRef={playerPositionRef} />
         </Canvas>
 
         {/* Controls */}
@@ -390,6 +408,7 @@ function GameWorld() {
           ) : null}
         </div>
         {flightOverlay}
+        <ColliderPainterOverlay />
 
         <button
           type="button"
@@ -415,7 +434,46 @@ function GameWorld() {
             : "Lighting: Global Fill"}
         </button>
       </div>
-    </MissionUIProvider>
+      </MissionUIProvider>
+    </ColliderPainterProvider>
+  );
+}
+
+type TaxiPhysicsProps = ComponentProps<typeof TaxiPhysics>;
+
+function ColliderAwareTaxiPhysics({
+  basePaused,
+  ...props
+}: Omit<TaxiPhysicsProps, "isPaused"> & { basePaused: boolean }) {
+  const { enabled: colliderEnabled } = useColliderPainter();
+  return (
+    <TaxiPhysics
+      {...props}
+      isPaused={basePaused || colliderEnabled}
+    />
+  );
+}
+
+function ColliderAwareCameraChase({
+  target,
+  flightEnabled,
+}: {
+  target: MutableRefObject<THREE.Object3D | null>;
+  flightEnabled: boolean;
+}) {
+  const { enabled: colliderEnabled } = useColliderPainter();
+  if (flightEnabled || colliderEnabled) return null;
+  return <CameraChase target={target} />;
+}
+
+function ColliderAwareOrbitControls({
+  flightEnabled,
+}: {
+  flightEnabled: boolean;
+}) {
+  const { enabled: colliderEnabled } = useColliderPainter();
+  return (
+    <OrbitControls makeDefault enabled={!flightEnabled && !colliderEnabled} />
   );
 }
 

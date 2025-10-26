@@ -58,9 +58,9 @@ function normalizeKey(key: string): string {
 
 export function FreeFlightControls({
   enabled = true,
-  speed = 35,
-  boostMultiplier = 2.5,
-  slowMultiplier = 0.25,
+  speed = 14,
+  boostMultiplier = 1.75,
+  slowMultiplier = 0.2,
   responsiveness = 12,
 }: FreeFlightControlsProps) {
   const { camera, controls } = useThree((state) => ({
@@ -85,7 +85,10 @@ export function FreeFlightControls({
       const normalizedKey = normalizeKey(event.key);
 
       const target = event.target as HTMLElement | null;
-      if (target && (target.tagName === "INPUT" || target.tagName === "TEXTAREA")) {
+      if (
+        target &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA")
+      ) {
         return;
       }
 
