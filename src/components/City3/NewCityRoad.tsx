@@ -38,7 +38,7 @@ export default function NewCityRoad({
         scale={0.3}
         rotation={[0, 0, 0]}
       />
-      <City3Colliders playerPositionRef={playerPositionRef} debug />
+      <City3Colliders playerPositionRef={playerPositionRef} />
       <Grass position={[0, -1, 0]} scale={[1000, 1, 1000]} />
     </group>
   );

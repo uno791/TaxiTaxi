@@ -5142,6 +5142,665 @@ const STATIC_COLLIDERS: readonly ColliderDescriptor[] = [
     width: 22.548,
     length: 1.444,
   },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 53.954, y: 0, z: -450.312 },
+    height: 10,
+    radiusX: 0.191,
+    radiusZ: 0.164,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 53.639, y: 0, z: -449.744 },
+    height: 10,
+    radiusX: 0.215,
+    radiusZ: 0.123,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 53.922, y: 0, z: -449.953 },
+    height: 10,
+    radiusX: 0.15,
+    radiusZ: 0.064,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 4.792, y: 0, z: -432.946 },
+    height: 10,
+    radiusX: 0.033,
+    radiusZ: 0.025,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 4.807, y: 0, z: -430.979 },
+    height: 10,
+    radiusX: 0.046,
+    radiusZ: 0.049,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 2.913, y: 0, z: -431.01 },
+    height: 10,
+    radiusX: 0.049,
+    radiusZ: 0.032,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: -11.86, y: 0, z: -418.099 },
+    height: 10,
+    radiusX: 0.031,
+    radiusZ: 0.188,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 24.71, y: 0, z: -410.636 },
+    height: 10,
+    radiusX: 0.09,
+    radiusZ: 0.083,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 24.687, y: 0, z: -418.794 },
+    height: 10,
+    radiusX: 0.054,
+    radiusZ: 0.044,
+    segments: 16,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 30.445, y: 0, z: -420.961 },
+    height: 10,
+    width: 3.144,
+    length: 5.095,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 31.304, y: 0, z: -417.261 },
+    height: 10,
+    width: 0.768,
+    length: 0.267,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 30.954, y: 0, z: -416.014 },
+    height: 10,
+    width: 0.799,
+    length: 1.604,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 38.157, y: 0, z: -417.862 },
+    height: 10,
+    width: 2.582,
+    length: 1.156,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 40.728, y: 0, z: -418.371 },
+    height: 10,
+    width: 1.242,
+    length: 0.289,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 45.752, y: 0, z: -418.151 },
+    height: 10,
+    width: 0.145,
+    length: 0.241,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 50.682, y: 0, z: -418.374 },
+    height: 10,
+    width: 1.223,
+    length: 0.157,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 59.579, y: 0, z: -418.373 },
+    height: 10,
+    width: 0.242,
+    length: 0.139,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 63.851, y: 0, z: -418.228 },
+    height: 10,
+    width: 0.279,
+    length: 0.213,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 68.477, y: 0, z: -418.468 },
+    height: 10,
+    width: 0.873,
+    length: 0.226,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 71.861, y: 0, z: -428.793 },
+    height: 10,
+    width: 0.08,
+    length: 0.051,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 71.816, y: 0, z: -436.735 },
+    height: 10,
+    width: 0.146,
+    length: 0.146,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 71.805, y: 0, z: -458.493 },
+    height: 10,
+    width: 0.19,
+    length: 0.176,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 61.178, y: 0, z: -467.994 },
+    height: 10,
+    width: 0.368,
+    length: 0.376,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 61.803, y: 0, z: -468.47 },
+    height: 10,
+    width: 0.636,
+    length: 0.336,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 62.335, y: 0, z: -469.08 },
+    height: 10,
+    width: 0.497,
+    length: 0.403,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 63.079, y: 0, z: -469.552 },
+    height: 10,
+    width: 0.467,
+    length: 0.442,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 64.009, y: 0, z: -469.905 },
+    height: 10,
+    width: 0.642,
+    length: 0.489,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 64.904, y: 0, z: -470.016 },
+    height: 10,
+    width: 0.595,
+    length: 0.376,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 66.152, y: 0, z: -469.857 },
+    height: 10,
+    width: 0.314,
+    length: 0.533,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 67.087, y: 0, z: -469.455 },
+    height: 10,
+    width: 0.41,
+    length: 0.513,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 67.946, y: 0, z: -468.848 },
+    height: 10,
+    width: 0.528,
+    length: 0.555,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 68.636, y: 0, z: -468.028 },
+    height: 10,
+    width: 0.544,
+    length: 0.588,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 69.185, y: 0, z: -467.038 },
+    height: 10,
+    width: 0.308,
+    length: 0.557,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 69.361, y: 0, z: -466.254 },
+    height: 10,
+    width: 0.411,
+    length: 0.509,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 69.436, y: 0, z: -465.351 },
+    height: 10,
+    width: 0.361,
+    length: 0.532,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 69.229, y: 0, z: -464.41 },
+    height: 10,
+    width: 0.461,
+    length: 0.505,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 68.841, y: 0, z: -463.581 },
+    height: 10,
+    width: 0.333,
+    length: 0.416,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 68.614, y: 0, z: -462.916 },
+    height: 10,
+    width: 0.413,
+    length: 0.588,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 68.137, y: 0, z: -462.347 },
+    height: 10,
+    width: 0.425,
+    length: 0.417,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 67.503, y: 0, z: -461.918 },
+    height: 10,
+    width: 0.445,
+    length: 0.529,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 66.743, y: 0, z: -461.494 },
+    height: 10,
+    width: 0.516,
+    length: 0.434,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 66.06, y: 0, z: -461.318 },
+    height: 10,
+    width: 0.403,
+    length: 0.273,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 65.461, y: 0, z: -461.251 },
+    height: 10,
+    width: 0.617,
+    length: 0.261,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 64.789, y: 0, z: -461.153 },
+    height: 10,
+    width: 0.505,
+    length: 0.273,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 64.067, y: 0, z: -461.202 },
+    height: 10,
+    width: 0.675,
+    length: 0.323,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 63.386, y: 0, z: -461.371 },
+    height: 10,
+    width: 0.49,
+    length: 0.339,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 62.466, y: 0, z: -461.86 },
+    height: 10,
+    width: 0.659,
+    length: 0.597,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 61.714, y: 0, z: -462.709 },
+    height: 10,
+    width: 0.508,
+    length: 0.561,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 61.069, y: 0, z: -463.379 },
+    height: 10,
+    width: 0.673,
+    length: 0.554,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 60.754, y: 0, z: -463.922 },
+    height: 10,
+    width: 0.696,
+    length: 0.427,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 16.167, y: 0, z: -553.49 },
+    height: 10,
+    width: 126.997,
+    length: 1.098,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 80.447, y: 0, z: -525.554 },
+    height: 10,
+    width: 0.142,
+    length: 0.088,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 110.068, y: 0, z: -525.551 },
+    height: 10,
+    width: 0.186,
+    length: 0.088,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 118.174, y: 0, z: -525.548 },
+    height: 10,
+    width: 0.151,
+    length: 0.132,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 128.276, y: 0, z: -526.171 },
+    height: 10,
+    width: 0.572,
+    length: 0.562,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 128.573, y: 0, z: -525.662 },
+    height: 10,
+    width: 0.633,
+    length: 0.572,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 127.494, y: 0, z: -509.129 },
+    height: 10,
+    width: 0.332,
+    length: 0.264,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 102.215, y: 0, z: -525.555 },
+    height: 10,
+    width: 0.142,
+    length: 0.151,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 128.283, y: 0, z: -478.329 },
+    height: 10,
+    width: 0.167,
+    length: 0.098,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 127.709, y: 0, z: -451.101 },
+    height: 10,
+    width: 0.31,
+    length: 0.349,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 127.949, y: 0, z: -456.683 },
+    height: 10,
+    width: 0.402,
+    length: 0.904,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 127.957, y: 0, z: -453.375 },
+    height: 10,
+    width: 0.323,
+    length: 0.748,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 128.299, y: 0, z: -447.428 },
+    height: 10,
+    width: 0.557,
+    length: 0.534,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 128.603, y: 0, z: -446.944 },
+    height: 10,
+    width: 0.542,
+    length: 0.603,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 98.629, y: 0, z: -441.915 },
+    height: 10,
+    width: 0.467,
+    length: 0.354,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 100.998, y: 0, z: -441.664 },
+    height: 10,
+    width: 0.933,
+    length: 0.391,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 104.347, y: 0, z: -441.641 },
+    height: 10,
+    width: 0.935,
+    length: 0.401,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 111.859, y: 0, z: -450.578 },
+    height: 10,
+    width: 0.193,
+    length: 2.219,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 105.919, y: 0, z: -458.506 },
+    height: 10,
+    width: 0.112,
+    length: 0.122,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 107.882, y: 0, z: -458.497 },
+    height: 10,
+    width: 0.078,
+    length: 0.122,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 107.861, y: 0, z: -456.623 },
+    height: 10,
+    width: 0.093,
+    length: 0.127,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 101.855, y: 0, z: -458.746 },
+    height: 10,
+    width: 1.019,
+    length: 0.361,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 96.523, y: 0, z: -456.29 },
+    height: 10,
+    width: 0.37,
+    length: 0.277,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 99.694, y: 0, z: -458.977 },
+    height: 10,
+    width: 0.397,
+    length: 0.371,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 88.546, y: 0, z: -507.647 },
+    height: 10,
+    radiusX: 0.256,
+    radiusZ: 0.238,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 89.151, y: 0, z: -507.305 },
+    height: 10,
+    radiusX: 0.228,
+    radiusZ: 0.157,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 88.971, y: 0, z: -507.641 },
+    height: 10,
+    radiusX: 0.13,
+    radiusZ: 0.14,
+    segments: 16,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 89.157, y: 0, z: -511.759 },
+    height: 10,
+    width: 0.369,
+    length: 0.465,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 90.238, y: 0, z: -509.911 },
+    height: 10,
+    width: 0.422,
+    length: 0.513,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 105.919, y: 0, z: -458.506 },
+    height: 10,
+    width: 0.112,
+    length: 0.122,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 107.882, y: 0, z: -458.497 },
+    height: 10,
+    width: 0.078,
+    length: 0.122,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 107.861, y: 0, z: -456.623 },
+    height: 10,
+    width: 0.093,
+    length: 0.127,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 101.855, y: 0, z: -458.746 },
+    height: 10,
+    width: 1.019,
+    length: 0.361,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 96.523, y: 0, z: -456.29 },
+    height: 10,
+    width: 0.37,
+    length: 0.277,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 99.694, y: 0, z: -458.977 },
+    height: 10,
+    width: 0.397,
+    length: 0.371,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 88.546, y: 0, z: -507.647 },
+    height: 10,
+    radiusX: 0.256,
+    radiusZ: 0.238,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 89.151, y: 0, z: -507.305 },
+    height: 10,
+    radiusX: 0.228,
+    radiusZ: 0.157,
+    segments: 16,
+  },
+  {
+    shape: "cylinder",
+    mapPosition: { x: 88.971, y: 0, z: -507.641 },
+    height: 10,
+    radiusX: 0.13,
+    radiusZ: 0.14,
+    segments: 16,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 89.157, y: 0, z: -511.759 },
+    height: 10,
+    width: 0.369,
+    length: 0.465,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 90.238, y: 0, z: -509.911 },
+    height: 10,
+    width: 0.422,
+    length: 0.513,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 112.868, y: 0, z: -456.077 },
+    height: 10,
+    width: 0.428,
+    length: 0.376,
+  },
+  {
+    shape: "box",
+    mapPosition: { x: 113.263, y: 0, z: -455.601 },
+    height: 10,
+    width: 0.421,
+    length: 0.551,
+  },
 ];
 
 type Triplet = [number, number, number];
@@ -5270,10 +5929,7 @@ function ChunkCollider({ chunk, debug }: ChunkColliderProps) {
     <group ref={ref} name={`City3ColliderChunk-${chunk.key}`}>
       {debug
         ? chunk.debugBoxes.map((box, index) => (
-            <mesh
-              key={`${chunk.key}-debug-${index}`}
-              position={box.position}
-            >
+            <mesh key={`${chunk.key}-debug-${index}`} position={box.position}>
               <boxGeometry args={box.size} />
               <meshBasicMaterial color="orange" transparent opacity={0.3} />
             </mesh>
@@ -5371,10 +6027,7 @@ export function City3Colliders({
     let changed = false;
     let processed = 0;
 
-    while (
-      additionsQueue.length > 0 &&
-      processed < MAX_CHUNKS_PER_FRAME
-    ) {
+    while (additionsQueue.length > 0 && processed < MAX_CHUNKS_PER_FRAME) {
       const key = additionsQueue.shift();
       if (!key) break;
       if (!targetKeys.has(key)) continue;
@@ -5384,14 +6037,8 @@ export function City3Colliders({
       processed += 1;
     }
 
-    if (
-      processed < MAX_CHUNKS_PER_FRAME &&
-      additionsQueue.length === 0
-    ) {
-      while (
-        removalsQueue.length > 0 &&
-        processed < MAX_CHUNKS_PER_FRAME
-      ) {
+    if (processed < MAX_CHUNKS_PER_FRAME && additionsQueue.length === 0) {
+      while (removalsQueue.length > 0 && processed < MAX_CHUNKS_PER_FRAME) {
         const key = removalsQueue.shift();
         if (!key) break;
         if (targetKeys.has(key)) continue;
@@ -5402,9 +6049,7 @@ export function City3Colliders({
     }
 
     if (changed) {
-      setChunkVersion(
-        (previous) => (previous + 1) % Number.MAX_SAFE_INTEGER
-      );
+      setChunkVersion((previous) => (previous + 1) % Number.MAX_SAFE_INTEGER);
     }
   });
 
