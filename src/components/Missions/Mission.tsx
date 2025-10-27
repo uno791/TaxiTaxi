@@ -78,6 +78,7 @@ type MissionProps = JSX.IntrinsicElements["group"] & {
 type CompletionInfo = {
   missionId: string;
   reward: number;
+  bonus?: number;
 };
 
 export default function Mission({
@@ -484,6 +485,7 @@ export default function Mission({
       if (missionStatesRef.current[missionId] !== "active") return;
       const config = missionConfigByIdRef.current[missionId];
       if (!config) return;
+
       let completionApplied = false;
       setMissionStates((prev) => {
         if (prev[missionId] !== "active") return prev;
@@ -493,18 +495,41 @@ export default function Mission({
         return next;
       });
       if (!completionApplied) return;
-      setActiveMissionId(null);
-      activeMissionIdRef.current = null;
-      setPromptMissionId(null);
-      promptMissionIdRef.current = null;
-      setDialogVisible(false);
-      setMoney((value) => value + config.reward);
-      setCompletionInfo({ missionId, reward: config.reward });
+
+      // ✅ stop timer AFTER we check timeLeft
+      let bonusAwarded = 0;
+      if (typeof config.timeLimit === "number" && timeLeft && timeLeft > 0) {
+        // Example: give +R100 if they finish with 15 seconds or more left
+        if (timeLeft >= 15) {
+          bonusAwarded =
+            100 +
+            Math.round(config.reward * (timeLeft / config.timeLimit) * 0.5);
+        } else bonusAwarded = 0;
+      }
+
+      const finalReward = config.reward + bonusAwarded;
+
+      // ✅ Apply money
+      setMoney((value) => value + finalReward);
+
+      // ✅ Store completion info (for overlay)
+      setCompletionInfo({
+        missionId,
+        reward: finalReward,
+        bonus: bonusAwarded,
+      });
+
+      // ✅ Update MissionUIContext
+      setCompletion({
+        reward: finalReward,
+        bonus: bonusAwarded,
+      });
+
       if (onDestinationChange) {
         onDestinationChange(null);
       }
 
-      // TIMER: stop on success
+      // ✅ Stop timer AFTER computing bonus
       if (timerRef.current) {
         window.clearInterval(timerRef.current);
         timerRef.current = null;
@@ -513,6 +538,29 @@ export default function Mission({
       setTimeLeft(null);
       playMissionWinSound();
 
+      // ✅ Store completion info (for overlay)
+      setCompletionInfo({
+        missionId,
+        reward: finalReward,
+        bonus: bonusAwarded,
+      });
+
+      // ✅ Update MissionUIContext
+      setCompletion({
+        reward: finalReward,
+        bonus: bonusAwarded,
+      });
+
+      // ✅ Clear active mission so overlay hides
+      setActive(null);
+      setActiveMissionId(null);
+      activeMissionIdRef.current = null;
+
+      if (onDestinationChange) {
+        onDestinationChange(null);
+      }
+
+      // ✅ Unlock next mission
       const currentIndex = missions.findIndex(
         (mission) => mission.id === missionId
       );
@@ -536,6 +584,7 @@ export default function Mission({
       onDestinationChange,
       playMissionWinSound,
       setActiveMissionId,
+      setCompletion,
       setCompletionInfo,
       setDialogVisible,
       setPromptMissionId,
@@ -543,6 +592,7 @@ export default function Mission({
       setMoney,
       setTimeLeft,
       setTimer,
+      timeLeft, // ✅ include timeLeft in deps
     ]
   );
 
@@ -736,7 +786,10 @@ export default function Mission({
 
   useEffect(() => {
     if (completionInfo && completionConfig) {
-      setCompletion({ reward: completionInfo.reward });
+      setCompletion({
+        reward: completionInfo.reward,
+        bonus: completionInfo.bonus ?? 0, // ✅ properly inside the object
+      });
     } else {
       setCompletion(null);
     }

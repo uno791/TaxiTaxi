@@ -14,6 +14,17 @@ export default function MissionOverlay() {
     }
   }, [timer]);
 
+  // Auto fade out mission complete popup
+  useEffect(() => {
+    if (!completion) return;
+    const timeout = setTimeout(() => {
+      // fade out automatically
+      const overlay = document.querySelector(".mission-complete");
+      if (overlay) (overlay as HTMLElement).style.opacity = "0";
+    }, 3000);
+    return () => clearTimeout(timeout);
+  }, [completion]);
+
   const shouldRender =
     prompt || active || dialog || completion || missionFailed;
   if (!shouldRender) return null;
@@ -318,29 +329,49 @@ export default function MissionOverlay() {
         </div>
       )}
 
-      {/* MISSION COMPLETE */}
+      {/* MISSION COMPLETE (with bonus) */}
       {completion && (
         <div
+          className="mission-complete"
           style={{
             position: "absolute",
             bottom: 140,
             left: "50%",
             transform: "translateX(-50%)",
+            transition: "opacity 0.5s ease",
+            zIndex: 60,
           }}
         >
           <div
             style={{
               pointerEvents: "auto",
-              padding: "12px 22px",
-              borderRadius: "12px",
-              background: "rgba(25, 118, 210, 0.88)",
+              padding: "16px 28px",
+              borderRadius: "14px",
+              background: "rgba(25, 118, 210, 0.9)",
               color: "#fff",
               fontFamily: "Arial, sans-serif",
               fontWeight: 600,
               boxShadow: "0 10px 20px rgba(0,0,0,0.35)",
+              textAlign: "center",
+              minWidth: "280px",
             }}
           >
-            Mission complete! Earned R{completion.reward}.
+            <div style={{ fontSize: "20px", marginBottom: "6px" }}>
+              Mission complete!
+            </div>
+            <div style={{ fontSize: "18px" }}>Earned R{completion.reward}</div>
+            {completion.bonus && completion.bonus > 0 && (
+              <div
+                style={{
+                  marginTop: "6px",
+                  fontSize: "16px",
+                  fontWeight: 700,
+                  color: "#ffeb3b",
+                }}
+              >
+                Speed Bonus +R{completion.bonus}
+              </div>
+            )}
           </div>
         </div>
       )}

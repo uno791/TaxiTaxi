@@ -32,16 +32,16 @@ export const cars: CarData[] = [
   {
     name: "Ferrari F40",
     modelPath: "/models/Ferrari F40.glb",
-    requiredLevel: 2,
-    scale: 0.12,
+    requiredLevel: 1,
+    scale: 0.17,
     offset: [0, -0.07, 0],
   },
   {
     name: "Lamborghini",
     modelPath: "/models/lamborghini.glb",
-    requiredLevel: 3,
-    scale: 0.002,
-    offset: [0, 0.08, 0],
+    requiredLevel: 1,
+    scale: 0.0027,
+    offset: [-0.06, 0.08, 0],
   },
   {
     name: "Rolls Royce",

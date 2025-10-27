@@ -35,6 +35,7 @@ export type MissionDialogState = {
 
 type MissionCompletionState = {
   reward: number;
+  bonus?: number;
 };
 
 type MissionTimerState = {
