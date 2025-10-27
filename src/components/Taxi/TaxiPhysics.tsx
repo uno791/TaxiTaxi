@@ -295,6 +295,7 @@ export function TaxiPhysics({
     setSpeed,
     setBoost,
     boost,
+    speed,
     gameOver,
   } = useGame();
 
@@ -346,7 +347,7 @@ export function TaxiPhysics({
     if (carSpeed < 5) return; // ignore light taps
 
     // Calculate loss based on speed
-    const loss = Math.min(carSpeed * 1.2, 200); // tune multiplier and cap
+    const loss = Math.min(carSpeed * 2, 500); // tune multiplier and cap
     setMoney((prev) => Math.max(prev - loss, 0));
   }, [setMoney]);
 
@@ -378,7 +379,11 @@ export function TaxiPhysics({
   }, [chaseRef]);
 
   useEffect(() => {
-    if (!chassisApi?.position || !chassisApi?.velocity || !chassisApi?.angularVelocity)
+    if (
+      !chassisApi?.position ||
+      !chassisApi?.velocity ||
+      !chassisApi?.angularVelocity
+    )
       return;
     const [x, y, z] = spawnPosition;
     chassisApi.position.set(x, y, z);
@@ -566,7 +571,8 @@ export function TaxiPhysics({
     (kilometers: number) => {
       if (kilometers <= 0) return;
       setKilometers((value) => value + kilometers);
-      const fuelCost = kilometers * 20;
+      //const fuelCost = kilometers * 45;
+      const fuelCost = kilometers * (40 + speed * 0.3 + (boost > 0 ? 15 : 0));
       if (fuelCost <= 0) return;
       setMoney((value) => {
         if (fuelCost < 1e-6) return value;
