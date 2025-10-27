@@ -56,7 +56,7 @@ export type MissionConfig = {
 const city1Missions: MissionConfig[] = [
   {
     id: "night1-accountant",
-    pickupPosition: [-26, -1, -20],
+    pickupPosition: [-26, 1.8, -20],
     passengerPosition: [-25, 0.7, -20],
     dropoffPosition: [59, -1, -48],
     dropoffHint: "the counting house under the viaduct",
@@ -212,9 +212,9 @@ const city1Missions: MissionConfig[] = [
   },
   {
     id: "night1-mirror-man",
-    pickupPosition: [-31, 0, -5],
-    passengerPosition: [-31, 0, -5],
-    dropoffPosition: [-22, -1, -48],
+    pickupPosition: [-31.644, 0, 5.543],
+    passengerPosition: [-31.644, 0, 5.543],
+    dropoffPosition: [77.82, 0, -21.603],
     dropoffHint: "the overpass mirror stand",
     reward: 0,
     pickupRadius: 4,
