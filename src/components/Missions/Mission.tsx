@@ -187,6 +187,8 @@ export default function Mission({
     setCompletion,
     setTimer,
     setMissionFailureActive,
+    setDebugMissions,
+    setDebugStartMission,
   } = useMissionUI();
   const lastGameOverRef = useRef(gameOver);
 
@@ -426,6 +428,70 @@ export default function Mission({
     setPromptMissionId(null);
     promptMissionIdRef.current = null;
   }, [updateMissionStates, setPromptMissionId]);
+
+  const debugStartMission = useCallback(
+    (missionId: string) => {
+      const config = missionConfigByIdRef.current[missionId];
+      if (!config) return;
+
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
+      setMissionFailureActive(false);
+      setCompletionInfo(null);
+      setDialogVisible(false);
+      setDialogIndex(0);
+      setTimeLeft(null);
+      setTimer(null);
+
+      const activeId = activeMissionIdRef.current;
+      if (activeId) {
+        if (activeId !== missionId) {
+          missionPerformance.abandonMission();
+        }
+        setActiveMissionId(null);
+        activeMissionIdRef.current = null;
+      }
+
+      if (onDestinationChange) {
+        onDestinationChange(null);
+      }
+
+      updateMissionStates((prev) => {
+        const next = { ...prev };
+        if (
+          activeId &&
+          activeId !== missionId &&
+          next[activeId] !== "completed"
+        ) {
+          next[activeId] = "available";
+        }
+        next[missionId] = "prompt";
+        return next as Record<string, MissionState>;
+      });
+
+      setPromptMissionId(missionId);
+      promptMissionIdRef.current = missionId;
+
+      handleStartMission();
+    },
+    [
+      handleStartMission,
+      missionPerformance,
+      onDestinationChange,
+      setActiveMissionId,
+      setCompletionInfo,
+      setDialogIndex,
+      setDialogVisible,
+      setMissionFailureActive,
+      setPromptMissionId,
+      setTimeLeft,
+      setTimer,
+      updateMissionStates,
+    ]
+  );
 
   const concludeDialogAndStartMission = useCallback(
     (missionId: string, config: MissionConfig) => {
@@ -753,6 +819,8 @@ export default function Mission({
       options,
       onContinue:
         !options || options.length === 0 ? () => advanceDialog() : undefined,
+      passengerModel: config.passengerModel ?? "generic",
+      passengerPreview: config.passengerPreview,
     });
   }, [advanceDialog, dialogIndex, dialogVisible, setDialog]);
 
@@ -799,6 +867,24 @@ export default function Mission({
       setActive(null);
     }
   }, [activeConfig, setActive]);
+
+  useEffect(() => {
+    setDebugStartMission(() => debugStartMission);
+    return () => setDebugStartMission(undefined);
+  }, [debugStartMission, setDebugStartMission]);
+
+  useEffect(() => {
+    setDebugMissions(
+      missions.map((config) => ({
+        id: config.id,
+        label: config.passengerName ?? config.id,
+        reward: config.reward,
+        dropoffHint: config.dropoffHint,
+        passengerModel: config.passengerModel,
+      }))
+    );
+    return () => setDebugMissions([]);
+  }, [missions, setDebugMissions]);
 
   useEffect(() => {
     if (completionInfo && completionConfig) {

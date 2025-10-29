@@ -1,6 +1,18 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import type { MissionPerformanceBreakdown } from "./MissionPerformanceContext";
+import type {
+  MissionPassengerModelId,
+  MissionPassengerPreviewConfig,
+} from "./missionConfig";
+
+export type MissionDebugEntry = {
+  id: string;
+  label: string;
+  reward: number;
+  dropoffHint: string;
+  passengerModel?: MissionPassengerModelId;
+};
 
 type MissionPromptState = {
   dropoffHint: string;
@@ -32,6 +44,8 @@ export type MissionDialogState = {
   text: string;
   options?: MissionDialogOption[];
   onContinue?: () => void;
+  passengerModel?: MissionPassengerModelId;
+  passengerPreview?: MissionPassengerPreviewConfig;
 };
 
 type MissionCompletionState = {
@@ -60,6 +74,12 @@ type MissionUIContextValue = {
   setTimer: React.Dispatch<React.SetStateAction<MissionTimerState | null>>;
   missionFailureActive: boolean;
   setMissionFailureActive: React.Dispatch<React.SetStateAction<boolean>>;
+  debugMissions: MissionDebugEntry[];
+  setDebugMissions: React.Dispatch<React.SetStateAction<MissionDebugEntry[]>>;
+  debugStartMission?: (missionId: string) => void;
+  setDebugStartMission: React.Dispatch<
+    React.SetStateAction<((missionId: string) => void) | undefined>
+  >;
 };
 
 const MissionUIContext = createContext<MissionUIContextValue | undefined>(
@@ -75,6 +95,10 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
   );
   const [timer, setTimer] = useState<MissionTimerState | null>(null);
   const [missionFailureActive, setMissionFailureActive] = useState(false);
+  const [debugMissions, setDebugMissions] = useState<MissionDebugEntry[]>([]);
+  const [debugStartMission, setDebugStartMission] = useState<
+    ((missionId: string) => void) | undefined
+  >(undefined);
 
   const value = useMemo(
     () => ({
@@ -90,8 +114,21 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       setTimer,
       missionFailureActive,
       setMissionFailureActive,
+      debugMissions,
+      setDebugMissions,
+      debugStartMission,
+      setDebugStartMission,
     }),
-    [prompt, active, dialog, completion, timer, missionFailureActive]
+    [
+      prompt,
+      active,
+      dialog,
+      completion,
+      timer,
+      missionFailureActive,
+      debugMissions,
+      debugStartMission,
+    ]
   );
 
   return (

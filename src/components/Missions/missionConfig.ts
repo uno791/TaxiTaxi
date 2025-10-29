@@ -35,6 +35,14 @@ export type MissionDialogueEntry = {
   options?: MissionDialogueOptionConfig[];
 };
 
+export type MissionPassengerPreviewConfig = {
+  position?: [number, number, number];
+  rotation?: [number, number, number];
+  scale?: number;
+  cameraPosition?: [number, number, number];
+  cameraFov?: number;
+};
+
 export type MissionConfig = {
   id: string;
   pickupPosition: [number, number, number];
@@ -51,13 +59,14 @@ export type MissionConfig = {
   passengerRotation?: [number, number, number];
   passengerScale?: number;
   timeLimit?: number;
+  passengerPreview?: MissionPassengerPreviewConfig;
 };
 
 const city1Missions: MissionConfig[] = [
   {
     id: "night1-accountant",
-    pickupPosition: [-26, 1.8, -20],
-    passengerPosition: [-25, 0.7, -20],
+    pickupPosition: [-26, 1.5, -20],
+    passengerPosition: [-26, 0.6, -20],
     dropoffPosition: [59, -1, -48],
     dropoffHint: "the counting house under the viaduct",
     reward: 200,
@@ -87,6 +96,13 @@ const city1Missions: MissionConfig[] = [
         text: "Balance is everything. You'll see soon enough.",
       },
     ],
+    passengerPreview: {
+      position: [0, 0.6, 0],
+      rotation: [0, 0, 0],
+      scale: 1.2,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 80,
+    },
   },
   {
     id: "night1-soldier",
@@ -120,6 +136,13 @@ const city1Missions: MissionConfig[] = [
         text: "We all have. Some of us just forget slower.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.7,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night1-street-preacher",
@@ -153,6 +176,13 @@ const city1Missions: MissionConfig[] = [
         text: "Everyone in this city knows you. They're just waiting for you to stop.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.7,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night1-child",
@@ -183,6 +213,13 @@ const city1Missions: MissionConfig[] = [
         text: "...",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.3,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night1-blind-woman",
@@ -213,6 +250,13 @@ const city1Missions: MissionConfig[] = [
         text: "No, you run.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.7,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night1-mirror-man",
@@ -242,6 +286,13 @@ const city1Missions: MissionConfig[] = [
         text: "Don't worry. We'll trade soon. You'll get to rest.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.7,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
 ];
 
@@ -283,6 +334,13 @@ const city2Missions: MissionConfig[] = [
         text: "You talk like you weren't there.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.25,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night2-clown",
@@ -317,6 +375,13 @@ const city2Missions: MissionConfig[] = [
         text: "Everyone hides something. The best ones hide bodies.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 1,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night2-coroner",
@@ -347,6 +412,13 @@ const city2Missions: MissionConfig[] = [
         text: "......",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.7,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night2-radio-host",
@@ -377,6 +449,13 @@ const city2Missions: MissionConfig[] = [
         text: "We all know it. Stay tuned -- after the break, we'll revisit the incident.",
       },
     ],
+    passengerPreview: {
+      position: [0, 0, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.2,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night2-nun",
@@ -437,6 +516,13 @@ const city2Missions: MissionConfig[] = [
         text: "You'll remember when you stop pretending.",
       },
     ],
+    passengerPreview: {
+      position: [0, 0.1, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 1.1,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night2-officer",
@@ -471,6 +557,13 @@ const city2Missions: MissionConfig[] = [
         text: "I can feel his flashlight through the mirror. The beam is too bright. It's burning through me.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.7,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night2-doctor",
@@ -501,6 +594,13 @@ const city2Missions: MissionConfig[] = [
         text: "I can't treat the dead.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.5, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.09,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
 ];
 
@@ -542,6 +642,13 @@ const city3Missions: MissionConfig[] = [
         text: "The rearview mirror is dripping. I tell myself it's rain. I don't believe it.",
       },
     ],
+    passengerPreview: {
+      position: [0, 0, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.9,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night3-jester",
