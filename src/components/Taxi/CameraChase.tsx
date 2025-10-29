@@ -2,6 +2,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useRef, useState, useEffect } from "react";
 import * as THREE from "three";
+import { useGame } from "../../GameContext";
 
 type CameraChaseProps = {
   target: React.MutableRefObject<THREE.Object3D | null>;
@@ -9,6 +10,8 @@ type CameraChaseProps = {
 
 export function CameraChase({ target }: CameraChaseProps) {
   const { camera } = useThree();
+  const perspectiveCamera = camera as THREE.PerspectiveCamera;
+  const { isBoosting } = useGame();
 
   const pos = useRef(new THREE.Vector3());
   const quat = useRef(new THREE.Quaternion());
@@ -30,6 +33,9 @@ export function CameraChase({ target }: CameraChaseProps) {
   ];
   const stiffness = 8;
   const targetSmoothing = 6;
+  const baseFov = 50;
+  const boostFov = 60;
+  const fovLerpSpeed = 6;
 
   // Switch camera view with "C"
   useEffect(() => {
@@ -102,6 +108,19 @@ export function CameraChase({ target }: CameraChaseProps) {
     const targetAlpha = 1 - Math.exp(-targetSmoothing * dt);
     filteredTarget.current.lerp(desiredTarget.current, targetAlpha);
     camera.lookAt(filteredTarget.current);
+
+    const targetFov = isBoosting ? boostFov : baseFov;
+    if (perspectiveCamera.isPerspectiveCamera) {
+      if (Math.abs(perspectiveCamera.fov - targetFov) > 0.01) {
+        const fovAlpha = 1 - Math.exp(-fovLerpSpeed * dt);
+        perspectiveCamera.fov = THREE.MathUtils.lerp(
+          perspectiveCamera.fov,
+          targetFov,
+          fovAlpha
+        );
+        perspectiveCamera.updateProjectionMatrix();
+      }
+    }
   });
 
   return null;

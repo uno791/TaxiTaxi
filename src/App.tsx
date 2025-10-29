@@ -35,7 +35,7 @@ import CarSelector from "./components/CarSelector/CarSelector";
 import MissionTrackerHUD from "./components/UI/MissionTrackerHUD";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
-import { useGameLifecycle } from "./GameContext";
+import { useGameLifecycle, useGame } from "./GameContext";
 import { useFlightMode } from "./tools/FlightTool";
 import {
   ColliderPainterOverlay,
@@ -232,194 +232,194 @@ function GameWorld() {
             style={{ width: "100vw", height: "100vh", position: "relative" }}
           >
             <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
-            <color attach="background" args={["#0a0f2c"]} />{" "}
-            <Stars
-              radius={200} // spread of the starfield
-              depth={80} // how deep the field goes
-              count={4000} // number of stars
-              factor={6} // ⭐ increase from 4 → 6 to make stars brighter/larger
-              saturation={0} // keep at 0 for white/blue stars
-              fade // enables distance fade
-            />
-            <FogEffect />
-            {/* dark blue night sky */}
-            <Physics
-              gravity={[0, -9.81, 0]}
-              broadphase="SAP"
-              allowSleep
-              iterations={12}
-              tolerance={1e-4}
-              stepSize={1 / 90}
-              maxSubSteps={4}
-            >
-              {/* Lighting */}
-              {lightingMode === "fill" ? (
-                <hemisphereLight args={["#8aa6ff", "#1b1e25", 0.35]} />
-              ) : null}
+              <color attach="background" args={["#0a0f2c"]} />{" "}
+              <Stars
+                radius={200} // spread of the starfield
+                depth={80} // how deep the field goes
+                count={4000} // number of stars
+                factor={6} // ⭐ increase from 4 → 6 to make stars brighter/larger
+                saturation={0} // keep at 0 for white/blue stars
+                fade // enables distance fade
+              />
+              <FogEffect />
+              {/* dark blue night sky */}
+              <Physics
+                gravity={[0, -9.81, 0]}
+                broadphase="SAP"
+                allowSleep
+                iterations={12}
+                tolerance={1e-4}
+                stepSize={1 / 90}
+                maxSubSteps={4}
+              >
+                {/* Lighting */}
+                {lightingMode === "fill" ? (
+                  <hemisphereLight args={["#8aa6ff", "#1b1e25", 0.35]} />
+                ) : null}
 
-              {/* World */}
-              {activeCity === "city1" ? (
-                <>
-                  <AllBuildings />
-                  <RoadCircuit position={[0, 0, 0]} />
-                  <Background position={[0, 0, 0]} />
-                </>
-              ) : null}
-              {activeCity === "city2" ? (
-                <Level2
-                  position={[-130, 0, -20]}
+                {/* World */}
+                {activeCity === "city1" ? (
+                  <>
+                    <AllBuildings />
+                    <RoadCircuit position={[0, 0, 0]} />
+                    <Background position={[0, 0, 0]} />
+                  </>
+                ) : null}
+                {activeCity === "city2" ? (
+                  <Level2
+                    position={[-130, 0, -20]}
+                    playerPositionRef={playerPositionRef}
+                  />
+                ) : null}
+                {activeCity === "city3" ? (
+                  <NewCityRoad
+                    position={[0, 0, 0]}
+                    playerPositionRef={playerPositionRef}
+                  />
+                ) : null}
+
+                {/* Taxi */}
+                <ColliderAwareTaxiPhysics
+                  chaseRef={chaseRef}
+                  controlMode={controlMode}
                   playerPositionRef={playerPositionRef}
+                  spawnPosition={spawnPosition}
+                  basePaused={
+                    isPaused || dialogPaused || storyPaused || flightEnabled
+                  }
                 />
-              ) : null}
-              {activeCity === "city3" ? (
-                <NewCityRoad
+
+                <Mission
                   position={[0, 0, 0]}
-                  playerPositionRef={playerPositionRef}
+                  taxiRef={chaseRef}
+                  missions={missions}
+                  cityId={activeCity}
+                  onDestinationChange={updateDestination}
+                  onAvailableMissionTargetsChange={
+                    handleAvailableMissionTargetsChange
+                  }
+                  onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
+                  onAllMissionsCompleted={handleAllMissionsCompleted}
+                  onMissionProgress={handleMissionProgress}
                 />
-              ) : null}
 
-              {/* Taxi */}
-              <ColliderAwareTaxiPhysics
-                chaseRef={chaseRef}
-                controlMode={controlMode}
-                playerPositionRef={playerPositionRef}
-                spawnPosition={spawnPosition}
-                basePaused={
-                  isPaused || dialogPaused || storyPaused || flightEnabled
-                }
-              />
+                <DestinationMarker destinationRef={destinationRef} />
+                <NavigationSystem
+                  playerRef={playerPositionRef}
+                  destinationRef={destinationRef}
+                  onMiniMapCanvasChange={setMiniMapCanvas}
+                />
 
-              <Mission
-                position={[0, 0, 0]}
-                taxiRef={chaseRef}
-                missions={missions}
-                cityId={activeCity}
-                onDestinationChange={updateDestination}
-                onAvailableMissionTargetsChange={
-                  handleAvailableMissionTargetsChange
-                }
-                onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
-                onAllMissionsCompleted={handleAllMissionsCompleted}
-                onMissionProgress={handleMissionProgress}
-              />
+                {/* Camera */}
+                <ColliderAwareCameraChase
+                  target={chaseRef}
+                  flightEnabled={flightEnabled}
+                />
+                {flightControls}
+                <ColliderAwareOrbitControls flightEnabled={flightEnabled} />
+              </Physics>
+              <ColliderPainterRuntime playerPositionRef={playerPositionRef} />
+            </Canvas>
 
-              <DestinationMarker destinationRef={destinationRef} />
-              <NavigationSystem
-                playerRef={playerPositionRef}
-                destinationRef={destinationRef}
-                onMiniMapCanvasChange={setMiniMapCanvas}
-              />
+            {/* Controls */}
+            <TaxiControlSettings
+              controlMode={controlMode}
+              onControlModeChange={setControlMode}
+              isPaused={isPaused}
+              onPauseChange={setIsPaused}
+            />
+            <RestartControl />
 
-              {/* Camera */}
-              <ColliderAwareCameraChase
-                target={chaseRef}
-                flightEnabled={flightEnabled}
-              />
-              {flightControls}
-              <ColliderAwareOrbitControls flightEnabled={flightEnabled} />
-            </Physics>
-            <ColliderPainterRuntime playerPositionRef={playerPositionRef} />
-          </Canvas>
+            {/* UI overlay */}
+            <TaxiSpeedometer />
+            <GameUI />
+            <GameOverPopup />
+            <UpgradeMenu />
 
-          {/* Controls */}
-          <TaxiControlSettings
-            controlMode={controlMode}
-            onControlModeChange={setControlMode}
-            isPaused={isPaused}
-            onPauseChange={setIsPaused}
-          />
-          <RestartControl />
+            <MissionTrackerHUD
+              remaining={missionsRemaining}
+              nextMission={nextMissionName}
+            />
 
-          {/* UI overlay */}
-          <TaxiSpeedometer />
-          <GameUI />
-          <GameOverPopup />
-          <UpgradeMenu />
-
-          <MissionTrackerHUD
-            remaining={missionsRemaining}
-            nextMission={nextMissionName}
-          />
-
-          <MiniMapOverlay
-            canvas={miniMapCanvas}
-            missions={availableMissionTargets}
-            playerRef={playerPositionRef}
-            size={220}
-          />
-          <MissionOverlay />
-          <CityStoryOverlay
-            cityId={introCity}
-            story={introData}
-            onContinue={handleIntroOverlayContinue}
-          />
-          <CityStoryOverlay
-            cityId={storyCity}
-            story={storyData}
-            onContinue={handleStoryOverlayContinue}
-          />
-          <div
-            style={{
-              position: "absolute",
-              bottom: 20,
-              left: 20,
-              display: "flex",
-              flexDirection: "column",
-              gap: "8px",
-              zIndex: 40,
-              pointerEvents: "auto",
-            }}
-          >
-            <button
-              type="button"
-              onClick={toggleTestMode}
+            <MiniMapOverlay
+              canvas={miniMapCanvas}
+              missions={availableMissionTargets}
+              playerRef={playerPositionRef}
+              size={220}
+            />
+            <MissionOverlay />
+            <CityStoryOverlay
+              cityId={introCity}
+              story={introData}
+              onContinue={handleIntroOverlayContinue}
+            />
+            <CityStoryOverlay
+              cityId={storyCity}
+              story={storyData}
+              onContinue={handleStoryOverlayContinue}
+            />
+            <div
               style={{
-                padding: "8px 14px",
-                borderRadius: "8px",
-                background: testMode
-                  ? "rgba(46, 125, 50, 0.85)"
-                  : "rgba(24, 28, 35, 0.85)",
-                color: "#f5f5f5",
-                border: "1px solid rgba(255,255,255,0.25)",
-                fontSize: "0.85rem",
-                cursor: "pointer",
+                position: "absolute",
+                bottom: 20,
+                left: 20,
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
+                zIndex: 40,
+                pointerEvents: "auto",
               }}
             >
-              {testMode ? "Test Travel: On" : "Enable Test Travel"}
-            </button>
-            {testMode ? (
-              <div
+              <button
+                type="button"
+                onClick={toggleTestMode}
                 style={{
-                  display: "flex",
-                  gap: "8px",
+                  padding: "8px 14px",
+                  borderRadius: "8px",
+                  background: testMode
+                    ? "rgba(46, 125, 50, 0.85)"
+                    : "rgba(24, 28, 35, 0.85)",
+                  color: "#f5f5f5",
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  fontSize: "0.85rem",
+                  cursor: "pointer",
                 }}
               >
-                {CITY_SEQUENCE.map((city) => (
-                  <button
-                    key={city}
-                    type="button"
-                    onClick={() => handleTestTravel(city)}
-                    style={{
-                      padding: "8px 12px",
-                      borderRadius: "8px",
-                      border: "1px solid rgba(255,255,255,0.25)",
-                      background:
-                        activeCity === city
-                          ? "rgba(46, 125, 50, 0.85)"
-                          : "rgba(24, 28, 35, 0.75)",
-                      color: "#f5f5f5",
-                      cursor: "pointer",
-                      fontSize: "0.8rem",
-                    }}
-                  >
-                    Travel to {city.toUpperCase()}
-                  </button>
-                ))}
-              </div>
-            ) : null}
-          </div>
-          {flightOverlay}
-          <ColliderPainterOverlay />
+                {testMode ? "Test Travel: On" : "Enable Test Travel"}
+              </button>
+              {testMode ? (
+                <div
+                  style={{
+                    display: "flex",
+                    gap: "8px",
+                  }}
+                >
+                  {CITY_SEQUENCE.map((city) => (
+                    <button
+                      key={city}
+                      type="button"
+                      onClick={() => handleTestTravel(city)}
+                      style={{
+                        padding: "8px 12px",
+                        borderRadius: "8px",
+                        border: "1px solid rgba(255,255,255,0.25)",
+                        background:
+                          activeCity === city
+                            ? "rgba(46, 125, 50, 0.85)"
+                            : "rgba(24, 28, 35, 0.75)",
+                        color: "#f5f5f5",
+                        cursor: "pointer",
+                        fontSize: "0.8rem",
+                      }}
+                    >
+                      Travel to {city.toUpperCase()}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+            {flightOverlay}
+            <ColliderPainterOverlay />
             <MissionUrgencyEffects containerRef={containerRef} />
 
             <button

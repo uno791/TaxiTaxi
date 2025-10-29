@@ -29,6 +29,8 @@ type GameContextType = {
   boost: number;
   setBoost: React.Dispatch<React.SetStateAction<number>>;
   maxBoost: number;
+  isBoosting: boolean;
+  setIsBoosting: React.Dispatch<React.SetStateAction<boolean>>;
   gameOver: boolean;
   setGameOver: React.Dispatch<React.SetStateAction<boolean>>;
   speedLevel: number;
@@ -53,9 +55,9 @@ type GameLifecycleContextType = {
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
-const GameLifecycleContext = createContext<GameLifecycleContextType | undefined>(
-  undefined
-);
+const GameLifecycleContext = createContext<
+  GameLifecycleContextType | undefined
+>(undefined);
 
 type EconomyState = {
   money: number;
@@ -78,6 +80,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [kilometers, setKilometers] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [boost, setBoost] = useState(0);
+  const [isBoosting, setIsBoosting] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameInstance, setGameInstance] = useState(0);
   const [activeCity, setActiveCity] = useState<CityId>(DEFAULT_CITY);
@@ -87,15 +90,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const setMoney = useCallback(
     (update: React.SetStateAction<number>) => {
       setEconomy((previous) => {
-        const nextMoney =
+        const rawNext =
           typeof update === "function"
             ? (update as (value: number) => number)(previous.money)
             : update;
+
+        // Clamp to zero so it never goes negative
+        const nextMoney = Math.max(0, rawNext);
+
+        // Trigger Game Over when money reaches 0
+        if (nextMoney <= 0 && previous.money > 0) {
+          setGameOver(true);
+        }
+
         if (nextMoney === previous.money) return previous;
         return { ...previous, money: nextMoney };
       });
     },
-    [setEconomy]
+    [setEconomy, setGameOver]
   );
 
   const speedMultiplier = 1 + speedLevel * speedIncreasePerLevel;
@@ -160,6 +172,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setKilometers(0);
     setSpeed(0);
     setBoost(0);
+    setIsBoosting(false);
     setGameOver(false);
     setGameInstance((value) => value + 1);
   }, []);
@@ -174,6 +187,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setSpeed,
       boost,
       setBoost,
+      isBoosting,
+      setIsBoosting,
       maxBoost,
       gameOver,
       setGameOver,
@@ -199,6 +214,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setSpeed,
       boost,
       setBoost,
+      isBoosting,
+      setIsBoosting,
       maxBoost,
       gameOver,
       setGameOver,

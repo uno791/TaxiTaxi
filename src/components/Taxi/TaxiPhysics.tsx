@@ -297,23 +297,42 @@ export function TaxiPhysics({
     setGameOver,
     setSpeed,
     setBoost,
+    setIsBoosting,
     boost,
     speed,
     gameOver,
   } = useGame();
 
+  const boostVisualActiveRef = useRef(false);
+
+  const updateBoostState = useCallback(
+    (active: boolean) => {
+      if (boostVisualActiveRef.current === active) return;
+      boostVisualActiveRef.current = active;
+      setIsBoosting(active);
+    },
+    [setIsBoosting]
+  );
+
   useEffect(() => {
-    if (gameOver) {
-      hasPlayedStartSoundRef.current = false;
-      stopEngineLoop();
-      stopBoostSound();
-      stopBrakeSound();
-    }
-  }, [gameOver, stopBoostSound, stopBrakeSound, stopEngineLoop]);
+    if (!gameOver) return;
+    hasPlayedStartSoundRef.current = false;
+    updateBoostState(false);
+    stopEngineLoop();
+    stopBoostSound();
+    stopBrakeSound();
+  }, [
+    gameOver,
+    stopBoostSound,
+    stopBrakeSound,
+    stopEngineLoop,
+    updateBoostState,
+  ]);
 
   useEffect(() => {
     if (gameOver) return;
     if (isPaused) {
+      updateBoostState(false);
       stopEngineLoop();
       stopBoostSound();
       stopBrakeSound();
@@ -329,6 +348,7 @@ export function TaxiPhysics({
     stopBrakeSound,
     stopBoostSound,
     stopEngineLoop,
+    updateBoostState,
   ]);
 
   const velocityRef = useRef<[number, number, number]>([0, 0, 0]);
@@ -564,6 +584,13 @@ export function TaxiPhysics({
   }, [activeKeyboardControls]);
 
   useEffect(() => {
+    return () => {
+      boostVisualActiveRef.current = false;
+      setIsBoosting(false);
+    };
+  }, [setIsBoosting]);
+
+  useEffect(() => {
     return hitDetection.onHit(() => {
       if (boostRef.current === 0) return;
       boostRef.current = 0;
@@ -598,6 +625,7 @@ export function TaxiPhysics({
     if (gameOver || isPaused) {
       stopBoostSound();
       stopBrakeSound();
+      updateBoostState(false);
       brakeSmokeSpawnTimerRef.current = 0;
       brakeSmokeSpawnIndexRef.current = 0;
       brakeSmokeParticlesRef.current.forEach((particle) => {
@@ -654,11 +682,15 @@ export function TaxiPhysics({
       setBoost(capped);
     }
 
-    if (boostKeyHeld && capped > 0.01) {
+    const boostActive = boostKeyHeld && capped > 0.01;
+
+    if (boostActive) {
       startBoostSound();
     } else {
       stopBoostSound();
     }
+
+    updateBoostState(boostActive);
 
     if (speed <= 0.0001) {
       if (distanceAccumulatorRef.current > 0) {
@@ -669,6 +701,7 @@ export function TaxiPhysics({
         lastSpeedBroadcastRef.current = 0;
         setSpeed(0);
       }
+      updateBoostState(false);
       uiTimerRef.current = 0;
       return;
     }

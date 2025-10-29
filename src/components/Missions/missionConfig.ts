@@ -105,7 +105,7 @@ const city1Missions: MissionConfig[] = [
     dialogue: [
       {
         speaker: "passenger",
-        text: "Funny, how cities look the same no matter where you fight. The headlights - like muzzle flashes. The silence after a scream. You ever wonder if war just follows some of us home, driver? Maybe you brought it here.",
+        text: "Funny, how cities look the same no matter where you fight. The headlights, like muzzle flashes. The silence after a scream. You ever wonder if war just follows some of us home, driver? Maybe you brought it here.",
       },
       {
         speaker: "driver",
