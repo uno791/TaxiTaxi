@@ -11,7 +11,7 @@ const TRACKS = {
   fuwatto: {
     id: "fuwatto",
     label: "ふわっと",
-    src: "/music/%E3%81%B5%E3%82%8F%E3%81%A3%E3%81%A8.mp3",
+    src: "music/%E3%81%B5%E3%82%8F%E3%81%A3%E3%81%A8.mp3",
     loop: false,
     priority: 0,
     volume: 0.28,
@@ -19,7 +19,7 @@ const TRACKS = {
   defaultTheme: {
     id: "defaultTheme",
     label: "A Bad Dream",
-    src: "/music/A%20Bad%20Dream.mp3",
+    src: "music/A%20Bad%20Dream.mp3",
     loop: false,
     priority: 0,
     volume: 0.25,

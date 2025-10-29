@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Dumpster(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Dumpster.glb");
+  const { scene } = useGLTF("models/Dumpster.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Dumpster(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Dumpster.glb");
+useGLTF.preload("models/Dumpster.glb");

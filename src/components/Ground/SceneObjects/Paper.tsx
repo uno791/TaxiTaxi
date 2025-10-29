@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Paper(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Debris Papers.glb");
+  const { scene } = useGLTF("models/Debris Papers.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Paper(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Debris Papers.glb");
+useGLTF.preload("models/Debris Papers.glb");

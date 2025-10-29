@@ -4,7 +4,7 @@ import { Group } from "three";
 
 export function Taxi(props: JSX.IntrinsicElements["group"]) {
   // Load model (must be in public/models/)
-  const { scene } = useGLTF("/models/Taxi.glb") as { scene: Group };
+  const { scene } = useGLTF("models/Taxi.glb") as { scene: Group };
 
   return (
     <group {...props}>
@@ -14,4 +14,4 @@ export function Taxi(props: JSX.IntrinsicElements["group"]) {
 }
 
 // Preload so it's ready when used
-useGLTF.preload("/models/Taxi.glb");
+useGLTF.preload("models/Taxi.glb");

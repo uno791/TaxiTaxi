@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Tennis(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Tennis court.glb");
+  const { scene } = useGLTF("models/Tennis court.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Tennis(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Tennis court.glb");
+useGLTF.preload("models/Tennis court.glb");

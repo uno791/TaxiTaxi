@@ -37,7 +37,7 @@ export function MissionZone({
   visibleWhenInactive = false,
   ...groupProps
 }: MissionZoneProps) {
-  const { scene } = useGLTF("/models/Glass.glb");
+  const { scene } = useGLTF("models/Glass.glb");
   const { scene: rootScene } = useThree();
 
   const zoneRef = useRef<THREE.Group>(null);
@@ -102,4 +102,4 @@ export function MissionZone({
   );
 }
 
-useGLTF.preload("/models/Glass.glb");
+useGLTF.preload("models/Glass.glb");

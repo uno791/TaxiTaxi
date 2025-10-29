@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function FlowerPotA(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Flower Pot.glb");
+  const { scene } = useGLTF("models/Flower Pot.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function FlowerPotA(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Flower Pot.glb");
+useGLTF.preload("models/Flower Pot.glb");

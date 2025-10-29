@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Hospital(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Hospital.glb");
+  const { scene } = useGLTF("models/Hospital.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Hospital(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Hospital.glb");
+useGLTF.preload("models/Hospital.glb");

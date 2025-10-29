@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Cone(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Cone.glb");
+  const { scene } = useGLTF("models/Cone.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Cone(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Cone.glb");
+useGLTF.preload("models/Cone.glb");

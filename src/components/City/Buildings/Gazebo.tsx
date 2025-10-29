@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Gazebo(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Gazebo.glb");
+  const { scene } = useGLTF("models/Gazebo.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Gazebo(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Gazebo.glb");
+useGLTF.preload("models/Gazebo.glb");

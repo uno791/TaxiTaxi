@@ -42,7 +42,7 @@ export default function UpgradeMenu() {
 
   useEffect(() => {
     if (typeof Audio === "undefined") return;
-    const audio = new Audio("/sounds/level-up.wav");
+    const audio = new Audio("sounds/level-up.wav");
     audio.preload = "auto";
     audio.volume = 0.7;
     levelUpSoundRef.current = audio;

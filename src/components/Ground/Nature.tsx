@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Nature(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Forest.glb");
+  const { scene } = useGLTF("models/Forest.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Nature(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Forest.glb");
+useGLTF.preload("models/Forest.glb");

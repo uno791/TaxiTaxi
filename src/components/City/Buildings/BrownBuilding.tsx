@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function BrownBuilding(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Brown Building.glb");
+  const { scene } = useGLTF("models/Brown Building.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function BrownBuilding(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Brown Building.glb");
+useGLTF.preload("models/Brown Building.glb");

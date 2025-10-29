@@ -186,27 +186,27 @@ export function TaxiPhysics({
   useEffect(() => {
     if (typeof Audio === "undefined") return;
 
-    const carStart = new Audio("/sounds/mixkit-car-start-ignition-1559.wav");
+    const carStart = new Audio("sounds/mixkit-car-start-ignition-1559.wav");
     carStart.preload = "auto";
     carStart.volume = 0.7;
 
-    const engineLoop = new Audio("/sounds/diesel-car-engine-sound-111994.mp3");
+    const engineLoop = new Audio("sounds/diesel-car-engine-sound-111994.mp3");
     engineLoop.preload = "auto";
     engineLoop.loop = true;
     engineLoop.volume = 0.05;
 
-    const boostLoop = new Audio("/sounds/audi-v8-acceleration-sound-6067.mp3");
+    const boostLoop = new Audio("sounds/audi-v8-acceleration-sound-6067.mp3");
     boostLoop.preload = "auto";
     boostLoop.loop = true;
     boostLoop.volume = 0.6;
 
     const brakeSound = new Audio(
-      "/sounds/fast-car-braking-sound-effect-3-11000.mp3"
+      "sounds/fast-car-braking-sound-effect-3-11000.mp3"
     );
     brakeSound.preload = "auto";
     brakeSound.volume = 0.65;
 
-    const glassBreak = new Audio("/sounds/mixkit-car-window-breaking-1551.wav");
+    const glassBreak = new Audio("sounds/mixkit-car-window-breaking-1551.wav");
     glassBreak.preload = "auto";
     glassBreak.volume = 0.8;
 
@@ -889,4 +889,4 @@ export function TaxiPhysics({
 }
 
 // Preload taxi as fallback
-useGLTF.preload("/models/Taxi.glb");
+useGLTF.preload("models/Taxi.glb");

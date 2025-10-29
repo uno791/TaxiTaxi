@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Bush(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Bush.glb");
+  const { scene } = useGLTF("models/Bush.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Bush(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Bush.glb");
+useGLTF.preload("models/Bush.glb");

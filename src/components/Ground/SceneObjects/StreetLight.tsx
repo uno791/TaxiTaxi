@@ -4,7 +4,7 @@ import * as THREE from "three";
 import type { JSX } from "react/jsx-runtime";
 
 export function StreetLight(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Streetlight.glb");
+  const { scene } = useGLTF("models/Streetlight.glb");
   const bulb = useMemo(() => {
     scene.updateMatrixWorld(true);
     const box = new THREE.Box3().setFromObject(scene);
@@ -42,4 +42,4 @@ export function StreetLight(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Streetlight.glb");
+useGLTF.preload("models/Streetlight.glb");

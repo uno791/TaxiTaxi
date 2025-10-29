@@ -4,7 +4,7 @@ import { FlowerPotA } from "../../Ground/SceneObjects/FlowerPotA";
 import { FlowerPotB } from "../../Ground/SceneObjects/FlowerPotB";
 
 export function BigBuilding(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Big Building.glb");
+  const { scene } = useGLTF("models/Big Building.glb");
   return (
     <group {...props}>
       <FlowerPotA
@@ -18,4 +18,4 @@ export function BigBuilding(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Big Building.glb");
+useGLTF.preload("models/Big Building.glb");

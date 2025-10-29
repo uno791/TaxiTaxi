@@ -26,7 +26,7 @@ type GLTFResult = GLTF & {
 
 // ----- Default export: renders ALL pieces in a small grid -----
 export default function RoadBits(props: JSX.IntrinsicElements['group']) {
-  const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF('models/road-bits.glb') as unknown as GLTFResult
 
   return (
     <group {...props} dispose={null}>
@@ -82,7 +82,7 @@ export default function RoadBits(props: JSX.IntrinsicElements['group']) {
 }
 
 // Preload for snappier first paint (✅ path matches)
-useGLTF.preload('/models/road-bits.glb')
+useGLTF.preload('models/road-bits.glb')
 
 /* ---------- Named piece components with sensible defaults + parent override ---------- */
 
@@ -96,7 +96,7 @@ function composeRoadUserData(userData?: Record<string, unknown>) {
 }
 
 export function RoadCorner({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
-  const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF('models/road-bits.glb') as unknown as GLTFResult
   const { userData, ...rest } = props
   return (
     <mesh
@@ -111,7 +111,7 @@ export function RoadCorner({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...pr
 }
 
 export function RoadCornerCurved({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
-  const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF('models/road-bits.glb') as unknown as GLTFResult
   const { userData, ...rest } = props
   return (
     <mesh
@@ -126,7 +126,7 @@ export function RoadCornerCurved({ rotation = [-Math.PI / 2, 0, 0], scale = 100,
 }
 
 export function RoadJunction({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
-  const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF('models/road-bits.glb') as unknown as GLTFResult
   const { userData, ...rest } = props
   return (
     <mesh
@@ -141,7 +141,7 @@ export function RoadJunction({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...
 }
 
 export function RoadStraight({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
-  const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF('models/road-bits.glb') as unknown as GLTFResult
   const { userData, ...rest } = props
   return (
     <mesh
@@ -156,7 +156,7 @@ export function RoadStraight({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...
 }
 
 export function RoadStraightCrossing({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
-  const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF('models/road-bits.glb') as unknown as GLTFResult
   const { userData, ...rest } = props
   return (
     <mesh
@@ -171,7 +171,7 @@ export function RoadStraightCrossing({ rotation = [-Math.PI / 2, 0, 0], scale = 
 }
 
 export function RoadTSplit({ rotation = [-Math.PI / 2, 0, 0], scale = 100, ...props }: MeshProps) {
-  const { nodes, materials } = useGLTF('/models/road-bits.glb') as unknown as GLTFResult
+  const { nodes, materials } = useGLTF('models/road-bits.glb') as unknown as GLTFResult
   const { userData, ...rest } = props
   return (
     <mesh

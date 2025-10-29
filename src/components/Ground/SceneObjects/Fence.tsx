@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Fence(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Fence.glb");
+  const { scene } = useGLTF("models/Fence.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Fence(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Fence.glb");
+useGLTF.preload("models/Fence.glb");

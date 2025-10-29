@@ -214,15 +214,15 @@ export default function Mission({
   useEffect(() => {
     if (typeof Audio === "undefined") return;
 
-    const startSound = new Audio("/sounds/start-mission.wav");
+    const startSound = new Audio("sounds/start-mission.wav");
     startSound.preload = "auto";
     startSound.volume = 0.7;
 
-    const winSound = new Audio("/sounds/win-mission.wav");
+    const winSound = new Audio("sounds/win-mission.wav");
     winSound.preload = "auto";
     winSound.volume = 0.75;
 
-    const loseSound = new Audio("/sounds/lose-mission.wav");
+    const loseSound = new Audio("sounds/lose-mission.wav");
     loseSound.preload = "auto";
     loseSound.volume = 0.75;
 

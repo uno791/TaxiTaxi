@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Billboard(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Billboard.glb");
+  const { scene } = useGLTF("models/Billboard.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Billboard(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Billboard.glb");
+useGLTF.preload("models/Billboard.glb");

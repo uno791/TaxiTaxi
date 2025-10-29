@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function Barrier(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/Barrier Large.glb");
+  const { scene } = useGLTF("models/Barrier Large.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function Barrier(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/Barrier Large.glb");
+useGLTF.preload("models/Barrier Large.glb");

@@ -2,7 +2,7 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 
 export function NewRoadtest(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/City3RoadsFixed.glb");
+  const { scene } = useGLTF("models/City3RoadsFixed.glb");
   return (
     <group {...props}>
       <Clone object={scene} />
@@ -10,4 +10,4 @@ export function NewRoadtest(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/City3RoadsFixed.glb");
+useGLTF.preload("models/City3RoadsFixed.glb");
