@@ -1,6 +1,6 @@
 import { useMissionUI, type MissionCompletionState } from "./MissionUIContext";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRive } from "@rive-app/react-canvas";
+import StarRatingFM from "./StarRatingFM";
 import type {
   MissionPerformanceBreakdown,
   MissionStarEvent,
@@ -28,6 +28,7 @@ export default function MissionOverlay() {
 
   const starAnimationTimeoutsRef = useRef<number[]>([]);
   const starAudioRef = useRef<HTMLAudioElement | null>(null);
+  const fiveStarAudioRef = useRef<HTMLAudioElement | null>(null);
   const [displayedStars, setDisplayedStars] = useState(0);
   const [currentStarEventIndex, setCurrentStarEventIndex] = useState<number | null>(
     null
@@ -36,37 +37,6 @@ export default function MissionOverlay() {
   const starEvents = completion?.starEvents ?? [];
   const totalStars = completion?.stars ?? 0;
 
-  const { rive, RiveComponent } = useRive({
-    src: "/models/6914-13295-star-rating.riv",
-    stateMachines: "State Machine 1",
-    autoplay: true,
-  });
-  const riveStarInputRef = useRef<{ machine: string; input: any } | null>(
-    null
-  );
-
-  useEffect(() => {
-    if (!rive || riveStarInputRef.current) return;
-    const machineNames = rive.stateMachineNames ?? [];
-    for (const machine of machineNames) {
-      const inputs = rive.stateMachineInputs(machine);
-      if (!inputs || !inputs.length) continue;
-      const numericInput = inputs.find((input: any) =>
-        typeof input.value === "number"
-      );
-      if (numericInput) {
-        riveStarInputRef.current = { machine, input: numericInput };
-        break;
-      }
-    }
-  }, [rive]);
-
-  useEffect(() => {
-    const entry = riveStarInputRef.current;
-    if (!entry || !rive) return;
-    entry.input.value = displayedStars;
-    rive.play(entry.machine);
-  }, [displayedStars, rive]);
 
   // Watch for timer reaching zero → show mission failed popup
   useEffect(() => {
@@ -106,6 +76,10 @@ export default function MissionOverlay() {
         starAudioRef.current.pause();
         starAudioRef.current.currentTime = 0;
       }
+      if (fiveStarAudioRef.current) {
+        fiveStarAudioRef.current.pause();
+        fiveStarAudioRef.current.currentTime = 0;
+      }
       setDisplayedStars(totalStars);
       setCurrentStarEventIndex(null);
       setCompletion(null);
@@ -126,6 +100,12 @@ export default function MissionOverlay() {
     }
     starAudioRef.current = null;
 
+    if (fiveStarAudioRef.current) {
+      fiveStarAudioRef.current.pause();
+      fiveStarAudioRef.current.currentTime = 0;
+    }
+    fiveStarAudioRef.current = null;
+
     if (!completion) {
       setDisplayedStars(0);
       setCurrentStarEventIndex(null);
@@ -141,16 +121,27 @@ export default function MissionOverlay() {
     setDisplayedStars(0);
     setCurrentStarEventIndex(null);
 
-    const newAudio = new Audio("sounds/mixkit-space-coin-win-notification-271.wav");
+    const newAudio = new Audio(
+      "sounds/mixkit-space-coin-win-notification-271.wav"
+    );
     newAudio.volume = 0.7;
     starAudioRef.current = newAudio;
+
+    if (totalStars >= 5) {
+      const celebration = new Audio("sounds/5star.wav");
+      celebration.volume = 0.9;
+      fiveStarAudioRef.current = celebration;
+    }
 
     const baseDelay = 220;
     starEvents.forEach((event, index) => {
       const timeoutId = window.setTimeout(() => {
         setDisplayedStars(event.starNumber);
         setCurrentStarEventIndex(index);
-        if (starAudioRef.current) {
+        if (event.starNumber === 5 && fiveStarAudioRef.current) {
+          fiveStarAudioRef.current.currentTime = 0;
+          void fiveStarAudioRef.current.play().catch(() => undefined);
+        } else if (starAudioRef.current) {
           starAudioRef.current.currentTime = 0;
           void starAudioRef.current.play().catch(() => undefined);
         }
@@ -173,6 +164,11 @@ export default function MissionOverlay() {
         activeAudio.currentTime = 0;
       }
       starAudioRef.current = null;
+      if (fiveStarAudioRef.current) {
+        fiveStarAudioRef.current.pause();
+        fiveStarAudioRef.current.currentTime = 0;
+      }
+      fiveStarAudioRef.current = null;
     };
   }, [completion, starEvents, totalStars]);
 
@@ -236,7 +232,6 @@ export default function MissionOverlay() {
       ? starEvents[currentStarEventIndex] ?? null
       : null;
 
-  const riveReady = Boolean(rive && riveStarInputRef.current);
 
   useEffect(() => {
     if (heartbeatTimerRef.current) {
@@ -652,8 +647,6 @@ export default function MissionOverlay() {
           completion={completion}
           displayedStars={displayedStars}
           currentStarEvent={currentStarEvent}
-          RiveComponent={riveReady ? RiveComponent : null}
-          riveReady={riveReady}
           collisionBreakdown={collisionBreakdown}
           timeBreakdown={timeBreakdown}
         />
@@ -696,8 +689,6 @@ type MissionCompletionCardProps = {
   completion: MissionCompletionState;
   displayedStars: number;
   currentStarEvent: MissionStarEvent | null;
-  RiveComponent: ReturnType<typeof useRive>["RiveComponent"] | null;
-  riveReady: boolean;
   collisionBreakdown: MissionPerformanceBreakdown | null;
   timeBreakdown: MissionPerformanceBreakdown | null;
 };
@@ -706,8 +697,6 @@ function MissionCompletionCard({
   completion,
   displayedStars,
   currentStarEvent,
-  RiveComponent,
-  riveReady,
   collisionBreakdown,
   timeBreakdown,
 }: MissionCompletionCardProps) {
@@ -794,47 +783,7 @@ function MissionCompletionCard({
             gap: "16px",
           }}
         >
-          <div
-            style={{
-              width: "200px",
-              height: "120px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {riveReady && RiveComponent ? (
-              <RiveComponent style={{ width: "200px", height: "120px" }} />
-            ) : (
-              <div
-                style={{
-                  display: "flex",
-                  gap: "6px",
-                  fontSize: "28px",
-                  letterSpacing: "3px",
-                  color: "rgba(255,255,255,0.25)",
-                }}
-              >
-                {Array.from({ length: 5 }).map((_, index) => (
-                  <span
-                    key={`fallback-star-${index}`}
-                    style={{
-                      color:
-                        index < displayedStars
-                          ? "#ffd54f"
-                          : "rgba(255,255,255,0.25)",
-                      textShadow:
-                        index < displayedStars
-                          ? "0 0 16px rgba(255,213,79,0.8)"
-                          : "none",
-                    }}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
+          <StarRatingFM value={displayedStars} size={46} interactive={false} />
         </div>
 
         {currentStarEvent && (
