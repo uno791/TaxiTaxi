@@ -53,9 +53,9 @@ type GameLifecycleContextType = {
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
-const GameLifecycleContext = createContext<GameLifecycleContextType | undefined>(
-  undefined
-);
+const GameLifecycleContext = createContext<
+  GameLifecycleContextType | undefined
+>(undefined);
 
 type EconomyState = {
   money: number;
@@ -87,15 +87,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const setMoney = useCallback(
     (update: React.SetStateAction<number>) => {
       setEconomy((previous) => {
-        const nextMoney =
+        const rawNext =
           typeof update === "function"
             ? (update as (value: number) => number)(previous.money)
             : update;
+
+        // Clamp to zero so it never goes negative
+        const nextMoney = Math.max(0, rawNext);
+
+        // Trigger Game Over when money reaches 0
+        if (nextMoney <= 0 && previous.money > 0) {
+          setGameOver(true);
+        }
+
         if (nextMoney === previous.money) return previous;
         return { ...previous, money: nextMoney };
       });
     },
-    [setEconomy]
+    [setEconomy, setGameOver]
   );
 
   const speedMultiplier = 1 + speedLevel * speedIncreasePerLevel;
