@@ -29,6 +29,8 @@ type GameContextType = {
   boost: number;
   setBoost: React.Dispatch<React.SetStateAction<number>>;
   maxBoost: number;
+  isBoosting: boolean;
+  setIsBoosting: React.Dispatch<React.SetStateAction<boolean>>;
   gameOver: boolean;
   setGameOver: React.Dispatch<React.SetStateAction<boolean>>;
   speedLevel: number;
@@ -78,6 +80,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [kilometers, setKilometers] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [boost, setBoost] = useState(0);
+  const [isBoosting, setIsBoosting] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameInstance, setGameInstance] = useState(0);
   const [activeCity, setActiveCity] = useState<CityId>(DEFAULT_CITY);
@@ -160,6 +163,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     setKilometers(0);
     setSpeed(0);
     setBoost(0);
+    setIsBoosting(false);
     setGameOver(false);
     setGameInstance((value) => value + 1);
   }, []);
@@ -174,6 +178,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setSpeed,
       boost,
       setBoost,
+      isBoosting,
+      setIsBoosting,
       maxBoost,
       gameOver,
       setGameOver,
@@ -199,6 +205,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setSpeed,
       boost,
       setBoost,
+      isBoosting,
+      setIsBoosting,
       maxBoost,
       gameOver,
       setGameOver,

@@ -31,7 +31,7 @@ import CarSelector from "./components/CarSelector/CarSelector";
 import MissionTrackerHUD from "./components/UI/MissionTrackerHUD";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
-import { useGameLifecycle } from "./GameContext";
+import { useGameLifecycle, useGame } from "./GameContext";
 import { useFlightMode } from "./tools/FlightTool";
 import {
   ColliderPainterOverlay,
@@ -220,7 +220,7 @@ function GameWorld() {
   return (
     <ColliderPainterProvider activeCity={activeCity}>
       <MissionUIProvider>
-        <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
+        <div style={{ width: "100vw", height: "100vh", position: "relative", overflow: "hidden" }}>
         <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
           <color attach="background" args={["#0a0f2c"]} />{" "}
           <Stars
@@ -309,6 +309,8 @@ function GameWorld() {
           </Physics>
           <ColliderPainterRuntime playerPositionRef={playerPositionRef} />
         </Canvas>
+
+        <BoostEffectsOverlay />
 
         {/* Controls */}
         <TaxiControlSettings
@@ -474,6 +476,38 @@ function ColliderAwareOrbitControls({
   const { enabled: colliderEnabled } = useColliderPainter();
   return (
     <OrbitControls makeDefault enabled={!flightEnabled && !colliderEnabled} />
+  );
+}
+
+function BoostEffectsOverlay() {
+  const { isBoosting } = useGame();
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        pointerEvents: "none",
+        zIndex: 12,
+        opacity: isBoosting ? 0.45 : 0,
+        transition: "opacity 0.25s ease-out",
+        backdropFilter: "blur(6px)",
+        background:
+          "radial-gradient(circle at center, rgba(160, 200, 255, 0.08) 0%, rgba(40, 80, 160, 0.05) 45%, rgba(5, 8, 20, 0.6) 100%)",
+      }}
+    >
+      <div
+        style={{
+          position: "absolute",
+          inset: "-15%",
+          background:
+            "linear-gradient(90deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0) 25%, rgba(255,255,255,0) 75%, rgba(255,255,255,0.16) 100%)",
+          opacity: 0.4,
+          filter: "blur(6px)",
+          transform: "scaleY(1.05)",
+        }}
+      />
+    </div>
   );
 }
 
