@@ -35,7 +35,7 @@ import CarSelector from "./components/CarSelector/CarSelector";
 import MissionTrackerHUD from "./components/UI/MissionTrackerHUD";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
-import { useGameLifecycle, useGame } from "./GameContext";
+import { useGameLifecycle } from "./GameContext";
 import { useFlightMode } from "./tools/FlightTool";
 import {
   ColliderPainterOverlay,

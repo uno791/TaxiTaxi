@@ -10,7 +10,7 @@ type FogEffectProps = {
 };
 
 function FogEffectComponent({
-  color = "#4c565fff",
+  color = "#4c565f",
   density = 0.035,
 }: FogEffectProps) {
   const { scene, camera } = useThree();

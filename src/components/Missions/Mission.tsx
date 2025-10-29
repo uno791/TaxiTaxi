@@ -11,6 +11,7 @@ import type { MissionConfig, MissionDialogueEntry } from "./missionConfig";
 import {
   useMissionPerformance,
   type MissionPerformanceBreakdown,
+  type MissionStarEvent,
 } from "./MissionPerformanceContext";
 
 type MissionState =
@@ -84,7 +85,12 @@ type CompletionInfo = {
   reward: number;
   bonus?: number;
   stars?: number;
+  collisionStars?: number;
+  timeStars?: number;
+  collisions?: number;
+  timeTakenSeconds?: number | null;
   breakdown?: MissionPerformanceBreakdown[];
+  starEvents?: MissionStarEvent[];
 };
 
 export default function Mission({
@@ -177,6 +183,7 @@ export default function Mission({
   // TIMER: new refs and state
   const [timeLeft, setTimeLeft] = useState<number | null>(null);
   const timerRef = useRef<number | null>(null);
+  const completionDisplayedRef = useRef(false);
 
   const { setMoney, gameOver } = useGame();
   // TIMER: include setTimer
@@ -186,6 +193,7 @@ export default function Mission({
     setDialog,
     setCompletion,
     setTimer,
+    completion,
     setMissionFailureActive,
     setDebugMissions,
     setDebugStartMission,
@@ -614,8 +622,13 @@ export default function Mission({
         missionId,
         reward: finalReward,
         bonus: performance.bonus,
-        stars: performance.stars,
+        stars: performance.totalStars,
+        collisionStars: performance.collisionStars,
+        timeStars: performance.timeStars,
+        collisions: performance.collisions,
+        timeTakenSeconds: performance.timeTakenSeconds,
         breakdown: performance.breakdown,
+        starEvents: performance.starEvents,
       });
 
       if (onDestinationChange) {
@@ -766,10 +779,29 @@ export default function Mission({
   }, [advanceDialog, dialogIndex]);
 
   useEffect(() => {
+    if (completion) {
+      completionDisplayedRef.current = true;
+    }
+  }, [completion]);
+
+  useEffect(() => {
+    if (
+      completionDisplayedRef.current &&
+      !completion &&
+      completionInfo
+    ) {
+      completionDisplayedRef.current = false;
+      setCompletionInfo(null);
+    }
+  }, [completion, completionInfo]);
+
+  useEffect(() => {
     if (!completionInfo) return;
-    const timeout = window.setTimeout(() => setCompletionInfo(null), 3500);
-    return () => window.clearTimeout(timeout);
-  }, [completionInfo]);
+    onPauseChange?.(true);
+    return () => {
+      onPauseChange?.(false);
+    };
+  }, [completionInfo, onPauseChange]);
 
   useEffect(() => {
     if (!dialogVisible) {
@@ -893,6 +925,11 @@ export default function Mission({
         bonus: completionInfo.bonus ?? 0,
         stars: completionInfo.stars,
         breakdown: completionInfo.breakdown,
+        collisionStars: completionInfo.collisionStars,
+        timeStars: completionInfo.timeStars,
+        collisions: completionInfo.collisions,
+        timeTakenSeconds: completionInfo.timeTakenSeconds ?? null,
+        starEvents: completionInfo.starEvents,
       });
     } else {
       setCompletion(null);

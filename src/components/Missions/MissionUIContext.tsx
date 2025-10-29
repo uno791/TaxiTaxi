@@ -1,6 +1,9 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
-import type { MissionPerformanceBreakdown } from "./MissionPerformanceContext";
+import type {
+  MissionPerformanceBreakdown,
+  MissionStarEvent,
+} from "./MissionPerformanceContext";
 import type {
   MissionPassengerModelId,
   MissionPassengerPreviewConfig,
@@ -48,11 +51,16 @@ export type MissionDialogState = {
   passengerPreview?: MissionPassengerPreviewConfig;
 };
 
-type MissionCompletionState = {
+export type MissionCompletionState = {
   reward: number;
   bonus?: number;
   stars?: number;
   breakdown?: MissionPerformanceBreakdown[];
+  collisionStars?: number;
+  timeStars?: number;
+  collisions?: number;
+  timeTakenSeconds?: number | null;
+  starEvents?: MissionStarEvent[];
 };
 
 type MissionTimerState = {
