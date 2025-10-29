@@ -8,6 +8,10 @@ import { PassengerModel } from "../Ground/SceneObjects/PassengerModel";
 import { useMissionUI } from "./MissionUIContext";
 import type { CityId } from "../../constants/cities";
 import type { MissionConfig, MissionDialogueEntry } from "./missionConfig";
+import {
+  useMissionPerformance,
+  type MissionPerformanceBreakdown,
+} from "./MissionPerformanceContext";
 
 type MissionState =
   | "locked"
@@ -79,6 +83,8 @@ type CompletionInfo = {
   missionId: string;
   reward: number;
   bonus?: number;
+  stars?: number;
+  breakdown?: MissionPerformanceBreakdown[];
 };
 
 export default function Mission({
@@ -106,6 +112,7 @@ export default function Mission({
   const missionWinSoundRef = useRef<HTMLAudioElement | null>(null);
   const missionLoseSoundRef = useRef<HTMLAudioElement | null>(null);
   const missionConfigByIdRef = useRef<Record<string, MissionConfig>>({});
+  const missionPerformance = useMissionPerformance();
 
   const playMissionStartSound = useCallback(() => {
     const audio = missionStartSoundRef.current;
@@ -173,8 +180,14 @@ export default function Mission({
 
   const { setMoney, gameOver } = useGame();
   // TIMER: include setTimer
-  const { setPrompt, setActive, setDialog, setCompletion, setTimer } =
-    useMissionUI();
+  const {
+    setPrompt,
+    setActive,
+    setDialog,
+    setCompletion,
+    setTimer,
+    setMissionFailureActive,
+  } = useMissionUI();
   const lastGameOverRef = useRef(gameOver);
 
   useEffect(() => {
@@ -194,6 +207,7 @@ export default function Mission({
       timerRef.current = null;
     }
     setTimer(null);
+    setMissionFailureActive(false);
     if (onDestinationChange) {
       onDestinationChange(null);
     }
@@ -209,6 +223,7 @@ export default function Mission({
     setDialogIndex,
     setTimeLeft,
     setTimer,
+    setMissionFailureActive,
   ]);
 
   useEffect(() => {
@@ -420,6 +435,8 @@ export default function Mission({
         ...current,
         [missionId]: "active",
       }) as Record<string, MissionState>);
+      setMissionFailureActive(false);
+      missionPerformance.beginMission(missionId);
       if (onDestinationChange) {
         onDestinationChange(config.dropoffPosition);
       }
@@ -435,11 +452,13 @@ export default function Mission({
       }
     },
     [
+      missionPerformance,
       onDestinationChange,
       onPauseChange,
       updateMissionStates,
       setTimeLeft,
       setTimer,
+      setMissionFailureActive,
     ]
   );
 
@@ -513,18 +532,13 @@ export default function Mission({
       });
       if (!completionApplied) return;
 
-      // ✅ stop timer AFTER we check timeLeft
-      let bonusAwarded = 0;
-      if (typeof config.timeLimit === "number" && timeLeft && timeLeft > 0) {
-        // Example: give +R100 if they finish with 15 seconds or more left
-        if (timeLeft >= 15) {
-          bonusAwarded =
-            100 +
-            Math.round(config.reward * (timeLeft / config.timeLimit) * 0.5);
-        } else bonusAwarded = 0;
-      }
-
-      const finalReward = config.reward + bonusAwarded;
+      const performance = missionPerformance.completeMission({
+        missionId,
+        baseReward: config.reward,
+        timeLimit: config.timeLimit,
+        timeLeft,
+      });
+      const finalReward = config.reward + performance.bonus;
 
       // ✅ Apply money
       setMoney((value) => value + finalReward);
@@ -533,13 +547,9 @@ export default function Mission({
       setCompletionInfo({
         missionId,
         reward: finalReward,
-        bonus: bonusAwarded,
-      });
-
-      // ✅ Update MissionUIContext
-      setCompletion({
-        reward: finalReward,
-        bonus: bonusAwarded,
+        bonus: performance.bonus,
+        stars: performance.stars,
+        breakdown: performance.breakdown,
       });
 
       if (onDestinationChange) {
@@ -554,19 +564,6 @@ export default function Mission({
       setTimer(null);
       setTimeLeft(null);
       playMissionWinSound();
-
-      // ✅ Store completion info (for overlay)
-      setCompletionInfo({
-        missionId,
-        reward: finalReward,
-        bonus: bonusAwarded,
-      });
-
-      // ✅ Update MissionUIContext
-      setCompletion({
-        reward: finalReward,
-        bonus: bonusAwarded,
-      });
 
       // ✅ Clear active mission so overlay hides
       setActive(null);
@@ -599,18 +596,16 @@ export default function Mission({
     [
       checkForCityCompletion,
       missions,
+      missionPerformance,
       onDestinationChange,
       playMissionWinSound,
       setActiveMissionId,
-      setCompletion,
       setCompletionInfo,
-      setDialogVisible,
-      setPromptMissionId,
       updateMissionStates,
       setMoney,
       setTimeLeft,
       setTimer,
-      timeLeft, // ✅ include timeLeft in deps
+      timeLeft,
     ]
   );
 
@@ -630,6 +625,7 @@ export default function Mission({
           timerRef.current = null;
           const activeId = activeMissionIdRef.current;
           if (activeId) {
+            missionPerformance.abandonMission();
             updateMissionStates((prevStates) => {
               if (prevStates[activeId] === "available") return prevStates;
               return {
@@ -672,6 +668,7 @@ export default function Mission({
     updateMissionStates,
     setPromptMissionId,
     setTimer,
+    missionPerformance,
   ]);
 
   // DIALOG: keyboard advance when no options are present
@@ -807,7 +804,9 @@ export default function Mission({
     if (completionInfo && completionConfig) {
       setCompletion({
         reward: completionInfo.reward,
-        bonus: completionInfo.bonus ?? 0, // ✅ properly inside the object
+        bonus: completionInfo.bonus ?? 0,
+        stars: completionInfo.stars,
+        breakdown: completionInfo.breakdown,
       });
     } else {
       setCompletion(null);
@@ -816,11 +815,13 @@ export default function Mission({
 
   useEffect(() => {
     return () => {
+      missionPerformance.abandonMission();
       setPrompt(null);
       setActive(null);
       setDialog(null);
       setCompletion(null);
       setTimer(null); // TIMER: reset on unmount
+      setMissionFailureActive(false);
       if (onDestinationChange) {
         onDestinationChange(null);
       }
@@ -832,6 +833,8 @@ export default function Mission({
     setCompletion,
     setTimer,
     onDestinationChange,
+    missionPerformance,
+    setMissionFailureActive,
   ]);
 
   return (

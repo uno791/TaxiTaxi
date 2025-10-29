@@ -12,6 +12,7 @@ import { useHitDetection } from "./useHitDetection";
 import { useMeta } from "../../context/MetaContext";
 import { useGLTF } from "@react-three/drei";
 import { cars } from "../../utils/cars";
+import { useMissionPerformance } from "../Missions/MissionPerformanceContext";
 
 const BOOST_CHARGE_RATE = 5;
 const BOOST_DEPLETION_RATE = 45;
@@ -69,6 +70,7 @@ export function TaxiPhysics({
   spawnPosition,
 }: Props) {
   const { selectedCar } = useMeta();
+  const missionPerformance = useMissionPerformance();
 
   // find config or fallback to Taxi
   const carConfig =
@@ -102,6 +104,7 @@ export function TaxiPhysics({
     initialBrakeSmokeParticles
   );
   const brakeSmokeTempObject = useMemo(() => new THREE.Object3D(), []);
+  const lastHardBrakeEventRef = useRef(0);
 
   const startEngineLoop = useCallback(() => {
     const engineAudio = engineSoundRef.current;
@@ -349,7 +352,8 @@ export function TaxiPhysics({
     // Calculate loss based on speed
     const loss = Math.min(carSpeed * 2, 500); // tune multiplier and cap
     setMoney((prev) => Math.max(prev - loss, 0));
-  }, [setMoney]);
+    missionPerformance.registerCollision();
+  }, [missionPerformance, setMoney]);
 
   const [chassisBoxRef, chassisApi] = useBox(
     () => ({
@@ -690,6 +694,14 @@ export function TaxiPhysics({
       playBrakeSound();
     }
     wasBrakingRef.current = shouldPlayBrake;
+
+    if (brakeStrengthRef.current > 0.85 && speedInKmh > 28) {
+      const elapsed = state.clock.getElapsedTime();
+      if (elapsed - lastHardBrakeEventRef.current > 0.7) {
+        lastHardBrakeEventRef.current = elapsed;
+        missionPerformance.registerHardBrake();
+      }
+    }
 
     const smokeParticles = brakeSmokeParticlesRef.current;
     const smokeMesh = brakeSmokeMeshRef.current;

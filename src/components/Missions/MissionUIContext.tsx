@@ -1,5 +1,6 @@
 import { createContext, useContext, useMemo, useState } from "react";
 import type { ReactNode } from "react";
+import type { MissionPerformanceBreakdown } from "./MissionPerformanceContext";
 
 type MissionPromptState = {
   dropoffHint: string;
@@ -36,6 +37,8 @@ export type MissionDialogState = {
 type MissionCompletionState = {
   reward: number;
   bonus?: number;
+  stars?: number;
+  breakdown?: MissionPerformanceBreakdown[];
 };
 
 type MissionTimerState = {
@@ -55,6 +58,8 @@ type MissionUIContextValue = {
     React.SetStateAction<MissionCompletionState | null>
   >;
   setTimer: React.Dispatch<React.SetStateAction<MissionTimerState | null>>;
+  missionFailureActive: boolean;
+  setMissionFailureActive: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
 const MissionUIContext = createContext<MissionUIContextValue | undefined>(
@@ -69,6 +74,7 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
     null
   );
   const [timer, setTimer] = useState<MissionTimerState | null>(null);
+  const [missionFailureActive, setMissionFailureActive] = useState(false);
 
   const value = useMemo(
     () => ({
@@ -82,8 +88,10 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       setDialog,
       setCompletion,
       setTimer,
+      missionFailureActive,
+      setMissionFailureActive,
     }),
-    [prompt, active, dialog, completion, timer]
+    [prompt, active, dialog, completion, timer, missionFailureActive]
   );
 
   return (

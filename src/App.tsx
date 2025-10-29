@@ -21,7 +21,11 @@ import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
 import TaxiSpeedometer from "./components/Taxi/TaxiSpeedometer";
 import UpgradeMenu from "./components/UI/UpgradeMenu";
-import { MissionUIProvider } from "./components/Missions/MissionUIContext";
+import {
+  MissionUIProvider,
+  useMissionUI,
+} from "./components/Missions/MissionUIContext";
+import { MissionPerformanceProvider } from "./components/Missions/MissionPerformanceContext";
 import MissionOverlay from "./components/Missions/MissionOverlay";
 import { Stars } from "@react-three/drei";
 
@@ -50,9 +54,11 @@ import {
   type CityId,
 } from "./constants/cities";
 import CityStoryOverlay from "./components/UI/CityStoryOverlay";
+import FogEffect from "./components/FogEffect";
 
 function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
   const [isPaused, setIsPaused] = useState(false);
   const [dialogPaused, setDialogPaused] = useState(false); // ✅ added
@@ -220,220 +226,227 @@ function GameWorld() {
   return (
     <ColliderPainterProvider activeCity={activeCity}>
       <MissionUIProvider>
-        <div style={{ width: "100vw", height: "100vh", position: "relative" }}>
-        <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
-          <color attach="background" args={["#0a0f2c"]} />{" "}
-          <Stars
-            radius={200} // spread of the starfield
-            depth={80} // how deep the field goes
-            count={4000} // number of stars
-            factor={6} // ⭐ increase from 4 → 6 to make stars brighter/larger
-            saturation={0} // keep at 0 for white/blue stars
-            fade // enables distance fade
-          />
-          {/* dark blue night sky */}
-          <Physics
-            gravity={[0, -9.81, 0]}
-            broadphase="SAP"
-            allowSleep
-            iterations={12}
-            tolerance={1e-4}
-            stepSize={1 / 90}
-            maxSubSteps={4}
+        <MissionPerformanceProvider>
+          <div
+            ref={containerRef}
+            style={{ width: "100vw", height: "100vh", position: "relative" }}
           >
-            {/* Lighting */}
-            {lightingMode === "fill" ? (
-              <hemisphereLight args={["#8aa6ff", "#1b1e25", 4.35]} />
-            ) : null}
+            <Canvas shadows camera={{ position: [0, 5, -10], fov: 50 }}>
+            <color attach="background" args={["#0a0f2c"]} />{" "}
+            <Stars
+              radius={200} // spread of the starfield
+              depth={80} // how deep the field goes
+              count={4000} // number of stars
+              factor={6} // ⭐ increase from 4 → 6 to make stars brighter/larger
+              saturation={0} // keep at 0 for white/blue stars
+              fade // enables distance fade
+            />
+            <FogEffect />
+            {/* dark blue night sky */}
+            <Physics
+              gravity={[0, -9.81, 0]}
+              broadphase="SAP"
+              allowSleep
+              iterations={12}
+              tolerance={1e-4}
+              stepSize={1 / 90}
+              maxSubSteps={4}
+            >
+              {/* Lighting */}
+              {lightingMode === "fill" ? (
+                <hemisphereLight args={["#8aa6ff", "#1b1e25", 0.35]} />
+              ) : null}
 
-            {/* World */}
-            {activeCity === "city1" ? (
-              <>
-                <AllBuildings />
-                <RoadCircuit position={[0, 0, 0]} />
-                <Background position={[0, 0, 0]} />
-              </>
-            ) : null}
-            {activeCity === "city2" ? (
-              <Level2
-                position={[-130, 0, -20]}
+              {/* World */}
+              {activeCity === "city1" ? (
+                <>
+                  <AllBuildings />
+                  <RoadCircuit position={[0, 0, 0]} />
+                  <Background position={[0, 0, 0]} />
+                </>
+              ) : null}
+              {activeCity === "city2" ? (
+                <Level2
+                  position={[-130, 0, -20]}
+                  playerPositionRef={playerPositionRef}
+                />
+              ) : null}
+              {activeCity === "city3" ? (
+                <NewCityRoad
+                  position={[0, 0, 0]}
+                  playerPositionRef={playerPositionRef}
+                />
+              ) : null}
+
+              {/* Taxi */}
+              <ColliderAwareTaxiPhysics
+                chaseRef={chaseRef}
+                controlMode={controlMode}
                 playerPositionRef={playerPositionRef}
+                spawnPosition={spawnPosition}
+                basePaused={
+                  isPaused || dialogPaused || storyPaused || flightEnabled
+                }
               />
-            ) : null}
-            {activeCity === "city3" ? (
-              <NewCityRoad
+
+              <Mission
                 position={[0, 0, 0]}
-                playerPositionRef={playerPositionRef}
+                taxiRef={chaseRef}
+                missions={missions}
+                cityId={activeCity}
+                onDestinationChange={updateDestination}
+                onAvailableMissionTargetsChange={
+                  handleAvailableMissionTargetsChange
+                }
+                onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
+                onAllMissionsCompleted={handleAllMissionsCompleted}
+                onMissionProgress={handleMissionProgress}
               />
-            ) : null}
 
-            {/* Taxi */}
-            <ColliderAwareTaxiPhysics
-              chaseRef={chaseRef}
-              controlMode={controlMode}
-              playerPositionRef={playerPositionRef}
-              spawnPosition={spawnPosition}
-              basePaused={
-                isPaused || dialogPaused || storyPaused || flightEnabled
-              }
-            />
+              <DestinationMarker destinationRef={destinationRef} />
+              <NavigationSystem
+                playerRef={playerPositionRef}
+                destinationRef={destinationRef}
+                onMiniMapCanvasChange={setMiniMapCanvas}
+              />
 
-            <Mission
-              position={[0, 0, 0]}
-              taxiRef={chaseRef}
-              missions={missions}
-              cityId={activeCity}
-              onDestinationChange={updateDestination}
-              onAvailableMissionTargetsChange={
-                handleAvailableMissionTargetsChange
-              }
-              onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
-              onAllMissionsCompleted={handleAllMissionsCompleted}
-              onMissionProgress={handleMissionProgress}
-            />
+              {/* Camera */}
+              <ColliderAwareCameraChase
+                target={chaseRef}
+                flightEnabled={flightEnabled}
+              />
+              {flightControls}
+              <ColliderAwareOrbitControls flightEnabled={flightEnabled} />
+            </Physics>
+            <ColliderPainterRuntime playerPositionRef={playerPositionRef} />
+          </Canvas>
 
-            <DestinationMarker destinationRef={destinationRef} />
-            <NavigationSystem
-              playerRef={playerPositionRef}
-              destinationRef={destinationRef}
-              onMiniMapCanvasChange={setMiniMapCanvas}
-            />
+          {/* Controls */}
+          <TaxiControlSettings
+            controlMode={controlMode}
+            onControlModeChange={setControlMode}
+            isPaused={isPaused}
+            onPauseChange={setIsPaused}
+          />
+          <RestartControl />
 
-            {/* Camera */}
-            <ColliderAwareCameraChase
-              target={chaseRef}
-              flightEnabled={flightEnabled}
-            />
-            {flightControls}
-            <ColliderAwareOrbitControls flightEnabled={flightEnabled} />
-          </Physics>
-          <ColliderPainterRuntime playerPositionRef={playerPositionRef} />
-        </Canvas>
+          {/* UI overlay */}
+          <TaxiSpeedometer />
+          <GameUI />
+          <GameOverPopup />
+          <UpgradeMenu />
 
-        {/* Controls */}
-        <TaxiControlSettings
-          controlMode={controlMode}
-          onControlModeChange={setControlMode}
-          isPaused={isPaused}
-          onPauseChange={setIsPaused}
-        />
-        <RestartControl />
+          <MissionTrackerHUD
+            remaining={missionsRemaining}
+            nextMission={nextMissionName}
+          />
 
-        {/* UI overlay */}
-        <TaxiSpeedometer />
-        <GameUI />
-        <GameOverPopup />
-        <UpgradeMenu />
-
-        <MissionTrackerHUD
-          remaining={missionsRemaining}
-          nextMission={nextMissionName}
-        />
-
-        <MiniMapOverlay
-          canvas={miniMapCanvas}
-          missions={availableMissionTargets}
-          playerRef={playerPositionRef}
-          size={220}
-        />
-        <MissionOverlay />
-        <CityStoryOverlay
-          cityId={introCity}
-          story={introData}
-          onContinue={handleIntroOverlayContinue}
-        />
-        <CityStoryOverlay
-          cityId={storyCity}
-          story={storyData}
-          onContinue={handleStoryOverlayContinue}
-        />
-        <div
-          style={{
-            position: "absolute",
-            bottom: 20,
-            left: 20,
-            display: "flex",
-            flexDirection: "column",
-            gap: "8px",
-            zIndex: 40,
-            pointerEvents: "auto",
-          }}
-        >
-          <button
-            type="button"
-            onClick={toggleTestMode}
+          <MiniMapOverlay
+            canvas={miniMapCanvas}
+            missions={availableMissionTargets}
+            playerRef={playerPositionRef}
+            size={220}
+          />
+          <MissionOverlay />
+          <CityStoryOverlay
+            cityId={introCity}
+            story={introData}
+            onContinue={handleIntroOverlayContinue}
+          />
+          <CityStoryOverlay
+            cityId={storyCity}
+            story={storyData}
+            onContinue={handleStoryOverlayContinue}
+          />
+          <div
             style={{
-              padding: "8px 14px",
-              borderRadius: "8px",
-              background: testMode
-                ? "rgba(46, 125, 50, 0.85)"
-                : "rgba(24, 28, 35, 0.85)",
-              color: "#f5f5f5",
-              border: "1px solid rgba(255,255,255,0.25)",
-              fontSize: "0.85rem",
-              cursor: "pointer",
+              position: "absolute",
+              bottom: 20,
+              left: 20,
+              display: "flex",
+              flexDirection: "column",
+              gap: "8px",
+              zIndex: 40,
+              pointerEvents: "auto",
             }}
           >
-            {testMode ? "Test Travel: On" : "Enable Test Travel"}
-          </button>
-          {testMode ? (
-            <div
+            <button
+              type="button"
+              onClick={toggleTestMode}
               style={{
-                display: "flex",
-                gap: "8px",
+                padding: "8px 14px",
+                borderRadius: "8px",
+                background: testMode
+                  ? "rgba(46, 125, 50, 0.85)"
+                  : "rgba(24, 28, 35, 0.85)",
+                color: "#f5f5f5",
+                border: "1px solid rgba(255,255,255,0.25)",
+                fontSize: "0.85rem",
+                cursor: "pointer",
               }}
             >
-              {CITY_SEQUENCE.map((city) => (
-                <button
-                  key={city}
-                  type="button"
-                  onClick={() => handleTestTravel(city)}
-                  style={{
-                    padding: "8px 12px",
-                    borderRadius: "8px",
-                    border: "1px solid rgba(255,255,255,0.25)",
-                    background:
-                      activeCity === city
-                        ? "rgba(46, 125, 50, 0.85)"
-                        : "rgba(24, 28, 35, 0.75)",
-                    color: "#f5f5f5",
-                    cursor: "pointer",
-                    fontSize: "0.8rem",
-                  }}
-                >
-                  Travel to {city.toUpperCase()}
-                </button>
-              ))}
-            </div>
-          ) : null}
-        </div>
-        {flightOverlay}
-        <ColliderPainterOverlay />
+              {testMode ? "Test Travel: On" : "Enable Test Travel"}
+            </button>
+            {testMode ? (
+              <div
+                style={{
+                  display: "flex",
+                  gap: "8px",
+                }}
+              >
+                {CITY_SEQUENCE.map((city) => (
+                  <button
+                    key={city}
+                    type="button"
+                    onClick={() => handleTestTravel(city)}
+                    style={{
+                      padding: "8px 12px",
+                      borderRadius: "8px",
+                      border: "1px solid rgba(255,255,255,0.25)",
+                      background:
+                        activeCity === city
+                          ? "rgba(46, 125, 50, 0.85)"
+                          : "rgba(24, 28, 35, 0.75)",
+                      color: "#f5f5f5",
+                      cursor: "pointer",
+                      fontSize: "0.8rem",
+                    }}
+                  >
+                    Travel to {city.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            ) : null}
+          </div>
+          {flightOverlay}
+          <ColliderPainterOverlay />
+            <MissionUrgencyEffects containerRef={containerRef} />
 
-        <button
-          type="button"
-          onClick={toggleLightingMode}
-          style={{
-            position: "absolute",
-            top: 16,
-            left: 84,
-            zIndex: 30,
-            border: "1px solid rgba(255,255,255,0.25)",
-            borderRadius: 8,
-            background: "rgba(24, 28, 35, 0.8)",
-            color: "#f5f5f5",
-            padding: "6px 12px",
-            fontSize: "0.85rem",
-            cursor: "pointer",
-            backdropFilter: "blur(2px)",
-          }}
-          title="Toggle between fake decal lighting and a global fill light."
-        >
-          {lightingMode === "fake"
-            ? "Lighting: Decals Only"
-            : "Lighting: Global Fill"}
-        </button>
-      </div>
+            <button
+              type="button"
+              onClick={toggleLightingMode}
+              style={{
+                position: "absolute",
+                top: 16,
+                left: 84,
+                zIndex: 30,
+                border: "1px solid rgba(255,255,255,0.25)",
+                borderRadius: 8,
+                background: "rgba(24, 28, 35, 0.8)",
+                color: "#f5f5f5",
+                padding: "6px 12px",
+                fontSize: "0.85rem",
+                cursor: "pointer",
+                backdropFilter: "blur(2px)",
+              }}
+              title="Toggle between fake decal lighting and a global fill light."
+            >
+              {lightingMode === "fake"
+                ? "Lighting: Decals Only"
+                : "Lighting: Global Fill"}
+            </button>
+          </div>
+        </MissionPerformanceProvider>
       </MissionUIProvider>
     </ColliderPainterProvider>
   );
@@ -446,12 +459,7 @@ function ColliderAwareTaxiPhysics({
   ...props
 }: Omit<TaxiPhysicsProps, "isPaused"> & { basePaused: boolean }) {
   const { enabled: colliderEnabled } = useColliderPainter();
-  return (
-    <TaxiPhysics
-      {...props}
-      isPaused={basePaused || colliderEnabled}
-    />
-  );
+  return <TaxiPhysics {...props} isPaused={basePaused || colliderEnabled} />;
 }
 
 function ColliderAwareCameraChase({
@@ -475,6 +483,74 @@ function ColliderAwareOrbitControls({
   return (
     <OrbitControls makeDefault enabled={!flightEnabled && !colliderEnabled} />
   );
+}
+
+function MissionUrgencyEffects({
+  containerRef,
+}: {
+  containerRef: MutableRefObject<HTMLDivElement | null>;
+}) {
+  const { timer, missionFailureActive } = useMissionUI();
+  const urgencyRef = useRef(0);
+  const animationRef = useRef<number | null>(null);
+  const intensityRef = useRef(0);
+
+  const PANIC_THRESHOLD = 10;
+  const timeUrgency =
+    timer && timer.secondsLeft > 0 && timer.secondsLeft <= PANIC_THRESHOLD
+      ? 1 - Math.max(timer.secondsLeft, 0) / PANIC_THRESHOLD
+      : 0;
+  const targetUrgency = missionFailureActive ? 1 : timeUrgency;
+  urgencyRef.current = targetUrgency;
+
+  useEffect(() => {
+    const animate = () => {
+      const container = containerRef.current;
+      if (!container) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
+
+      const target = urgencyRef.current;
+      const nextIntensity =
+        intensityRef.current + (target - intensityRef.current) * 0.1;
+      intensityRef.current = nextIntensity;
+
+      if (nextIntensity > 0.001) {
+        const time = performance.now();
+        const amplitude = 2.8 * nextIntensity;
+        const offsetX =
+          Math.sin(time * 0.07) * amplitude +
+          Math.sin(time * 0.11) * amplitude * 0.5;
+        const offsetY =
+          Math.cos(time * 0.09) * amplitude +
+          Math.cos(time * 0.14) * amplitude * 0.35;
+        container.style.transform = `translate3d(${offsetX.toFixed(
+          2
+        )}px, ${offsetY.toFixed(2)}px, 0)`;
+      } else if (container.style.transform) {
+        container.style.transform = "";
+        intensityRef.current = 0;
+      }
+
+      animationRef.current = requestAnimationFrame(animate);
+    };
+
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current !== null) {
+        cancelAnimationFrame(animationRef.current);
+        animationRef.current = null;
+      }
+      const container = containerRef.current;
+      if (container) {
+        container.style.transform = "";
+      }
+      intensityRef.current = 0;
+    };
+  }, [containerRef]);
+
+  return null;
 }
 
 function AppContent() {
