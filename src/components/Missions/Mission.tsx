@@ -150,6 +150,19 @@ export default function Mission({
   }, [missions, missionStates, onMissionProgress]);
 
   const missionStatesRef = useRef(missionStates);
+  const updateMissionStates = useCallback(
+    (
+      updater: (
+        prev: Record<string, MissionState>
+      ) => Record<string, MissionState>
+    ) =>
+      setMissionStates((prev) => {
+        const next = updater(prev);
+        missionStatesRef.current = next;
+        return next;
+      }),
+    [setMissionStates]
+  );
   const activeMissionIdRef = useRef(activeMissionId);
   const promptMissionIdRef = useRef(promptMissionId);
   const dialogIntervalRef = useRef<number | null>(null);
@@ -245,7 +258,7 @@ export default function Mission({
   useEffect(() => {
     if (gameOver && !lastGameOverRef.current) {
       playMissionLoseSound();
-      setMissionStates((prev) => {
+      updateMissionStates((prev) => {
         let mutated = false;
         const next: Record<string, MissionState> = {};
         let unlocked = false;
@@ -269,7 +282,6 @@ export default function Mission({
         }
 
         if (mutated) {
-          missionStatesRef.current = next;
           return next;
         }
         return prev;
@@ -296,7 +308,7 @@ export default function Mission({
     onDestinationChange,
     missions,
     playMissionLoseSound,
-    setMissionStates,
+    updateMissionStates,
     setActiveMissionId,
     setPromptMissionId,
     setDialogVisible,
@@ -311,16 +323,17 @@ export default function Mission({
       if (currentState !== "available") return;
       const currentActive = activeMissionIdRef.current;
       if (currentActive && currentActive !== missionId) return;
-      setMissionStates((prev) => {
+      updateMissionStates((prev) => {
         if (prev[missionId] === "prompt") return prev;
-        const next = { ...prev, [missionId]: "prompt" };
-        missionStatesRef.current = next;
-        return next;
+        return {
+          ...prev,
+          [missionId]: "prompt",
+        } as Record<string, MissionState>;
       });
       setPromptMissionId(missionId);
       promptMissionIdRef.current = missionId;
     },
-    [setMissionStates, setPromptMissionId]
+    [updateMissionStates, setPromptMissionId]
   );
 
   const handlePickupExit = useCallback(
@@ -332,14 +345,15 @@ export default function Mission({
         }
         return current;
       });
-      setMissionStates((prev) => {
+      updateMissionStates((prev) => {
         if (prev[missionId] !== "prompt") return prev;
-        const next = { ...prev, [missionId]: "available" };
-        missionStatesRef.current = next;
-        return next;
+        return {
+          ...prev,
+          [missionId]: "available",
+        } as Record<string, MissionState>;
       });
     },
-    [setMissionStates, setPromptMissionId]
+    [updateMissionStates, setPromptMissionId]
   );
 
   const handleStartMission = useCallback(() => {
@@ -350,12 +364,13 @@ export default function Mission({
     if (!config) return;
 
     // Enter dialog mode first (do NOT start mission/timer yet)
-    setMissionStates((prev) => {
+    updateMissionStates((prev) => {
       const current = prev[missionId];
       if (current === "active" || current === "dialog") return prev;
-      const next = { ...prev, [missionId]: "dialog" };
-      missionStatesRef.current = next;
-      return next;
+      return {
+        ...prev,
+        [missionId]: "dialog",
+      } as Record<string, MissionState>;
     });
 
     setActiveMissionId(missionId);
@@ -374,7 +389,7 @@ export default function Mission({
     playMissionStartSound();
   }, [
     playMissionStartSound,
-    setMissionStates,
+    updateMissionStates,
     setActiveMissionId,
     setPromptMissionId,
     setDialogIndex,
@@ -385,34 +400,35 @@ export default function Mission({
   const handleDeclineMission = useCallback(() => {
     const missionId = promptMissionIdRef.current;
     if (missionId) {
-      setMissionStates((prev) => {
+      updateMissionStates((prev) => {
         if (prev[missionId] === "available") return prev;
-        const next = { ...prev, [missionId]: "available" };
-        missionStatesRef.current = next;
-        return next;
+        return {
+          ...prev,
+          [missionId]: "available",
+        } as Record<string, MissionState>;
       });
     }
     setPromptMissionId(null);
     promptMissionIdRef.current = null;
-  }, [setMissionStates, setPromptMissionId]);
+  }, [updateMissionStates, setPromptMissionId]);
 
   const concludeDialogAndStartMission = useCallback(
     (missionId: string, config: MissionConfig) => {
       setDialogVisible(false);
       onPauseChange?.(false);
-      setMissionStates((current) => {
-        const updated = { ...current, [missionId]: "active" };
-        missionStatesRef.current = updated;
-        return updated;
-      });
+      updateMissionStates((current) => ({
+        ...current,
+        [missionId]: "active",
+      }) as Record<string, MissionState>);
       if (onDestinationChange) {
         onDestinationChange(config.dropoffPosition);
       }
       const hasLimit =
         typeof config.timeLimit === "number" && config.timeLimit > 0;
       if (hasLimit) {
-        setTimeLeft(config.timeLimit);
-        setTimer({ secondsLeft: config.timeLimit });
+        const limit = config.timeLimit as number;
+        setTimeLeft(limit);
+        setTimer({ secondsLeft: limit });
       } else {
         setTimeLeft(null);
         setTimer(null);
@@ -421,7 +437,7 @@ export default function Mission({
     [
       onDestinationChange,
       onPauseChange,
-      setMissionStates,
+      updateMissionStates,
       setTimeLeft,
       setTimer,
     ]
@@ -487,12 +503,13 @@ export default function Mission({
       if (!config) return;
 
       let completionApplied = false;
-      setMissionStates((prev) => {
+      updateMissionStates((prev) => {
         if (prev[missionId] !== "active") return prev;
-        const next = { ...prev, [missionId]: "completed" };
-        missionStatesRef.current = next;
         completionApplied = true;
-        return next;
+        return {
+          ...prev,
+          [missionId]: "completed",
+        } as Record<string, MissionState>;
       });
       if (!completionApplied) return;
 
@@ -567,11 +584,12 @@ export default function Mission({
       if (currentIndex >= 0) {
         const nextMission = missions[currentIndex + 1];
         if (nextMission) {
-          setMissionStates((prevStates) => {
+          updateMissionStates((prevStates) => {
             if (prevStates[nextMission.id] !== "locked") return prevStates;
-            const nextStates = { ...prevStates, [nextMission.id]: "available" };
-            missionStatesRef.current = nextStates;
-            return nextStates;
+            return {
+              ...prevStates,
+              [nextMission.id]: "available",
+            } as Record<string, MissionState>;
           });
         }
       }
@@ -588,7 +606,7 @@ export default function Mission({
       setCompletionInfo,
       setDialogVisible,
       setPromptMissionId,
-      setMissionStates,
+      updateMissionStates,
       setMoney,
       setTimeLeft,
       setTimer,
@@ -612,11 +630,12 @@ export default function Mission({
           timerRef.current = null;
           const activeId = activeMissionIdRef.current;
           if (activeId) {
-            setMissionStates((prevStates) => {
+            updateMissionStates((prevStates) => {
               if (prevStates[activeId] === "available") return prevStates;
-              const nextStates = { ...prevStates, [activeId]: "available" };
-              missionStatesRef.current = nextStates;
-              return nextStates;
+              return {
+                ...prevStates,
+                [activeId]: "available",
+              } as Record<string, MissionState>;
             });
             setActiveMissionId(null);
             activeMissionIdRef.current = null;
@@ -650,7 +669,7 @@ export default function Mission({
     setActiveMissionId,
     setCompletionInfo,
     setDialogVisible,
-    setMissionStates,
+    updateMissionStates,
     setPromptMissionId,
     setTimer,
   ]);

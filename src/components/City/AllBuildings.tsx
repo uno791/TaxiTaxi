@@ -8,7 +8,6 @@ import BlockBuildings from "./BlockBuildings";
 import Resedential from "./Resedential";
 import { BBall } from "./Buildings/BBall";
 import { Tennis } from "./Buildings/Tennis";
-import { Hospital } from "./Buildings/Hospital";
 import { ColliderBox } from "../Taxi/ColliderBox";
 import FlickeringBillboard from "../Environment/FlickeringBillboard";
 import TrashCan from "../Environment/TrashCan";

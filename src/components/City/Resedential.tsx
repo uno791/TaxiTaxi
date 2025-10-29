@@ -1,18 +1,14 @@
 import type { JSX } from 'react/jsx-runtime'
-import { BritsHouse } from './Buildings/BritsHouse';
 import { FarmHouse } from './Buildings/FarmHouse';
 import { House } from './Buildings/House';
-import { HouseCar } from './Buildings/HouseCar';
 import { HouseDriveway } from './Buildings/HouseDriveway';
 import {
   RoadStraight,
   RoadCornerCurved,
   RoadTSplit,
-  RoadJunction
 } from '../Road/RoadBitsGenerated';
 import { Driveway } from '../Ground/SceneObjects/Driveway';
 import { Tree } from '../Ground/SceneObjects/Tree';
-import { Hedge } from '../Ground/SceneObjects/Hedge';
 import { StreetLight } from '../Ground/SceneObjects/StreetLight';
 import { Gazebo } from './Buildings/Gazebo';
 import { TrashBag } from '../Ground/SceneObjects/TrashBag';

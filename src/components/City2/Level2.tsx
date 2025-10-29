@@ -19,8 +19,12 @@ export default function Level2({
   const positionProp = groupProps.position;
   const cityOffset: [number, number, number] = Array.isArray(positionProp)
     ? [positionProp[0] ?? 0, positionProp[1] ?? 0, positionProp[2] ?? 0]
-    : positionProp
-    ? [positionProp.x, positionProp.y, positionProp.z]
+    : positionProp && typeof positionProp === "object" && "x" in positionProp
+    ? [
+        (positionProp.x as number | undefined) ?? 0,
+        (positionProp.y as number | undefined) ?? 0,
+        (positionProp.z as number | undefined) ?? 0,
+      ]
     : [0, 0, 0];
 
   return (

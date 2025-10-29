@@ -1,5 +1,3 @@
-import React from "react";
-
 type MissionTrackerHUDProps = {
   remaining: number;
   nextMission: string | null;

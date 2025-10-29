@@ -23,9 +23,7 @@ import TaxiSpeedometer from "./components/Taxi/TaxiSpeedometer";
 import UpgradeMenu from "./components/UI/UpgradeMenu";
 import { MissionUIProvider } from "./components/Missions/MissionUIContext";
 import MissionOverlay from "./components/Missions/MissionOverlay";
-import FogEffect from "./components/FogEffect";
 import { Stars } from "@react-three/drei";
-import { useLoader } from "@react-three/fiber";
 
 import LoginScreen from "./components/UI/LoginScreen";
 import EntranceScreen from "./components/UI/EntranceScreen";
@@ -234,7 +232,6 @@ function GameWorld() {
             fade // enables distance fade
           />
           {/* dark blue night sky */}
-          {/* <FogEffect /> */}
           <Physics
             gravity={[0, -9.81, 0]}
             broadphase="SAP"

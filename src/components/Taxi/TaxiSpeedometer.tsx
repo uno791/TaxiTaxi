@@ -1,7 +1,5 @@
-import * as React from "react";
 import {
   GaugeContainer,
-  GaugeValueArc,
   GaugeReferenceArc,
   useGaugeState,
 } from "@mui/x-charts/Gauge";

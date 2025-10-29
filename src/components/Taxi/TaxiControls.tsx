@@ -1,5 +1,4 @@
-import { useEffect, useRef } from "react";
-import type { MutableRefObject } from "react";
+import { useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import * as THREE from "three";
 import { Taxi } from "./Taxi";
@@ -79,13 +78,6 @@ export function TaxiController() {
       .add(new THREE.Vector3(0, 0.5, 0)); // slight upward bias
     camera.lookAt(target);
   });
-
-  useEffect(() => {
-    const taxi = taxiRef.current;
-    if (taxi && positionRef) {
-      positionRef.current.copy(taxi.position);
-    }
-  }, [positionRef]);
 
   return <Taxi scale={0.27} ref={taxiRef} />;
 }

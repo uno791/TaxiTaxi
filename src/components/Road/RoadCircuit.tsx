@@ -8,13 +8,11 @@ import {
   RoadTSplit,
   RoadJunction,
 } from "./RoadBitsGenerated";
-import { ColliderBox } from "../Taxi/ColliderBox";
 type Vector3 = [number, number, number];
 
 export default function RoadCircuit(props: JSX.IntrinsicElements["group"]) {
   const horizontalRotation: Vector3 = [Math.PI / 2, Math.PI, Math.PI / 2];
   const cornerEastToSouth: Vector3 = [Math.PI / 2, Math.PI, 0];
-  const cornerNorthToEast: Vector3 = [Math.PI / 2, Math.PI, Math.PI];
   const junctionRotation: Vector3 = [Math.PI / 2, Math.PI, -Math.PI / 2];
   const tSplitRotations: Record<"north" | "south" | "east" | "west", Vector3> =
     {

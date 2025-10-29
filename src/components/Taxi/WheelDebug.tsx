@@ -4,7 +4,7 @@ const debug = false;
 
 interface WheelDebugProps {
   radius: number;
-  wheelRef: React.RefObject<THREE.Group>;
+  wheelRef: React.MutableRefObject<THREE.Group | null>;
 }
 
 export const WheelDebug: React.FC<WheelDebugProps> = ({ radius, wheelRef }) => {

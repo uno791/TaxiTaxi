@@ -1,14 +1,11 @@
 import type { JSX } from 'react/jsx-runtime'
 import {
   BuildingRowVariant1,
-  BuildingRowVariant2,
   BuildingRowVariant3,
 } from './BuildingRow';
 import { BigBuilding } from "./Buildings/BigBuilding";
-import { BrownBuilding } from "./Buildings/BrownBuilding";
 import { CornerBuilding } from "./Buildings/CornerBuilding";
 import { GreenBuilding } from "./Buildings/GreenBuilding";
-import { RedBuilding } from "./Buildings/RedBuilding";
 
 /**
  * Helper to convert world-ish coords into local coords around a chosen pivot.

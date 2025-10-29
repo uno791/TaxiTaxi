@@ -3,23 +3,11 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useRef, useState, useEffect } from "react";
 import * as THREE from "three";
 
-export function CameraChase({
-  target,
-  distance = 3,
-  height = 1.6,
-  lookAhead = 1.8,
-  lookUp = 0.5,
-  stiffness = 8,
-  targetSmoothing = 6,
-}: {
+type CameraChaseProps = {
   target: React.MutableRefObject<THREE.Object3D | null>;
-  distance?: number;
-  height?: number;
-  lookAhead?: number;
-  lookUp?: number;
-  stiffness?: number;
-  targetSmoothing?: number;
-}) {
+};
+
+export function CameraChase({ target }: CameraChaseProps) {
   const { camera } = useThree();
 
   const pos = useRef(new THREE.Vector3());
@@ -40,6 +28,8 @@ export function CameraChase({
     { distance: 0, height: 10, lookAhead: 0, lookUp: 0 }, // Top-down (rotates yaw only, reversed)
     { distance: 6, height: 2.5, lookAhead: 2, lookUp: 0.5 }, // Far chase
   ];
+  const stiffness = 8;
+  const targetSmoothing = 6;
 
   // Switch camera view with "C"
   useEffect(() => {

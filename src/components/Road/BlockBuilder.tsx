@@ -1,17 +1,12 @@
 import type { JSX } from 'react/jsx-runtime'
 import {
   RoadStraight,
-  RoadCorner,
   RoadCornerCurved,
-  RoadJunction,
   RoadStraightCrossing,
   RoadTSplit,
 } from './RoadBitsGenerated'
-import type { PI } from 'three/tsl'
 
 export default function BlockBuilder(props: JSX.IntrinsicElements['group']) {
-
-    const spacing = 2
   const tilesUp: JSX.Element[] = []
   const tilesDown: JSX.Element[] = []
    const tilesLeft: JSX.Element[] = []

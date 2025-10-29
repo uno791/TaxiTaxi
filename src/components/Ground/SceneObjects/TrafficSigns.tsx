@@ -1,6 +1,4 @@
 import type { JSX } from "react/jsx-runtime";
-import { StreetLight } from "./StreetLight";
-
 import { TrafficLight } from "./TrafficLight";
 import { TrafficLightB } from "./TrafficLightB";
 import { TrafficLightC } from "./TrafficLightC";

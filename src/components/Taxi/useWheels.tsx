@@ -1,5 +1,6 @@
-import { useCompoundBody } from "@react-three/cannon";
+import { useCompoundBody, type WheelInfoOptions } from "@react-three/cannon";
 import { useRef } from "react";
+import type { Group } from "three";
 
 export const useWheels = (
   width: number,
@@ -7,9 +8,14 @@ export const useWheels = (
   front: number,
   radius: number
 ) => {
-  const wheels = [useRef(null), useRef(null), useRef(null), useRef(null)];
+  const wheels = [
+    useRef<Group>(null),
+    useRef<Group>(null),
+    useRef<Group>(null),
+    useRef<Group>(null),
+  ];
 
-  const wheelInfo = {
+  const wheelInfo: WheelInfoOptions = {
     radius,
     directionLocal: [0, -1, 0] as [number, number, number],
     axleLocal: [1, 0, 0] as [number, number, number],
@@ -26,7 +32,7 @@ export const useWheels = (
     useCustomSlidingRotationalSpeed: true,
   };
 
-  const wheelInfos = [
+  const wheelInfos: WheelInfoOptions[] = [
     {
       ...wheelInfo,
       chassisConnectionPointLocal: [
@@ -84,5 +90,5 @@ export const useWheels = (
   useCompoundBody(propsFunc, wheels[2]);
   useCompoundBody(propsFunc, wheels[3]);
 
-  return [wheels, wheelInfos];
+  return [wheels, wheelInfos] as const;
 };

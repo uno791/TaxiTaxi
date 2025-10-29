@@ -1,6 +1,4 @@
 import type { JSX } from "react/jsx-runtime";
-import { PowerBox } from "./PowerBox";
-import { Fence } from "./Fence";
 import { Dumpster } from "./Dumpster";
 import { TrashBag } from "./TrashBag";
 export default function DumpsterFull(props: JSX.IntrinsicElements["group"]) {

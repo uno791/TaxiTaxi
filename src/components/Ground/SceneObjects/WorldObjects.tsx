@@ -1,27 +1,18 @@
 import type { JSX } from "react/jsx-runtime";
 import { Cone } from "./Cone";
-import { Dumpster } from "./Dumpster";
-import { FlowerPotA } from "./FlowerPotA";
-import { FlowerPotB } from "./FlowerPotB";
 import { FireHydrant } from "./FireHydrant";
 import { MailBox } from "./MailBox";
 import { ManHole } from "./ManHole";
 import { Paper } from "./Paper";
-import { Planter } from "./Planter";
-import { StreetLight } from "./StreetLight";
 import { TrashBag } from "./TrashBag";
 import { TreeA } from "./TreeA";
 import { TreeB } from "./TreeB";
 import { Bush } from "./Bush";
 import { Billboard } from "./Billboard";
 import { FloorHole } from "./FloorHole";
-import { Woman } from "./Woman";
-import { PowerBox } from "./PowerBox";
 import ElectricityBox from "./ElectricityBox";
-import { Fence } from "./Fence";
-import { Hedge } from "./Hedge";
 import DumpsterFull from "./DumpsterFull";
-import HedgeBoundry from "../hedgeboundry";
+import HedgeBoundry from "../HedgeBoundry";
 
 export default function WorldObjects(props: JSX.IntrinsicElements["group"]) {
   return (
