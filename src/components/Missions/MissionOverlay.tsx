@@ -1,5 +1,10 @@
-import { useMissionUI } from "./MissionUIContext";
-import { useEffect, useRef } from "react";
+import { useMissionUI, type MissionCompletionState } from "./MissionUIContext";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRive } from "@rive-app/react-canvas";
+import type {
+  MissionPerformanceBreakdown,
+  MissionStarEvent,
+} from "./MissionPerformanceContext";
 
 export default function MissionOverlay() {
   const {
@@ -10,6 +15,7 @@ export default function MissionOverlay() {
     timer,
     missionFailureActive,
     setMissionFailureActive,
+    setCompletion,
   } = useMissionUI();
   const vignetteRef = useRef<HTMLDivElement | null>(null);
   const urgencyIntensityRef = useRef(0);
@@ -19,6 +25,48 @@ export default function MissionOverlay() {
   const audioBufferRef = useRef<AudioBuffer | null>(null);
   const heartbeatTimerRef = useRef<number | null>(null);
   const missionFailedTimeoutRef = useRef<number | null>(null);
+
+  const starAnimationTimeoutsRef = useRef<number[]>([]);
+  const starAudioRef = useRef<HTMLAudioElement | null>(null);
+  const [displayedStars, setDisplayedStars] = useState(0);
+  const [currentStarEventIndex, setCurrentStarEventIndex] = useState<number | null>(
+    null
+  );
+
+  const starEvents = completion?.starEvents ?? [];
+  const totalStars = completion?.stars ?? 0;
+
+  const { rive, RiveComponent } = useRive({
+    src: "/models/6914-13295-star-rating.riv",
+    stateMachines: "State Machine 1",
+    autoplay: true,
+  });
+  const riveStarInputRef = useRef<{ machine: string; input: any } | null>(
+    null
+  );
+
+  useEffect(() => {
+    if (!rive || riveStarInputRef.current) return;
+    const machineNames = rive.stateMachineNames ?? [];
+    for (const machine of machineNames) {
+      const inputs = rive.stateMachineInputs(machine);
+      if (!inputs || !inputs.length) continue;
+      const numericInput = inputs.find((input: any) =>
+        typeof input.value === "number"
+      );
+      if (numericInput) {
+        riveStarInputRef.current = { machine, input: numericInput };
+        break;
+      }
+    }
+  }, [rive]);
+
+  useEffect(() => {
+    const entry = riveStarInputRef.current;
+    if (!entry || !rive) return;
+    entry.input.value = displayedStars;
+    rive.play(entry.machine);
+  }, [displayedStars, rive]);
 
   // Watch for timer reaching zero → show mission failed popup
   useEffect(() => {
@@ -46,13 +94,87 @@ export default function MissionOverlay() {
   // Auto fade out mission complete popup
   useEffect(() => {
     if (!completion) return;
-    const timeout = setTimeout(() => {
-      // fade out automatically
-      const overlay = document.querySelector(".mission-complete");
-      if (overlay) (overlay as HTMLElement).style.opacity = "0";
-    }, 3000);
-    return () => clearTimeout(timeout);
-  }, [completion]);
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space") return;
+      event.preventDefault();
+      starAnimationTimeoutsRef.current.forEach((id) =>
+        window.clearTimeout(id)
+      );
+      starAnimationTimeoutsRef.current = [];
+      if (starAudioRef.current) {
+        starAudioRef.current.pause();
+        starAudioRef.current.currentTime = 0;
+      }
+      setDisplayedStars(totalStars);
+      setCurrentStarEventIndex(null);
+      setCompletion(null);
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [completion, totalStars, setCompletion]);
+
+  useEffect(() => {
+    starAnimationTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+    starAnimationTimeoutsRef.current = [];
+
+    const audio = starAudioRef.current;
+    if (audio) {
+      audio.pause();
+      audio.currentTime = 0;
+    }
+    starAudioRef.current = null;
+
+    if (!completion) {
+      setDisplayedStars(0);
+      setCurrentStarEventIndex(null);
+      return;
+    }
+
+    if (!starEvents.length) {
+      setDisplayedStars(totalStars);
+      setCurrentStarEventIndex(null);
+      return;
+    }
+
+    setDisplayedStars(0);
+    setCurrentStarEventIndex(null);
+
+    const newAudio = new Audio("sounds/mixkit-space-coin-win-notification-271.wav");
+    newAudio.volume = 0.7;
+    starAudioRef.current = newAudio;
+
+    const baseDelay = 220;
+    starEvents.forEach((event, index) => {
+      const timeoutId = window.setTimeout(() => {
+        setDisplayedStars(event.starNumber);
+        setCurrentStarEventIndex(index);
+        if (starAudioRef.current) {
+          starAudioRef.current.currentTime = 0;
+          void starAudioRef.current.play().catch(() => undefined);
+        }
+      }, baseDelay + index * 620);
+      starAnimationTimeoutsRef.current.push(timeoutId);
+    });
+
+    const settleTimeout = window.setTimeout(() => {
+      setDisplayedStars(totalStars);
+      setCurrentStarEventIndex(starEvents.length - 1);
+    }, baseDelay + starEvents.length * 620 + 320);
+    starAnimationTimeoutsRef.current.push(settleTimeout);
+
+    return () => {
+      starAnimationTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+      starAnimationTimeoutsRef.current = [];
+      const activeAudio = starAudioRef.current;
+      if (activeAudio) {
+        activeAudio.pause();
+        activeAudio.currentTime = 0;
+      }
+      starAudioRef.current = null;
+    };
+  }, [completion, starEvents, totalStars]);
 
   const PANIC_THRESHOLD = 10;
   let nextUrgencyTarget = 0;
@@ -98,6 +220,23 @@ export default function MissionOverlay() {
   }, []);
 
   const heartbeatActive = urgencyTargetRef.current > 0;
+
+  const collisionBreakdown = useMemo(
+    () => completion?.breakdown?.find((item) => item.key === "collisions") ?? null,
+    [completion]
+  );
+
+  const timeBreakdown = useMemo(
+    () => completion?.breakdown?.find((item) => item.key === "time") ?? null,
+    [completion]
+  );
+
+  const currentStarEvent =
+    currentStarEventIndex !== null && currentStarEventIndex >= 0
+      ? starEvents[currentStarEventIndex] ?? null
+      : null;
+
+  const riveReady = Boolean(rive && riveStarInputRef.current);
 
   useEffect(() => {
     if (heartbeatTimerRef.current) {
@@ -194,8 +333,6 @@ export default function MissionOverlay() {
     prompt || active || dialog || completion || missionFailureActive;
   if (!shouldRender) return null;
 
-  const starCount = completion?.stars ?? 0;
-  const showStars = starCount > 0;
 
   return (
     <div
@@ -510,121 +647,16 @@ export default function MissionOverlay() {
         </div>
       )}
 
-      {/* MISSION COMPLETE (with bonus) */}
       {completion && (
-        <div
-          className="mission-complete"
-          style={{
-            position: "absolute",
-            bottom: 140,
-            left: "50%",
-            transform: "translateX(-50%)",
-            transition: "opacity 0.5s ease",
-            zIndex: 60,
-          }}
-        >
-          <div
-            style={{
-              pointerEvents: "auto",
-              padding: "16px 28px",
-              borderRadius: "14px",
-              background: "rgba(25, 118, 210, 0.9)",
-              color: "#fff",
-              fontFamily: "Arial, sans-serif",
-              fontWeight: 600,
-              boxShadow: "0 10px 20px rgba(0,0,0,0.35)",
-              textAlign: "center",
-              minWidth: "280px",
-            }}
-          >
-            {showStars && (
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "center",
-                  gap: "6px",
-                  marginBottom: "8px",
-                  fontSize: "24px",
-                  letterSpacing: "2px",
-                }}
-              >
-                {Array.from({ length: 3 }).map((_, index) => (
-                  <span
-                    key={`star-${index}`}
-                    style={{
-                      color:
-                        index < starCount ? "#ffeb3b" : "rgba(255,255,255,0.3)",
-                      textShadow:
-                        index < starCount
-                          ? "0 0 12px rgba(255,235,59,0.7)"
-                          : "none",
-                    }}
-                  >
-                    ★
-                  </span>
-                ))}
-              </div>
-            )}
-            <div style={{ fontSize: "20px", marginBottom: "6px" }}>
-              Mission complete!
-            </div>
-            <div style={{ fontSize: "18px" }}>Earned R{completion.reward}</div>
-            {completion.breakdown && completion.breakdown.length > 0 && (
-              <div
-                style={{
-                  marginTop: "10px",
-                  paddingTop: "10px",
-                  borderTop: "1px solid rgba(255,255,255,0.2)",
-                  fontSize: "14px",
-                  textAlign: "left",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: "6px",
-                }}
-              >
-                {completion.breakdown.map((item) => (
-                  <div
-                    key={item.key}
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      opacity: item.achieved ? 1 : 0.55,
-                      color: item.achieved ? "#fff" : "rgba(255,255,255,0.7)",
-                    }}
-                  >
-                    <span>{item.label}</span>
-                    <span
-                      style={{
-                        color: item.achieved ? "#ffeb3b" : "rgba(255,255,255,0.5)",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {item.achieved ? `+R${item.bonus}` : "—"}
-                    </span>
-                  </div>
-                ))}
-                {completion.bonus && completion.bonus > 0 && (
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginTop: "4px",
-                      paddingTop: "6px",
-                      borderTop: "1px solid rgba(255,255,255,0.15)",
-                      color: "#ffeb3b",
-                      fontWeight: 700,
-                    }}
-                  >
-                    <span>Total bonus tips</span>
-                    <span>+R{completion.bonus}</span>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
+        <MissionCompletionCard
+          completion={completion}
+          displayedStars={displayedStars}
+          currentStarEvent={currentStarEvent}
+          RiveComponent={riveReady ? RiveComponent : null}
+          riveReady={riveReady}
+          collisionBreakdown={collisionBreakdown}
+          timeBreakdown={timeBreakdown}
+        />
       )}
 
       {/* MISSION FAILED POPUP */}
@@ -658,4 +690,323 @@ export default function MissionOverlay() {
       )}
     </div>
   );
+}
+
+type MissionCompletionCardProps = {
+  completion: MissionCompletionState;
+  displayedStars: number;
+  currentStarEvent: MissionStarEvent | null;
+  RiveComponent: ReturnType<typeof useRive>["RiveComponent"] | null;
+  riveReady: boolean;
+  collisionBreakdown: MissionPerformanceBreakdown | null;
+  timeBreakdown: MissionPerformanceBreakdown | null;
+};
+
+function MissionCompletionCard({
+  completion,
+  displayedStars,
+  currentStarEvent,
+  RiveComponent,
+  riveReady,
+  collisionBreakdown,
+  timeBreakdown,
+}: MissionCompletionCardProps) {
+  const bonus = completion.bonus ?? 0;
+  const baseReward = completion.reward - bonus;
+
+  const collisionCount =
+    typeof completion.collisions === "number"
+      ? completion.collisions
+      : typeof collisionBreakdown?.value === "number"
+      ? collisionBreakdown.value
+      : 0;
+
+  const timeTaken =
+    typeof completion.timeTakenSeconds === "number"
+      ? completion.timeTakenSeconds
+      : typeof timeBreakdown?.value === "number"
+      ? timeBreakdown.value
+      : null;
+
+  const collisionsToNext = collisionBreakdown?.nextStar?.collisionsToReduce ?? null;
+  const secondsToNext = timeBreakdown?.nextStar?.secondsToSave ?? null;
+
+  const collisionBonus = collisionBreakdown?.bonus ?? 0;
+  const timeBonus = timeBreakdown?.bonus ?? 0;
+  const collisionStars = collisionBreakdown?.starsEarned ?? 0;
+  const timeStars = timeBreakdown?.starsEarned ?? 0;
+
+  return (
+    <div
+      className="mission-complete"
+      style={{
+        position: "absolute",
+        bottom: 110,
+        left: "50%",
+        transform: "translateX(-50%)",
+        transition: "opacity 0.5s ease",
+        zIndex: 60,
+      }}
+    >
+      <div
+        style={{
+          pointerEvents: "auto",
+          padding: "22px 30px 26px",
+          borderRadius: "16px",
+          background: "rgba(15, 26, 46, 0.92)",
+          color: "#f5f7ff",
+          fontFamily: "Arial, sans-serif",
+          width: "min(520px, 92vw)",
+          boxShadow: "0 18px 38px rgba(0,0,0,0.45)",
+        }}
+      >
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            marginBottom: "18px",
+          }}
+        >
+          <div style={{ fontSize: "22px", fontWeight: 700 }}>
+            Mission complete!
+          </div>
+          <div
+            style={{
+              fontSize: "16px",
+              padding: "6px 12px",
+              borderRadius: "999px",
+              background: "rgba(255, 255, 255, 0.12)",
+              color: "rgba(255,255,255,0.85)",
+              fontWeight: 600,
+            }}
+          >
+            {displayedStars} / 5 stars
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            marginBottom: "18px",
+            gap: "16px",
+          }}
+        >
+          <div
+            style={{
+              width: "200px",
+              height: "120px",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {riveReady && RiveComponent ? (
+              <RiveComponent style={{ width: "200px", height: "120px" }} />
+            ) : (
+              <div
+                style={{
+                  display: "flex",
+                  gap: "6px",
+                  fontSize: "28px",
+                  letterSpacing: "3px",
+                  color: "rgba(255,255,255,0.25)",
+                }}
+              >
+                {Array.from({ length: 5 }).map((_, index) => (
+                  <span
+                    key={`fallback-star-${index}`}
+                    style={{
+                      color:
+                        index < displayedStars
+                          ? "#ffd54f"
+                          : "rgba(255,255,255,0.25)",
+                      textShadow:
+                        index < displayedStars
+                          ? "0 0 16px rgba(255,213,79,0.8)"
+                          : "none",
+                    }}
+                  >
+                    ★
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+
+        {currentStarEvent && (
+          <div
+            style={{
+              textAlign: "center",
+              marginBottom: "16px",
+              fontSize: "15px",
+              color: "rgba(255,255,255,0.9)",
+            }}
+          >
+            <strong>{currentStarEvent.label}</strong> — {currentStarEvent.detail}
+          </div>
+        )}
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
+            gap: "14px",
+            marginBottom: "18px",
+          }}
+        >
+          <div
+            style={{
+              background: "rgba(255,255,255,0.08)",
+              borderRadius: "12px",
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
+            <div style={{ fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.6)" }}>
+              Defensive driving
+            </div>
+            <div style={{ fontSize: "18px", fontWeight: 600 }}>
+              {formatCollisions(collisionCount)}
+            </div>
+            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.75)" }}>
+              {collisionStars} / 2 stars · {formatBonus(collisionBonus)} bonus
+            </div>
+            {collisionsToNext && collisionsToNext > 0 && (
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>
+                {collisionsToNext} fewer {collisionsToNext === 1 ? "collision" : "collisions"} for the next star
+              </div>
+            )}
+          </div>
+          <div
+            style={{
+              background: "rgba(255,255,255,0.08)",
+              borderRadius: "12px",
+              padding: "14px 16px",
+              display: "flex",
+              flexDirection: "column",
+              gap: "6px",
+            }}
+          >
+            <div style={{ fontSize: "14px", textTransform: "uppercase", letterSpacing: "0.08em", color: "rgba(255,255,255,0.6)" }}>
+              Speed run
+            </div>
+            <div style={{ fontSize: "18px", fontWeight: 600 }}>
+              {formatDuration(timeTaken)}
+            </div>
+            <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.75)" }}>
+              {timeStars} / 3 stars · {formatBonus(timeBonus)} bonus
+            </div>
+            {secondsToNext && secondsToNext > 0 && (
+              <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>
+                {formatSecondsDiff(secondsToNext)} faster for the next star
+              </div>
+            )}
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "8px",
+            background: "rgba(255,255,255,0.06)",
+            borderRadius: "12px",
+            padding: "14px 16px",
+          }}
+        >
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              color: "rgba(255,255,255,0.8)",
+            }}
+          >
+            <span>Fare</span>
+            <span>{formatCurrency(baseReward)}</span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              color: "rgba(255,255,255,0.8)",
+            }}
+          >
+            <span>Safety bonus</span>
+            <span>{formatBonus(collisionBonus)}</span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              color: "rgba(255,255,255,0.8)",
+            }}
+          >
+            <span>Speed bonus</span>
+            <span>{formatBonus(timeBonus)}</span>
+          </div>
+          <div
+            style={{
+              display: "flex",
+              justifyContent: "space-between",
+              marginTop: "4px",
+              paddingTop: "6px",
+              borderTop: "1px solid rgba(255,255,255,0.12)",
+              fontWeight: 700,
+            }}
+          >
+            <span>Total payout</span>
+            <span>{formatCurrency(completion.reward)}</span>
+          </div>
+        </div>
+
+        <div
+          style={{
+            marginTop: "16px",
+            textAlign: "center",
+            fontSize: "13px",
+            letterSpacing: "0.08em",
+            textTransform: "uppercase",
+            color: "rgba(255,255,255,0.7)",
+          }}
+        >
+          Press Space to continue
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function formatCurrency(value: number) {
+  const rounded = Math.round(value);
+  return `R${rounded}`;
+}
+
+function formatBonus(value: number) {
+  const rounded = Math.round(value);
+  const sign = rounded >= 0 ? "+" : "-";
+  return `${sign}R${Math.abs(rounded)}`;
+}
+
+function formatDuration(seconds: number | null) {
+  if (seconds === null || Number.isNaN(seconds)) return "—";
+  if (seconds >= 60) {
+    const minutes = Math.floor(seconds / 60);
+    const remainder = seconds - minutes * 60;
+    return `${minutes}:${remainder.toFixed(1).padStart(4, "0")}`;
+  }
+  return `${seconds.toFixed(1)}s`;
+}
+
+function formatSecondsDiff(seconds: number) {
+  return `${seconds.toFixed(1)}s`;
+}
+
+function formatCollisions(count: number) {
+  return `${count} collision${count === 1 ? "" : "s"}`;
 }
