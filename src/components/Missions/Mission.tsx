@@ -14,7 +14,7 @@ import {
   type MissionStarEvent,
 } from "./MissionPerformanceContext";
 
-type MissionState =
+export type MissionState =
   | "locked"
   | "available"
   | "prompt"
@@ -22,18 +22,64 @@ type MissionState =
   | "active"
   | "completed";
 
+export type MissionResumeState = {
+  completedMissionIds: string[];
+  nextMissionId: string | null;
+};
+
+export type MissionProgressSummary = {
+  cityId: CityId;
+  activeMissionId: string | null;
+  nextMissionId: string | null;
+  completedMissionIds: string[];
+};
+
 export type MissionTargetInfo = {
   id: string;
   position: [number, number, number];
 };
 
 const createInitialMissionState = (
-  missions: MissionConfig[]
+  missions: MissionConfig[],
+  resume?: MissionResumeState | null
 ): Record<string, MissionState> => {
   const initialState: Record<string, MissionState> = {};
   missions.forEach((config, index) => {
     initialState[config.id] = index === 0 ? "available" : "locked";
   });
+
+  if (!resume) return initialState;
+
+  const completedSet = new Set(resume.completedMissionIds);
+  missions.forEach((config) => {
+    if (completedSet.has(config.id)) {
+      initialState[config.id] = "completed";
+    }
+  });
+
+  if (resume.nextMissionId) {
+    let nextAssigned = false;
+    for (const config of missions) {
+      if (completedSet.has(config.id)) {
+        continue;
+      }
+      if (!nextAssigned) {
+        initialState[config.id] =
+          config.id === resume.nextMissionId ? "available" : "locked";
+        if (config.id === resume.nextMissionId) {
+          nextAssigned = true;
+        }
+      } else {
+        initialState[config.id] = "locked";
+      }
+    }
+  } else if (completedSet.size >= missions.length && missions.length > 0) {
+    // All missions completed �?" reflect completion state
+    missions.forEach((config) => {
+      initialState[config.id] = "completed";
+    });
+  }
+
   return initialState;
 };
 
@@ -78,6 +124,8 @@ type MissionProps = JSX.IntrinsicElements["group"] & {
   onPauseChange?: (paused: boolean) => void;
   onAllMissionsCompleted?: (cityId: CityId) => void;
   onMissionProgress?: (remaining: number, nextName: string | null) => void;
+  onMissionSummaryChange?: (summary: MissionProgressSummary) => void;
+  initialResumeState?: MissionResumeState | null;
 };
 
 type CompletionInfo = {
@@ -102,6 +150,8 @@ export default function Mission({
   onPauseChange,
   onAllMissionsCompleted,
   onMissionProgress,
+  onMissionSummaryChange,
+  initialResumeState = null,
   ...groupProps
 }: MissionProps) {
   const [missionStates, setMissionStates] = useState<
@@ -119,6 +169,7 @@ export default function Mission({
   const missionLoseSoundRef = useRef<HTMLAudioElement | null>(null);
   const missionConfigByIdRef = useRef<Record<string, MissionConfig>>({});
   const missionPerformance = useMissionPerformance();
+  const resumeStateRef = useRef<MissionResumeState | null>(initialResumeState);
 
   const playMissionStartSound = useCallback(() => {
     const audio = missionStartSoundRef.current;
@@ -162,6 +213,30 @@ export default function Mission({
     onMissionProgress(remaining, nextMission);
   }, [missions, missionStates, onMissionProgress]);
 
+  useEffect(() => {
+    if (!onMissionSummaryChange) return;
+
+    const completedMissionIds = missions
+      .filter((m) => missionStates[m.id] === "completed")
+      .map((m) => m.id);
+
+    const nextMission =
+      missions.find((m) => missionStates[m.id] !== "completed")?.id || null;
+
+    onMissionSummaryChange({
+      cityId,
+      activeMissionId,
+      nextMissionId: nextMission,
+      completedMissionIds,
+    });
+  }, [
+    missions,
+    missionStates,
+    activeMissionId,
+    cityId,
+    onMissionSummaryChange,
+  ]);
+
   const missionStatesRef = useRef(missionStates);
   const updateMissionStates = useCallback(
     (
@@ -201,7 +276,12 @@ export default function Mission({
   const lastGameOverRef = useRef(gameOver);
 
   useEffect(() => {
-    const initialState = createInitialMissionState(missions);
+    resumeStateRef.current = initialResumeState ?? null;
+  }, [initialResumeState]);
+
+  useEffect(() => {
+    const resumeState = resumeStateRef.current;
+    const initialState = createInitialMissionState(missions, resumeState);
     missionStatesRef.current = initialState;
     setMissionStates(initialState);
     setPromptMissionId(null);
@@ -221,6 +301,7 @@ export default function Mission({
     if (onDestinationChange) {
       onDestinationChange(null);
     }
+    resumeStateRef.current = null;
   }, [
     missions,
     cityId,

@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import settingsIcon from "../../assets/settings-svgrepo-com.svg";
+﻿import { useEffect, useMemo, useState } from "react";
 import infoIcon from "../../assets/info-circle-svgrepo-com.svg";
 import type { ControlMode } from "./useControls";
 import { MusicToggleButton } from "../UI/MusicToggleButton";
@@ -9,6 +8,7 @@ type Props = {
   onControlModeChange: (mode: ControlMode) => void;
   isPaused: boolean;
   onPauseChange: (paused: boolean) => void;
+  onSaveAndExit: () => void;
 };
 
 const CONTROL_OPTIONS: Array<{ mode: ControlMode; label: string }> = [
@@ -22,6 +22,7 @@ export function TaxiControlSettings({
   onControlModeChange,
   isPaused,
   onPauseChange,
+  onSaveAndExit,
 }: Props) {
   const [infoTarget, setInfoTarget] = useState<ControlMode | null>(null);
 
@@ -37,8 +38,13 @@ export function TaxiControlSettings({
     []
   );
 
-  const closeSettings = () => {
+  const handleResume = () => {
     onPauseChange(false);
+  };
+
+  const handleSave = () => {
+    onPauseChange(false);
+    onSaveAndExit();
   };
 
   useEffect(() => {
@@ -76,22 +82,18 @@ export function TaxiControlSettings({
           type="button"
           onClick={() => onPauseChange(true)}
           style={{
-            width: 44,
-            height: 44,
-            borderRadius: "50%",
+            padding: "10px 18px",
+            borderRadius: 999,
             border: "none",
-            padding: 8,
-            background: "rgba(255, 255, 255, 0.85)",
+            background: "rgba(255, 255, 255, 0.9)",
+            color: "#1C274C",
+            fontWeight: 600,
+            fontSize: 15,
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.2)",
             cursor: "pointer",
           }}
-          aria-label="Open driving settings"
         >
-          <img
-            src={settingsIcon}
-            alt="Settings"
-            style={{ width: "100%", height: "100%" }}
-          />
+          Pause
         </button>
       </div>
 
@@ -100,133 +102,189 @@ export function TaxiControlSettings({
           style={{
             position: "absolute",
             inset: 0,
-            background: "rgba(0, 0, 0, 0.45)",
+            background: "rgba(10, 15, 28, 0.55)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             zIndex: 10,
+            backdropFilter: "blur(2px)",
           }}
-          onClick={closeSettings}
+          onClick={handleResume}
         >
           <div
             onClick={(event) => event.stopPropagation()}
             style={{
-              width: "min(340px, 90vw)",
+              width: "min(420px, 92vw)",
               background: "#ffffff",
-              borderRadius: 16,
-              padding: "24px 28px",
-              boxShadow: "0 12px 32px rgba(0, 0, 0, 0.25)",
+              borderRadius: 20,
+              padding: "28px 32px",
+              boxShadow: "0 18px 42px rgba(0, 0, 0, 0.3)",
               display: "flex",
               flexDirection: "column",
-              gap: 16,
+              gap: 18,
             }}
           >
-            <h2 style={{ margin: 0, fontSize: 22 }}>Driving Controls</h2>
-            <p style={{ margin: 0, color: "#555" }}>
-              Pick how you want to drive the taxi.
-            </p>
-
-            {CONTROL_OPTIONS.map(({ mode, label }) => {
-              const isActive = controlMode === mode;
-              return (
-                <div
-                  key={mode}
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "space-between",
-                    gap: 12,
-                    padding: "12px 16px",
-                    borderRadius: 12,
-                    border: isActive
-                      ? "2px solid #1C274C"
-                      : "1px solid #d0d0d0",
-                    background: isActive ? "#f5f8ff" : "#fafafa",
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 12,
-                      cursor: "pointer",
-                      flex: 1,
-                    }}
-                  >
-                    <input
-                      type="radio"
-                      name="control-mode"
-                      checked={isActive}
-                      onChange={() => {
-                        onControlModeChange(mode);
-                        setInfoTarget(null);
-                      }}
-                    />
-                    <span style={{ fontSize: 16 }}>{label}</span>
-                  </label>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setInfoTarget((current) =>
-                        current === mode ? null : mode
-                      )
-                    }
-                    style={{
-                      width: 32,
-                      height: 32,
-                      borderRadius: "50%",
-                      border: "none",
-                      background: "rgba(255, 255, 255, 0.92)",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      padding: 0,
-                    }}
-                    aria-label={`How ${label} controls work`}
-                  >
-                    <img
-                      src={infoIcon}
-                      alt=""
-                      aria-hidden="true"
-                      style={{ width: 20, height: 20, display: "block" }}
-                    />
-                  </button>
-                </div>
-              );
-            })}
-
-            {infoTarget && (
-              <div
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <h2
                 style={{
-                  background: "#f1f5f9",
-                  borderRadius: 12,
-                  padding: "12px 16px",
-                  color: "#1c274c",
+                  margin: 0,
+                  fontSize: 26,
+                  color: "#1C274C",
                 }}
               >
-                <p style={{ margin: 0, fontSize: 14 }}>
-                  {infoText[infoTarget]}
-                </p>
-              </div>
-            )}
+                Game Paused
+              </h2>
+              <p style={{ margin: 0, color: "#4a5568", fontSize: 15 }}>
+                The city can wait. Choose what to do next.
+              </p>
+            </div>
 
-            <button
-              type="button"
-              onClick={closeSettings}
+            <div
               style={{
-                alignSelf: "flex-end",
-                border: "none",
-                background: "#1C274C",
-                color: "white",
-                padding: "10px 18px",
-                borderRadius: 999,
-                fontSize: 15,
-                cursor: "pointer",
+                display: "flex",
+                gap: 12,
+                flexWrap: "wrap",
               }}
             >
-              Close
-            </button>
+              <button
+                type="button"
+                onClick={handleResume}
+                style={{
+                  flex: "1 1 140px",
+                  borderRadius: 999,
+                  border: "none",
+                  background: "#1C274C",
+                  color: "white",
+                  padding: "12px 20px",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Resume
+              </button>
+              <button
+                type="button"
+                onClick={handleSave}
+                style={{
+                  flex: "1 1 140px",
+                  borderRadius: 999,
+                  border: "none",
+                  background: "#D92E2E",
+                  color: "white",
+                  padding: "12px 20px",
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                }}
+              >
+                Save & Exit
+              </button>
+            </div>
+
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 14,
+                paddingTop: 18,
+                borderTop: "1px solid #e2e8f0",
+              }}
+            >
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                <h3 style={{ margin: 0, fontSize: 18, color: "#1C274C" }}>
+                  Driving Controls
+                </h3>
+                <p style={{ margin: 0, color: "#4a5568", fontSize: 14 }}>
+                  Pick how you want to drive the taxi.
+                </p>
+              </div>
+
+              {CONTROL_OPTIONS.map(({ mode, label }) => {
+                const isActive = controlMode === mode;
+                return (
+                  <div
+                    key={mode}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 12,
+                      padding: "12px 16px",
+                      borderRadius: 14,
+                      border: isActive
+                        ? "2px solid #1C274C"
+                        : "1px solid #d0d0d0",
+                      background: isActive ? "#f5f8ff" : "#fafafa",
+                    }}
+                  >
+                    <label
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 12,
+                        cursor: "pointer",
+                        flex: 1,
+                      }}
+                    >
+                      <input
+                        type="radio"
+                        name="control-mode"
+                        checked={isActive}
+                        onChange={() => {
+                          onControlModeChange(mode);
+                          setInfoTarget(null);
+                        }}
+                      />
+                      <span style={{ fontSize: 16 }}>{label}</span>
+                    </label>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setInfoTarget((current) =>
+                          current === mode ? null : mode
+                        )
+                      }
+                      style={{
+                        width: 34,
+                        height: 34,
+                        borderRadius: "50%",
+                        border: "none",
+                        background: "rgba(255, 255, 255, 0.92)",
+                        cursor: "pointer",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        padding: 0,
+                      }}
+                      aria-label={`How ${label} controls work`}
+                    >
+                      <img
+                        src={infoIcon}
+                        alt=""
+                        aria-hidden="true"
+                        style={{ width: 20, height: 20, display: "block" }}
+                      />
+                    </button>
+                  </div>
+                );
+              })}
+
+              {infoTarget && (
+                <div
+                  style={{
+                    background: "#f1f5f9",
+                    borderRadius: 12,
+                    padding: "12px 16px",
+                    color: "#1c274c",
+                  }}
+                >
+                  <p style={{ margin: 0, fontSize: 14 }}>
+                    {infoText[infoTarget]}
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

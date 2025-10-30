@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentProps, MutableRefObject } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
@@ -12,7 +12,11 @@ import { NavigationSystem } from "./components/Navigation/NavigationSystem";
 import { DestinationMarker } from "./components/Navigation/DestinationMarker";
 import { MiniMapOverlay } from "./hooks/useMiniMapOverlay";
 
-import Mission, { type MissionTargetInfo } from "./components/Missions/Mission";
+import Mission, {
+  type MissionProgressSummary,
+  type MissionResumeState,
+  type MissionTargetInfo,
+} from "./components/Missions/Mission";
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
 import RestartControl from "./components/UI/RestartControl";
@@ -55,8 +59,10 @@ import {
 } from "./constants/cities";
 import CityStoryOverlay from "./components/UI/CityStoryOverlay";
 import FogEffect from "./components/FogEffect";
+import { saveGameProgress, loadGameProgress } from "./utils/storage";
 
 function GameWorld() {
+  const savedProgress = useMemo(() => loadGameProgress(), []);
   const chaseRef = useRef<THREE.Object3D | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
@@ -64,12 +70,50 @@ function GameWorld() {
   const [dialogPaused, setDialogPaused] = useState(false); // ✅ added
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
   const { activeCity, setActiveCity } = useGameLifecycle();
+  const { setAppStage } = useMeta();
   const completedCitiesRef = useRef<Record<CityId, boolean>>({
     city1: false,
     city2: false,
     city3: false,
   });
-  const initialIntroCity: CityId | null = activeCity;
+  const missionSummaryRef = useRef<MissionProgressSummary | null>(null);
+  const resumeStatesRef = useRef<Record<CityId, MissionResumeState | null>>({
+    city1:
+      savedProgress && savedProgress.cityId === "city1"
+        ? {
+            completedMissionIds: [...savedProgress.completedMissionIds],
+            nextMissionId: savedProgress.nextMissionId,
+          }
+        : null,
+    city2:
+      savedProgress && savedProgress.cityId === "city2"
+        ? {
+            completedMissionIds: [...savedProgress.completedMissionIds],
+            nextMissionId: savedProgress.nextMissionId,
+          }
+        : null,
+    city3:
+      savedProgress && savedProgress.cityId === "city3"
+        ? {
+            completedMissionIds: [...savedProgress.completedMissionIds],
+            nextMissionId: savedProgress.nextMissionId,
+          }
+        : null,
+  });
+
+  if (
+    savedProgress &&
+    missionSummaryRef.current === null &&
+    savedProgress.cityId === activeCity
+  ) {
+    missionSummaryRef.current = {
+      cityId: savedProgress.cityId,
+      activeMissionId: null,
+      nextMissionId: savedProgress.nextMissionId,
+      completedMissionIds: [...savedProgress.completedMissionIds],
+    };
+  }
+  const initialIntroCity: CityId | null = savedProgress ? null : activeCity;
   const [introCity, setIntroCity] = useState<CityId | null>(initialIntroCity);
   const [storyCity, setStoryCity] = useState<CityId | null>(null);
   const [storyPaused, setStoryPaused] = useState(initialIntroCity !== null);
@@ -140,14 +184,34 @@ function GameWorld() {
     []
   );
 
+  const handleMissionSummaryChange = useCallback(
+    (summary: MissionProgressSummary) => {
+      missionSummaryRef.current = summary;
+    },
+    []
+  );
+
   const missions = MISSIONS_BY_CITY[activeCity];
+  const savedForActiveCity =
+    savedProgress && savedProgress.cityId === activeCity ? savedProgress : null;
   const spawnPosition = CITY_SPAWN_POINTS[activeCity];
   const introData = introCity ? CITY_INTRO_DIALOGS[introCity] : null;
   const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
   const [testMode, setTestMode] = useState(false);
   // ✅ Add this here — after missions is defined
-  const [missionsRemaining, setMissionsRemaining] = useState(missions.length);
-  const [nextMissionName, setNextMissionName] = useState<string | null>(null);
+  const [missionsRemaining, setMissionsRemaining] = useState(() => {
+    if (savedForActiveCity) {
+      const completedInCity = new Set(savedForActiveCity.completedMissionIds);
+      const completedCount = missions.filter((mission) =>
+        completedInCity.has(mission.id)
+      ).length;
+      return Math.max(missions.length - completedCount, 0);
+    }
+    return missions.length;
+  });
+  const [nextMissionName, setNextMissionName] = useState<string | null>(
+    savedForActiveCity ? savedForActiveCity.nextMissionId : null
+  );
 
   const {
     enabled: flightEnabled,
@@ -217,6 +281,32 @@ function GameWorld() {
   const toggleTestMode = useCallback(() => {
     setTestMode((prev) => !prev);
   }, []);
+
+  const handleSaveAndExit = useCallback(() => {
+    const summary = missionSummaryRef.current;
+    const relevantSummary =
+      summary && summary.cityId === activeCity ? summary : null;
+
+    const completedMissionIds = relevantSummary
+      ? [...relevantSummary.completedMissionIds]
+      : savedForActiveCity
+      ? [...savedForActiveCity.completedMissionIds]
+      : [];
+
+    const nextMissionId = relevantSummary
+      ? relevantSummary.nextMissionId
+      : savedForActiveCity?.nextMissionId ?? null;
+
+    saveGameProgress({
+      cityId: activeCity,
+      completedMissionIds,
+      nextMissionId,
+      savedAt: Date.now(),
+    });
+
+    setIsPaused(false);
+    setAppStage("entrance");
+  }, [activeCity, savedForActiveCity, setAppStage, setIsPaused]);
 
   useEffect(() => {
     setAvailableMissionTargets([]);
@@ -301,6 +391,8 @@ function GameWorld() {
                   onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
                   onAllMissionsCompleted={handleAllMissionsCompleted}
                   onMissionProgress={handleMissionProgress}
+                  onMissionSummaryChange={handleMissionSummaryChange}
+                  initialResumeState={resumeStatesRef.current[activeCity]}
                 />
 
                 <DestinationMarker destinationRef={destinationRef} />
@@ -327,6 +419,7 @@ function GameWorld() {
               onControlModeChange={setControlMode}
               isPaused={isPaused}
               onPauseChange={setIsPaused}
+              onSaveAndExit={handleSaveAndExit}
             />
             <RestartControl />
 
