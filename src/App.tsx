@@ -7,6 +7,7 @@ import RoadCircuit from "./components/Road/RoadCircuit";
 import { TaxiPhysics } from "./components/Taxi/TaxiPhysics";
 import { CameraChase } from "./components/Taxi/CameraChase";
 import AllBuildings from "./components/City/AllBuildings";
+import { City1Colliders } from "./components/City/City1Colliders";
 import Background from "./components/City/Background";
 import { NavigationSystem } from "./components/Navigation/NavigationSystem";
 import { DestinationMarker } from "./components/Navigation/DestinationMarker";
@@ -323,6 +324,7 @@ function GameWorld() {
                 {activeCity === "city1" ? (
                   <>
                     <AllBuildings />
+                    <City1Colliders playerPositionRef={playerPositionRef} />
                     <RoadCircuit position={[0, 0, 0]} />
                     <Background position={[0, 0, 0]} />
                   </>
