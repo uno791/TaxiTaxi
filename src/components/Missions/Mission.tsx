@@ -201,6 +201,7 @@ export default function Mission({
     setTimer,
     completion,
     setMissionFailureActive,
+    setMissionFailureMessage,
     setDebugMissions,
     setDebugStartMission,
   } = useMissionUI();
@@ -224,6 +225,7 @@ export default function Mission({
     }
     setTimer(null);
     setMissionFailureActive(false);
+    setMissionFailureMessage(null);
     if (onDestinationChange) {
       onDestinationChange(null);
     }
@@ -241,6 +243,7 @@ export default function Mission({
     setTimeLeft,
     setTimer,
     setMissionFailureActive,
+    setMissionFailureMessage,
   ]);
 
   useEffect(() => {
@@ -343,6 +346,7 @@ export default function Mission({
         timerRef.current = null;
       }
       setTimer(null);
+      setMissionFailureMessage(null);
       if (onDestinationChange) {
         onDestinationChange(null);
       }
@@ -360,6 +364,7 @@ export default function Mission({
     setCompletionInfo,
     setTimeLeft,
     setTimer,
+    setMissionFailureMessage,
     unlockAll,
   ]);
 
@@ -462,6 +467,70 @@ export default function Mission({
     setPromptMissionId(null);
     promptMissionIdRef.current = null;
   }, [updateMissionStates, setPromptMissionId]);
+
+  const failActiveMission = useCallback(
+    (options?: { message?: string; setTimerZero?: boolean; clearTimeLeft?: boolean }) => {
+      const activeId = activeMissionIdRef.current;
+      if (!activeId) return false;
+
+      missionPerformance.abandonMission();
+
+      updateMissionStates((prevStates) => {
+        if (prevStates[activeId] === "available") return prevStates;
+        return {
+          ...prevStates,
+          [activeId]: "available",
+        } as Record<string, MissionState>;
+      });
+
+      setActiveMissionId(null);
+      activeMissionIdRef.current = null;
+      setPromptMissionId(null);
+      promptMissionIdRef.current = null;
+      setDialogVisible(false);
+      setCompletionInfo(null);
+
+      if (options?.clearTimeLeft !== false) {
+        setTimeLeft(null);
+      }
+
+      if (timerRef.current) {
+        window.clearInterval(timerRef.current);
+        timerRef.current = null;
+      }
+
+      if (options?.setTimerZero) {
+        setTimer({ secondsLeft: 0 });
+      } else {
+        setTimer(null);
+      }
+
+      if (onDestinationChange) {
+        onDestinationChange(null);
+      }
+
+      setMissionFailureMessage(options?.message ?? "Mission Failed.");
+
+      setMissionFailureActive(true);
+      playMissionLoseSound();
+
+      return true;
+    },
+    [
+      missionPerformance,
+      updateMissionStates,
+      setActiveMissionId,
+      setPromptMissionId,
+      setDialogVisible,
+      setCompletionInfo,
+      setTimeLeft,
+      setTimer,
+      onDestinationChange,
+      setMissionFailureMessage,
+      setMissionFailureActive,
+      playMissionLoseSound,
+    ]
+  );
 
   const debugStartMission = useCallback(
     (missionId: string) => {
@@ -740,23 +809,11 @@ export default function Mission({
           timerRef.current = null;
           const activeId = activeMissionIdRef.current;
           if (activeId) {
-            missionPerformance.abandonMission();
-            updateMissionStates((prevStates) => {
-              if (prevStates[activeId] === "available") return prevStates;
-              return {
-                ...prevStates,
-                [activeId]: "available",
-              } as Record<string, MissionState>;
+            failActiveMission({
+              message: "Mission Failed! Time ran out.",
+              setTimerZero: true,
+              clearTimeLeft: false,
             });
-            setActiveMissionId(null);
-            activeMissionIdRef.current = null;
-            setPromptMissionId(null);
-            promptMissionIdRef.current = null;
-            setDialogVisible(false);
-            setCompletionInfo(null);
-            if (onDestinationChange) onDestinationChange(null);
-            setTimer({ secondsLeft: 0 }); // Triggers MissionOverlay popup instead of browser alert
-            playMissionLoseSound();
           }
           return null;
         }
@@ -773,18 +830,7 @@ export default function Mission({
         timerRef.current = null;
       }
     };
-  }, [
-    timeLeft,
-    onDestinationChange,
-    playMissionLoseSound,
-    setActiveMissionId,
-    setCompletionInfo,
-    setDialogVisible,
-    updateMissionStates,
-    setPromptMissionId,
-    setTimer,
-    missionPerformance,
-  ]);
+  }, [timeLeft, failActiveMission, setTimer]);
 
   // DIALOG: keyboard advance when no options are present
   useEffect(() => {
@@ -981,6 +1027,7 @@ export default function Mission({
       setCompletion(null);
       setTimer(null); // TIMER: reset on unmount
       setMissionFailureActive(false);
+      setMissionFailureMessage(null);
       if (onDestinationChange) {
         onDestinationChange(null);
       }
@@ -994,6 +1041,7 @@ export default function Mission({
     onDestinationChange,
     missionPerformance,
     setMissionFailureActive,
+    setMissionFailureMessage,
   ]);
 
   return (
@@ -1042,17 +1090,21 @@ export default function Mission({
 
             {missionEventPlacements.map((placement, index) => {
               const EventComponent = getMissionEventComponent(placement.event);
-              const eventActive =
-                missionState === "active" ||
-                missionState === "prompt" ||
-                missionState === "available" ||
-                (unlockAll && missionState === "completed");
               return (
                 <EventComponent
                   key={`${placement.event}-${index}`}
                   position={placement.position}
                   taxiRef={taxiRef}
-                  active={eventActive}
+                  active={
+                    missionState === "active" ||
+                    (unlockAll && missionState === "completed")
+                  }
+                  onMissionFailed={(options) =>
+                    failActiveMission({
+                      message: options?.message,
+                      setTimerZero: false,
+                    })
+                  }
                 />
               );
             })}

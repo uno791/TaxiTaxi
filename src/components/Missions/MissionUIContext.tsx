@@ -82,6 +82,8 @@ type MissionUIContextValue = {
   setTimer: React.Dispatch<React.SetStateAction<MissionTimerState | null>>;
   missionFailureActive: boolean;
   setMissionFailureActive: React.Dispatch<React.SetStateAction<boolean>>;
+  missionFailureMessage: string | null;
+  setMissionFailureMessage: React.Dispatch<React.SetStateAction<string | null>>;
   debugMissions: MissionDebugEntry[];
   setDebugMissions: React.Dispatch<React.SetStateAction<MissionDebugEntry[]>>;
   debugStartMission?: (missionId: string) => void;
@@ -103,6 +105,9 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
   );
   const [timer, setTimer] = useState<MissionTimerState | null>(null);
   const [missionFailureActive, setMissionFailureActive] = useState(false);
+  const [missionFailureMessage, setMissionFailureMessage] = useState<
+    string | null
+  >(null);
   const [debugMissions, setDebugMissions] = useState<MissionDebugEntry[]>([]);
   const [debugStartMission, setDebugStartMission] = useState<
     ((missionId: string) => void) | undefined
@@ -122,6 +127,8 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       setTimer,
       missionFailureActive,
       setMissionFailureActive,
+      missionFailureMessage,
+      setMissionFailureMessage,
       debugMissions,
       setDebugMissions,
       debugStartMission,
@@ -134,6 +141,7 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       completion,
       timer,
       missionFailureActive,
+      missionFailureMessage,
       debugMissions,
       debugStartMission,
     ]

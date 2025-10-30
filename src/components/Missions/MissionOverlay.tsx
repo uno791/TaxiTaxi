@@ -122,6 +122,8 @@ export default function MissionOverlay() {
     timer,
     missionFailureActive,
     setMissionFailureActive,
+    missionFailureMessage,
+    setMissionFailureMessage,
     setCompletion,
     debugMissions,
     debugStartMission,
@@ -167,16 +169,30 @@ export default function MissionOverlay() {
   // Watch for timer reaching zero → show mission failed popup
   useEffect(() => {
     if (timer && timer.secondsLeft === 0) {
+      setMissionFailureMessage("Mission Failed! Time ran out.");
       setMissionFailureActive(true);
+    }
+  }, [timer, setMissionFailureActive, setMissionFailureMessage]);
+
+  useEffect(() => {
+    if (!missionFailureActive) return;
+    if (missionFailedTimeoutRef.current) {
+      window.clearTimeout(missionFailedTimeoutRef.current);
+      missionFailedTimeoutRef.current = null;
+    }
+    missionFailedTimeoutRef.current = window.setTimeout(() => {
+      setMissionFailureActive(false);
+      setMissionFailureMessage(null);
+      missionFailedTimeoutRef.current = null;
+    }, 3000);
+
+    return () => {
       if (missionFailedTimeoutRef.current) {
         window.clearTimeout(missionFailedTimeoutRef.current);
-      }
-      missionFailedTimeoutRef.current = window.setTimeout(() => {
-        setMissionFailureActive(false);
         missionFailedTimeoutRef.current = null;
-      }, 3000);
-    }
-  }, [timer, setMissionFailureActive]);
+      }
+    };
+  }, [missionFailureActive, setMissionFailureActive, setMissionFailureMessage]);
 
   useEffect(() => {
     return () => {
@@ -184,8 +200,9 @@ export default function MissionOverlay() {
         window.clearTimeout(missionFailedTimeoutRef.current);
         missionFailedTimeoutRef.current = null;
       }
+      setMissionFailureMessage(null);
     };
-  }, []);
+  }, [setMissionFailureMessage]);
 
   // Auto fade out mission complete popup
   useEffect(() => {
@@ -970,7 +987,7 @@ export default function MissionOverlay() {
               boxShadow: "0 18px 36px rgba(0,0,0,0.5)",
             }}
           >
-            Mission Failed! Time ran out.
+            {missionFailureMessage ?? "Mission Failed!"}
           </div>
         </div>
       )}
