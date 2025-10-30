@@ -56,6 +56,7 @@ import {
   CITY_SPAWN_POINTS,
   CITY_STORY_DIALOGS,
   CITY_INTRO_DIALOGS,
+  GAME_INTRO_STORY,
   type CityId,
 } from "./constants/cities";
 import CityStoryOverlay from "./components/UI/CityStoryOverlay";
@@ -126,10 +127,12 @@ function GameWorld() {
     : savedProgress
     ? null
     : activeCity;
+  const initialGameIntro = !isFreeRoam && !savedProgress;
   const [introCity, setIntroCity] = useState<CityId | null>(initialIntroCity);
   const [storyCity, setStoryCity] = useState<CityId | null>(null);
+  const [showGameIntro, setShowGameIntro] = useState(initialGameIntro);
   const [storyPaused, setStoryPaused] = useState(
-    isFreeRoam ? false : initialIntroCity !== null
+    isFreeRoam ? false : initialGameIntro || initialIntroCity !== null
   );
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
@@ -237,6 +240,7 @@ function GameWorld() {
       setIntroCity(null);
       setStoryCity(null);
       setStoryPaused(false);
+      setShowGameIntro(false);
     } else if (clearWeather) {
       setLightingMode(previousLightingModeRef.current);
       setClearWeather(false);
@@ -250,6 +254,7 @@ function GameWorld() {
     setStoryCity,
     setStoryPaused,
     setClearWeather,
+    setShowGameIntro,
   ]);
 
   const {
@@ -263,6 +268,10 @@ function GameWorld() {
   const toggleLightingMode = useCallback(() => {
     setLightingMode((previous) => (previous === "fake" ? "fill" : "fake"));
   }, [setLightingMode]);
+
+  const handleGameIntroContinue = useCallback(() => {
+    setShowGameIntro(false);
+  }, [setShowGameIntro]);
 
   const handleIntroOverlayContinue = useCallback(() => {
     setIntroCity(null);
@@ -549,16 +558,27 @@ function GameWorld() {
             <MissionOverlay />
             {!isFreeRoam ? (
               <>
-                <CityStoryOverlay
-                  cityId={introCity}
-                  story={introData}
-                  onContinue={handleIntroOverlayContinue}
-                />
-                <CityStoryOverlay
-                  cityId={storyCity}
-                  story={storyData}
-                  onContinue={handleStoryOverlayContinue}
-                />
+                {showGameIntro ? (
+                  <CityStoryOverlay
+                    storyId="game-intro"
+                    story={GAME_INTRO_STORY}
+                    onContinue={handleGameIntroContinue}
+                  />
+                ) : null}
+                {!showGameIntro ? (
+                  <>
+                    <CityStoryOverlay
+                      storyId={introCity}
+                      story={introData}
+                      onContinue={handleIntroOverlayContinue}
+                    />
+                    <CityStoryOverlay
+                      storyId={storyCity}
+                      story={storyData}
+                      onContinue={handleStoryOverlayContinue}
+                    />
+                  </>
+                ) : null}
               </>
             ) : null}
             <div

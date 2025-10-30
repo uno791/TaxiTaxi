@@ -13,6 +13,17 @@ export const CITY_SPAWN_POINTS: Record<CityId, [number, number, number]> = {
   city3: [60, 0.5, -448],
 };
 
+export const GAME_INTRO_STORY: CityStory = {
+  title: "Prologue - Unpaid Fare",
+  lines: [
+    "I drove nights to keep Mara and Noah safe. One blink on the rain-slick highway and the guardrail swallowed the cab instead.",
+    "Sirens pulled us apart. I woke to twisted steel and an empty back seat that still felt warm.",
+    "Now the meter keeps running, dragging me through cities that shouldn't exist and passengers who know every secret I buried.",
+    "Three nights. Three cities. If I finish the fares, maybe the road finally lets me rest.",
+  ],
+  continueLabel: "Drive into the night",
+};
+
 export const CITY_INTRO_DIALOGS: Record<CityId, CityStory> = {
   city1: {
     title: "Night 1 - City of Fog",

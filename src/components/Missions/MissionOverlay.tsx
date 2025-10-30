@@ -352,8 +352,8 @@ export default function MissionOverlay() {
     }
 
     const nextChar = dialogText.charAt(displayedDialogText.length);
-    const baseDelay = dialogSpeaker === "driver" ? 14 : 18;
-    let delay = baseDelay + Math.random() * 6;
+    const baseDelay = dialogSpeaker === "driver" ? 24 : 30;
+    let delay = baseDelay + Math.random() * 12;
 
     if (".?!".includes(nextChar)) {
       delay = baseDelay * 6;
@@ -370,7 +370,7 @@ export default function MissionOverlay() {
 
     const timeoutId = window.setTimeout(() => {
       setDisplayedDialogText((prev) => dialogText.slice(0, prev.length + 1));
-    }, Math.max(delay, 16));
+    }, Math.max(delay, 22));
 
     typingTimeoutRef.current = timeoutId;
 
@@ -1058,11 +1058,11 @@ export default function MissionOverlay() {
                           style={{
                             padding: "14px 28px",
                             borderRadius: "999px",
-                            border: "3px solid #111",
+                            border: "3px solid #34040a",
                             background: disabled
-                              ? "rgba(255, 224, 102, 0.6)"
-                              : "#ffe066",
-                            color: "#111",
+                              ? "rgba(144, 10, 22, 0.55)"
+                              : "#b3121d",
+                            color: "#f8f5f5",
                             cursor: disabled ? "not-allowed" : "pointer",
                             fontWeight: 700,
                             fontSize: "17px",
@@ -1070,7 +1070,7 @@ export default function MissionOverlay() {
                             textTransform: "uppercase",
                             boxShadow: disabled
                               ? "none"
-                              : "6px 6px 0 rgba(0,0,0,0.25)",
+                              : "8px 8px 0 rgba(0,0,0,0.35)",
                             transition:
                               "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
                           }}
@@ -1079,21 +1079,21 @@ export default function MissionOverlay() {
                             event.currentTarget.style.transform =
                               "translateY(2px)";
                             event.currentTarget.style.boxShadow =
-                              "2px 2px 0 rgba(0,0,0,0.25)";
+                              "4px 4px 0 rgba(0,0,0,0.35)";
                           }}
                           onMouseUp={(event) => {
                             if (disabled) return;
                             event.currentTarget.style.transform =
                               "translateY(0)";
                             event.currentTarget.style.boxShadow =
-                              "6px 6px 0 rgba(0,0,0,0.25)";
+                              "8px 8px 0 rgba(0,0,0,0.35)";
                           }}
                           onMouseLeave={(event) => {
                             if (disabled) return;
                             event.currentTarget.style.transform =
                               "translateY(0)";
                             event.currentTarget.style.boxShadow =
-                              "6px 6px 0 rgba(0,0,0,0.25)";
+                              "8px 8px 0 rgba(0,0,0,0.35)";
                           }}
                         >
                           {option.label}
@@ -1131,18 +1131,18 @@ export default function MissionOverlay() {
                       style={{
                         padding: "12px 34px",
                         borderRadius: "999px",
-                        border: "3px solid #111",
+                        border: "3px solid #34040a",
                         background: dialogTypingComplete
-                          ? "#8be9fd"
-                          : "rgba(139, 233, 253, 0.55)",
-                        color: "#0f1a2a",
+                          ? "#c21807"
+                          : "rgba(194, 24, 7, 0.5)",
+                        color: "#f8f5f5",
                         fontWeight: 700,
                         fontSize: "18px",
                         letterSpacing: "0.08em",
                         textTransform: "uppercase",
                         cursor: dialogTypingComplete ? "pointer" : "not-allowed",
                         boxShadow: dialogTypingComplete
-                          ? "6px 6px 0 rgba(0,0,0,0.25)"
+                          ? "8px 8px 0 rgba(0,0,0,0.35)"
                           : "none",
                         transition:
                           "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
@@ -1151,19 +1151,19 @@ export default function MissionOverlay() {
                         if (!dialogTypingComplete) return;
                         event.currentTarget.style.transform = "translateY(2px)";
                         event.currentTarget.style.boxShadow =
-                          "2px 2px 0 rgba(0,0,0,0.25)";
+                          "4px 4px 0 rgba(0,0,0,0.35)";
                       }}
                       onMouseUp={(event) => {
                         if (!dialogTypingComplete) return;
                         event.currentTarget.style.transform = "translateY(0)";
                         event.currentTarget.style.boxShadow =
-                          "6px 6px 0 rgba(0,0,0,0.25)";
+                          "8px 8px 0 rgba(0,0,0,0.35)";
                       }}
                       onMouseLeave={(event) => {
                         if (!dialogTypingComplete) return;
                         event.currentTarget.style.transform = "translateY(0)";
                         event.currentTarget.style.boxShadow =
-                          "6px 6px 0 rgba(0,0,0,0.25)";
+                          "8px 8px 0 rgba(0,0,0,0.35)";
                       }}
                     >
                       {dialogTypingComplete ? "Continue" : "..."}
