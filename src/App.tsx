@@ -148,7 +148,6 @@ function GameWorld() {
   // ✅ Add this here — after missions is defined
   const [missionsRemaining, setMissionsRemaining] = useState(missions.length);
   const [nextMissionName, setNextMissionName] = useState<string | null>(null);
-
   const {
     enabled: flightEnabled,
     overlay: flightOverlay,
@@ -260,7 +259,7 @@ function GameWorld() {
                 {/* World */}
                 {activeCity === "city1" ? (
                   <>
-                    <AllBuildings />
+                    <AllBuildings playerPositionRef={playerPositionRef} />
                     <RoadCircuit position={[0, 0, 0]} />
                     <Background position={[0, 0, 0]} />
                   </>
