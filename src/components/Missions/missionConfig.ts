@@ -98,7 +98,7 @@ const city1Missions: MissionConfig[] = [
     ],
     passengerPreview: {
       position: [0, 0.6, 0],
-      rotation: [0, 0, 0],
+      rotation: [0, Math.PI, 0],
       scale: 1.2,
       cameraPosition: [0, 1.2, 2.8],
       cameraFov: 80,
@@ -137,11 +137,11 @@ const city1Missions: MissionConfig[] = [
       },
     ],
     passengerPreview: {
-      position: [0, -0.6, 0],
+      position: [0, -0.8, 0],
       rotation: [0, Math.PI / 6, 0],
       scale: 0.7,
       cameraPosition: [0, 1.2, 2.8],
-      cameraFov: 26,
+      cameraFov: 16,
     },
   },
   {
@@ -376,11 +376,11 @@ const city2Missions: MissionConfig[] = [
       },
     ],
     passengerPreview: {
-      position: [0, -0.6, 0],
+      position: [0, -0.8, 0],
       rotation: [0, Math.PI / 6, 0],
       scale: 1,
       cameraPosition: [0, 1.2, 2.8],
-      cameraFov: 26,
+      cameraFov: 10,
     },
   },
   {
@@ -413,11 +413,11 @@ const city2Missions: MissionConfig[] = [
       },
     ],
     passengerPreview: {
-      position: [0, -0.6, 0],
-      rotation: [0, Math.PI / 6, 0],
+      position: [0, -0.9, 0],
+      rotation: [0, Math.PI / 7, 0],
       scale: 0.7,
       cameraPosition: [0, 1.2, 2.8],
-      cameraFov: 26,
+      cameraFov: 16,
     },
   },
   {
@@ -450,11 +450,11 @@ const city2Missions: MissionConfig[] = [
       },
     ],
     passengerPreview: {
-      position: [0, 0, 0],
-      rotation: [0, Math.PI / 6, 0],
+      position: [0, -0.5, 0],
+      rotation: [0, Math.PI * 1.6, 0],
       scale: 0.2,
       cameraPosition: [0, 1.2, 2.8],
-      cameraFov: 26,
+      cameraFov: 8,
     },
   },
   {
@@ -486,6 +486,9 @@ const city2Missions: MissionConfig[] = [
         text: "You will.",
       },
     ],
+    passengerPreview: {
+      rotation: [0, -Math.PI / 2, 0],
+    },
   },
   {
     id: "night2-hooded-figure",
@@ -518,7 +521,7 @@ const city2Missions: MissionConfig[] = [
     ],
     passengerPreview: {
       position: [0, 0.1, 0],
-      rotation: [0, Math.PI / 6, 0],
+      rotation: [0, Math.PI * 1.6, 0],
       scale: 1.1,
       cameraPosition: [0, 1.2, 2.8],
       cameraFov: 26,
@@ -558,11 +561,11 @@ const city2Missions: MissionConfig[] = [
       },
     ],
     passengerPreview: {
-      position: [0, -0.6, 0],
+      position: [0, -0.8, 0],
       rotation: [0, Math.PI / 6, 0],
       scale: 0.7,
       cameraPosition: [0, 1.2, 2.8],
-      cameraFov: 26,
+      cameraFov: 16,
     },
   },
   {
@@ -586,7 +589,7 @@ const city2Missions: MissionConfig[] = [
       },
       {
         speaker: "driver",
-        text: "Fight it.",
+        text: "",
         options: [{ label: "Shut up." }],
       },
       {
@@ -643,11 +646,11 @@ const city3Missions: MissionConfig[] = [
       },
     ],
     passengerPreview: {
-      position: [0, -0.6, 0],
+      position: [0, -1, 0],
       rotation: [0, Math.PI / 6, 0],
-      scale: 50,
-      cameraPosition: [0, 1.2, 2.8],
-      cameraFov: 26,
+      scale: 57,
+      cameraPosition: [1, 1, 1],
+      cameraFov: 16,
     },
   },
   {
@@ -685,10 +688,10 @@ const city3Missions: MissionConfig[] = [
     ],
     passengerPreview: {
       position: [0, -0.7, 0],
-      rotation: [0, Math.PI, 0],
+      rotation: [0, -Math.PI / 2, 0],
       scale: 0.25,
       cameraPosition: [0, 1.2, 2.8],
-      cameraFov: 26,
+      cameraFov: 16,
     },
   },
   {
@@ -733,6 +736,9 @@ const city3Missions: MissionConfig[] = [
         text: "For a second, daylight breaks through the windshield. Then it blinks out, swallowed by red taillights that never end.",
       },
     ],
+    passengerPreview: {
+      rotation: [0, -Math.PI / 2, 0],
+    },
   },
   {
     id: "night3-reflection",
@@ -911,11 +917,11 @@ const city3Missions: MissionConfig[] = [
       },
     ],
     passengerPreview: {
-      position: [0, -0.6, 0],
+      position: [0, -0.8, 0],
       rotation: [0, Math.PI / 6, 0],
       scale: 0.08,
-      cameraPosition: [0, 1.2, 2.8],
-      cameraFov: 26,
+      cameraPosition: [0, 2, 2.8],
+      cameraFov: 16,
     },
   },
   {
