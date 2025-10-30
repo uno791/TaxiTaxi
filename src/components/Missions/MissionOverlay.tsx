@@ -838,7 +838,7 @@ export default function MissionOverlay() {
               Start Mission?
             </div>
             <div style={{ lineHeight: 1.5, marginBottom: "18px" }}>
-              Drive the passenger to {prompt.dropoffHint}. Reward: R
+              Drop the passenger off at their destination. Reward: R
               {prompt.reward}.
             </div>
             <div

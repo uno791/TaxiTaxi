@@ -30,7 +30,7 @@ export const CITY_INTRO_DIALOGS: Record<CityId, CityStory> = {
       "The GPS swears I've been driving in circles for three hours. Maybe it's lying.",
       "Maybe I am.",
     ],
-    continueLabel: "Pick up the next voice",
+    continueLabel: "Pick up the next passenger",
   },
   city3: {
     title: "Night 3 - City of Echoes",
