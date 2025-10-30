@@ -41,7 +41,13 @@ export type MissionDialogOption = {
   onSelect: () => void;
 };
 
+export type MissionDialogAutoAdvance = {
+  nextIndex?: number;
+  delayMs?: number;
+};
+
 export type MissionDialogState = {
+  id: string;
   speaker: MissionDialogSpeaker;
   speakerLabel: string;
   text: string;
@@ -49,6 +55,7 @@ export type MissionDialogState = {
   onContinue?: () => void;
   passengerModel?: MissionPassengerModelId;
   passengerPreview?: MissionPassengerPreviewConfig;
+  autoAdvance?: MissionDialogAutoAdvance;
 };
 
 export type MissionCompletionState = {
@@ -71,11 +78,13 @@ type MissionUIContextValue = {
   prompt: MissionPromptState | null;
   active: MissionActiveState | null;
   dialog: MissionDialogState | null;
+  dialogTyping: boolean;
   completion: MissionCompletionState | null;
   timer: MissionTimerState | null;
   setPrompt: React.Dispatch<React.SetStateAction<MissionPromptState | null>>;
   setActive: React.Dispatch<React.SetStateAction<MissionActiveState | null>>;
   setDialog: React.Dispatch<React.SetStateAction<MissionDialogState | null>>;
+  setDialogTyping: React.Dispatch<React.SetStateAction<boolean>>;
   setCompletion: React.Dispatch<
     React.SetStateAction<MissionCompletionState | null>
   >;
@@ -98,6 +107,7 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
   const [prompt, setPrompt] = useState<MissionPromptState | null>(null);
   const [active, setActive] = useState<MissionActiveState | null>(null);
   const [dialog, setDialog] = useState<MissionDialogState | null>(null);
+  const [dialogTyping, setDialogTyping] = useState(false);
   const [completion, setCompletion] = useState<MissionCompletionState | null>(
     null
   );
@@ -113,11 +123,13 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       prompt,
       active,
       dialog,
+      dialogTyping,
       completion,
       timer,
       setPrompt,
       setActive,
       setDialog,
+      setDialogTyping,
       setCompletion,
       setTimer,
       missionFailureActive,
@@ -131,6 +143,7 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       prompt,
       active,
       dialog,
+      dialogTyping,
       completion,
       timer,
       missionFailureActive,

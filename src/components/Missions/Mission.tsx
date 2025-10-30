@@ -199,6 +199,7 @@ export default function Mission({
     setTimer,
     completion,
     setMissionFailureActive,
+    setDialogTyping,
     setDebugMissions,
     setDebugStartMission,
   } = useMissionUI();
@@ -784,34 +785,6 @@ export default function Mission({
     missionPerformance,
   ]);
 
-  // DIALOG: keyboard advance when no options are present
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.code !== "Space" && event.code !== "Enter") return;
-
-      const missionId = activeMissionIdRef.current;
-      if (!missionId) return;
-
-      const currentState = missionStatesRef.current[missionId];
-      if (currentState !== "dialog") return;
-
-      const config = missionConfigByIdRef.current[missionId];
-      if (!config) return;
-
-      const entries = getMissionDialogue(config);
-      const entry = entries[dialogIndex];
-      if (!entry) return;
-      if (entry.options && entry.options.length > 0) return;
-
-      event.preventDefault();
-      event.stopPropagation();
-      advanceDialog();
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [advanceDialog, dialogIndex]);
-
   useEffect(() => {
     if (completion) {
       completionDisplayedRef.current = true;
@@ -840,18 +813,21 @@ export default function Mission({
   useEffect(() => {
     if (!dialogVisible) {
       setDialog(null);
+      setDialogTyping(false);
       return;
     }
 
     const missionId = activeMissionIdRef.current;
     if (!missionId) {
       setDialog(null);
+      setDialogTyping(false);
       return;
     }
 
     const config = missionConfigByIdRef.current[missionId];
     if (!config) {
       setDialog(null);
+      setDialogTyping(false);
       return;
     }
 
@@ -859,26 +835,52 @@ export default function Mission({
     const entry = entries[dialogIndex];
     if (!entry) {
       setDialog(null);
+      setDialogTyping(false);
       return;
     }
 
     const speakerLabel =
       entry.speakerLabel ?? getDefaultSpeakerLabel(entry, config);
+    const driverSpeakerLabel =
+      entry.speaker === "driver"
+        ? speakerLabel
+        : getDefaultSpeakerLabel(
+            { speaker: "driver", text: "" } as MissionDialogueEntry,
+            config
+          );
 
     const options = entry.options
-      ? entry.options.map((option, optionIndex) => ({
-          id: `${missionId}-option-${dialogIndex}-${optionIndex}`,
-          label: option.label,
-          onSelect: () =>
-            advanceDialog(
-              typeof option.nextIndex === "number"
-                ? option.nextIndex
-                : undefined
-            ),
-        }))
+      ? entry.options.map((option, optionIndex) => {
+          const optionId = `${missionId}-option-${dialogIndex}-${optionIndex}`;
+          const nextIndex =
+            typeof option.nextIndex === "number"
+              ? option.nextIndex
+              : undefined;
+          return {
+            id: optionId,
+            label: option.label,
+            onSelect: () => {
+              setDialog({
+                id: `${optionId}-selection`,
+                speaker: "driver",
+                speakerLabel: driverSpeakerLabel,
+                text: option.label,
+                passengerModel: config.passengerModel ?? "generic",
+                passengerPreview: config.passengerPreview,
+                onContinue: () => advanceDialog(nextIndex),
+                autoAdvance: {
+                  nextIndex,
+                  delayMs: 700,
+                },
+              });
+              setDialogTyping(true);
+            },
+          };
+        })
       : undefined;
 
     setDialog({
+      id: `${missionId}-entry-${dialogIndex}`,
       speaker: entry.speaker,
       speakerLabel,
       text: entry.text,
@@ -888,7 +890,8 @@ export default function Mission({
       passengerModel: config.passengerModel ?? "generic",
       passengerPreview: config.passengerPreview,
     });
-  }, [advanceDialog, dialogIndex, dialogVisible, setDialog]);
+    setDialogTyping(true);
+  }, [advanceDialog, dialogIndex, dialogVisible, setDialog, setDialogTyping]);
 
   useEffect(() => {
     return () => {
@@ -976,6 +979,7 @@ export default function Mission({
       setPrompt(null);
       setActive(null);
       setDialog(null);
+      setDialogTyping(false);
       setCompletion(null);
       setTimer(null); // TIMER: reset on unmount
       setMissionFailureActive(false);
@@ -989,6 +993,7 @@ export default function Mission({
     setDialog,
     setCompletion,
     setTimer,
+    setDialogTyping,
     onDestinationChange,
     missionPerformance,
     setMissionFailureActive,

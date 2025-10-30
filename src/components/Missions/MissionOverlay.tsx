@@ -1,5 +1,5 @@
-import { useMissionUI, type MissionCompletionState } from "./MissionUIContext";
-import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+﻿import { useMissionUI, type MissionCompletionState } from "./MissionUIContext";
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
 import type { Group } from "three";
 import { PassengerModel } from "../Ground/SceneObjects/PassengerModel";
@@ -123,6 +123,7 @@ export default function MissionOverlay() {
     missionFailureActive,
     setMissionFailureActive,
     setCompletion,
+    setDialogTyping,
     debugMissions,
     debugStartMission,
   } = useMissionUI();
@@ -158,13 +159,25 @@ export default function MissionOverlay() {
   const starEvents = completion?.starEvents ?? [];
   const totalStars = completion?.stars ?? 0;
 
+  const [displayedDialogText, setDisplayedDialogText] = useState("");
+  const [dialogTypingComplete, setDialogTypingComplete] = useState(false);
+  const typingTimeoutRef = useRef<number | null>(null);
+  const autoAdvanceTimeoutRef = useRef<number | null>(null);
+
+  const dialogId = dialog?.id ?? null;
+  const dialogText = dialog?.text ?? "";
+  const dialogSpeaker = dialog?.speaker ?? null;
+  const dialogAutoAdvance = dialog?.autoAdvance;
+  const dialogOnContinue = dialog?.onContinue;
+  const dialogHasOptions = Boolean(dialog?.options && dialog.options.length > 0);
+
   useEffect(() => {
     if (isFreeRoam) {
       setDebugMenuOpen(true);
     }
   }, [isFreeRoam]);
 
-  // Watch for timer reaching zero → show mission failed popup
+  // Watch for timer reaching zero -> show mission failed popup
   useEffect(() => {
     if (timer && timer.secondsLeft === 0) {
       setMissionFailureActive(true);
@@ -295,6 +308,173 @@ export default function MissionOverlay() {
       fiveStarAudioRef.current = null;
     };
   }, [completion, starEvents, totalStars]);
+
+  useEffect(() => {
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    if (autoAdvanceTimeoutRef.current) {
+      window.clearTimeout(autoAdvanceTimeoutRef.current);
+      autoAdvanceTimeoutRef.current = null;
+    }
+
+    if (!dialog) {
+      setDisplayedDialogText("");
+      setDialogTypingComplete(false);
+      setDialogTyping(false);
+      return;
+    }
+
+    if (dialogHasOptions) {
+      setDisplayedDialogText(dialogText);
+      setDialogTypingComplete(true);
+      setDialogTyping(false);
+      return;
+    }
+
+    setDisplayedDialogText("");
+    const shouldType = dialogText.length > 0;
+    setDialogTypingComplete(!shouldType);
+    setDialogTyping(shouldType);
+  }, [dialog, dialogHasOptions, dialogId, dialogText, setDialogTyping]);
+
+  useEffect(() => {
+    if (dialogId === null || dialogTypingComplete) {
+      return;
+    }
+
+    if (displayedDialogText.length >= dialogText.length) {
+      setDisplayedDialogText(dialogText);
+      setDialogTypingComplete(true);
+      setDialogTyping(false);
+      return;
+    }
+
+    const nextChar = dialogText.charAt(displayedDialogText.length);
+    const baseDelay = dialogSpeaker === "driver" ? 14 : 18;
+    let delay = baseDelay + Math.random() * 6;
+
+    if (".?!".includes(nextChar)) {
+      delay = baseDelay * 6;
+    } else if (",;:".includes(nextChar)) {
+      delay = baseDelay * 3;
+    } else if (nextChar === "\n") {
+      delay = baseDelay * 4;
+    } else if (nextChar === " ") {
+      const previousChar = dialogText.charAt(displayedDialogText.length - 1);
+      if (previousChar === "-" || previousChar === "\u2014") {
+          delay = baseDelay * 2.5;
+      }
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setDisplayedDialogText((prev) => dialogText.slice(0, prev.length + 1));
+    }, Math.max(delay, 16));
+
+    typingTimeoutRef.current = timeoutId;
+
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
+  }, [
+    dialogId,
+    dialogText,
+    dialogSpeaker,
+    displayedDialogText,
+    dialogTypingComplete,
+    setDialogTyping,
+  ]);
+
+  useEffect(() => {
+    if (
+      dialogId === null ||
+      !dialogTypingComplete ||
+      !dialogAutoAdvance ||
+      !dialogOnContinue
+    ) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      dialogOnContinue();
+    }, dialogAutoAdvance.delayMs ?? 650);
+
+    autoAdvanceTimeoutRef.current = timeout;
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [dialogId, dialogTypingComplete, dialogAutoAdvance, dialogOnContinue]);
+
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        window.clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      if (autoAdvanceTimeoutRef.current) {
+        window.clearTimeout(autoAdvanceTimeoutRef.current);
+        autoAdvanceTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  const handleSkipTyping = useCallback(() => {
+    if (dialogId === null || dialogTypingComplete) {
+      return;
+    }
+    if (typingTimeoutRef.current) {
+      window.clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    setDisplayedDialogText(dialogText);
+    setDialogTypingComplete(true);
+    setDialogTyping(false);
+  }, [dialogId, dialogText, dialogTypingComplete, setDialogTyping]);
+
+  const isPassengerDialog = dialog?.speaker === "passenger";
+  const shouldCenterBubble = Boolean(
+    dialog && (!isPassengerDialog || dialog.passengerModel === "none")
+  );
+  const pointerPosition = shouldCenterBubble
+    ? { left: "50%", transform: "translateX(-50%)" }
+    : { left: "12%", transform: "translateX(-50%)" };
+  const pointerOuterBottom = "-32px";
+  const pointerInnerBottom = "-28px";
+
+  useEffect(() => {
+    if (dialogId === null) {
+      return;
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.code !== "Space") return;
+
+      if (!dialogTypingComplete) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        handleSkipTyping();
+        return;
+      }
+
+      if (!dialogHasOptions && dialogOnContinue && !dialogAutoAdvance) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        dialogOnContinue();
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [
+    dialogId,
+    dialogTypingComplete,
+    dialogHasOptions,
+    dialogOnContinue,
+    dialogAutoAdvance,
+    handleSkipTyping,
+  ]);
 
   const PANIC_THRESHOLD = 10;
   let nextUrgencyTarget = 0;
@@ -774,15 +954,18 @@ export default function MissionOverlay() {
           <div
             style={{
               display: "flex",
-              alignItems: "flex-end",
+              flexDirection: shouldCenterBubble ? "column" : "row",
+              alignItems: shouldCenterBubble ? "center" : "flex-end",
               justifyContent: "center",
-              width: "min(92%, 960px)",
-              gap: "28px",
-              flexWrap: "wrap",
+              width: "min(94%, 980px)",
+              gap: shouldCenterBubble ? "32px" : "28px",
               rowGap: "24px",
+              flexWrap: shouldCenterBubble ? "nowrap" : "wrap",
             }}
           >
-            {dialog.passengerModel && dialog.passengerModel !== "none" && (
+            {dialog.passengerModel &&
+              dialog.passengerModel !== "none" &&
+              dialog.speaker !== "driver" && (
               <MissionDialogModelPreview
                 modelId={dialog.passengerModel}
                 preview={dialog.passengerPreview}
@@ -790,146 +973,257 @@ export default function MissionOverlay() {
             )}
             <div
               style={{
-                flex: "1 1 320px",
-                maxWidth: "640px",
-                background: "rgba(20,20,20,0.95)",
-                padding: "26px 34px 28px",
-                borderRadius: "14px",
-                color: "#f0f0f0",
-                fontFamily: "Arial, sans-serif",
-                fontSize: "18px",
-                lineHeight: 1.6,
-                textAlign: "center",
-                boxShadow: "0 16px 30px rgba(0,0,0,0.45)",
-                pointerEvents: "auto",
+                flex: shouldCenterBubble ? "0 1 560px" : "1 1 340px",
+                display: "flex",
+                justifyContent: shouldCenterBubble ? "center" : "flex-start",
+                width: "100%",
               }}
             >
               <div
                 style={{
-                  fontSize: "15px",
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  color: "rgba(255,255,255,0.65)",
-                  marginBottom: "12px",
+                  position: "relative",
+                  background:
+                    "linear-gradient(180deg, #fffdf4 0%, #ffeec9 100%)",
+                  border: "4px solid #111",
+                  borderRadius: "32px",
+                  padding: "28px 34px 34px",
+                  width: "100%",
+                  maxWidth: "560px",
+                  color: "#111",
+                  fontFamily:
+                    "'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', sans-serif",
+                  textAlign: shouldCenterBubble ? "center" : "left",
+                  lineHeight: 1.55,
+                  boxShadow: "10px 14px 0 rgba(0,0,0,0.25)",
+                  overflow: "visible",
+                  cursor: dialogTypingComplete ? "default" : "pointer",
+                  transition: "transform 0.2s ease",
                 }}
+                onClick={handleSkipTyping}
               >
-                {dialog.speakerLabel}
-              </div>
-              <div style={{ whiteSpace: "pre-wrap" }}>{dialog.text}</div>
-              {dialog.options && dialog.options.length > 0 ? (
                 <div
                   style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    gap: "12px",
-                    marginTop: "24px",
+                    position: "absolute",
+                    inset: "12px",
+                    borderRadius: "24px",
+                    border: "2px dashed rgba(17,17,17,0.14)",
+                    pointerEvents: "none",
+                  }}
+                />
+                <div
+                  style={{
+                    fontSize: "15px",
+                    letterSpacing: "0.18em",
+                    textTransform: "uppercase",
+                    color: "rgba(17,17,17,0.62)",
+                    marginBottom: "18px",
+                    fontWeight: 700,
                   }}
                 >
-                  {dialog.options.map((option) => (
-                    <button
-                      key={option.id}
-                      type="button"
-                      onClick={option.onSelect}
-                      style={{
-                        padding: "12px 18px",
-                        borderRadius: "10px",
-                        border: "1px solid rgba(255,255,255,0.2)",
-                        background: "rgba(60, 68, 82, 0.65)",
-                        color: "#f5f5f5",
-                        cursor: "pointer",
-                        fontSize: "17px",
-                        transition:
-                          "background 0.15s ease, transform 0.15s ease",
-                      }}
-                      onMouseDown={(event) => {
-                        event.currentTarget.style.transform = "scale(0.97)";
-                        event.currentTarget.style.background =
-                          "rgba(60, 68, 82, 0.8)";
-                      }}
-                      onMouseUp={(event) => {
-                        event.currentTarget.style.transform = "scale(1)";
-                        event.currentTarget.style.background =
-                          "rgba(60, 68, 82, 0.65)";
-                      }}
-                      onMouseLeave={(event) => {
-                        event.currentTarget.style.transform = "scale(1)";
-                        event.currentTarget.style.background =
-                          "rgba(60, 68, 82, 0.65)";
-                      }}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
+                  {dialog.speakerLabel}
+                </div>
+                <div
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: 700,
+                    whiteSpace: "pre-wrap",
+                    textShadow: "1px 1px 0 rgba(255,255,255,0.45)",
+                    minHeight: "90px",
+                    letterSpacing: "0.01em",
+                  }}
+                >
+                  {displayedDialogText}
+                  {!dialogTypingComplete && (
+                    <span style={{ opacity: 0.6, marginLeft: "2px" }}>|</span>
+                  )}
+                </div>
+                {dialog.options && dialog.options.length > 0 ? (
                   <div
                     style={{
-                      marginTop: "4px",
-                      fontSize: "13px",
-                      letterSpacing: "0.05em",
-                      textTransform: "uppercase",
-                      color: "rgba(255,255,255,0.6)",
+                      display: "flex",
+                      flexDirection: "column",
+                      gap: "16px",
+                      marginTop: "28px",
+                      alignItems: "center",
                     }}
                   >
-                    Choose an option to continue
+                    {dialog.options.map((option) => {
+                      const disabled = !dialogTypingComplete;
+                      return (
+                        <button
+                          key={option.id}
+                          type="button"
+                          onClick={option.onSelect}
+                          disabled={disabled}
+                          style={{
+                            padding: "14px 28px",
+                            borderRadius: "999px",
+                            border: "3px solid #111",
+                            background: disabled
+                              ? "rgba(255, 224, 102, 0.6)"
+                              : "#ffe066",
+                            color: "#111",
+                            cursor: disabled ? "not-allowed" : "pointer",
+                            fontWeight: 700,
+                            fontSize: "17px",
+                            letterSpacing: "0.08em",
+                            textTransform: "uppercase",
+                            boxShadow: disabled
+                              ? "none"
+                              : "6px 6px 0 rgba(0,0,0,0.25)",
+                            transition:
+                              "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
+                          }}
+                          onMouseDown={(event) => {
+                            if (disabled) return;
+                            event.currentTarget.style.transform =
+                              "translateY(2px)";
+                            event.currentTarget.style.boxShadow =
+                              "2px 2px 0 rgba(0,0,0,0.25)";
+                          }}
+                          onMouseUp={(event) => {
+                            if (disabled) return;
+                            event.currentTarget.style.transform =
+                              "translateY(0)";
+                            event.currentTarget.style.boxShadow =
+                              "6px 6px 0 rgba(0,0,0,0.25)";
+                          }}
+                          onMouseLeave={(event) => {
+                            if (disabled) return;
+                            event.currentTarget.style.transform =
+                              "translateY(0)";
+                            event.currentTarget.style.boxShadow =
+                              "6px 6px 0 rgba(0,0,0,0.25)";
+                          }}
+                        >
+                          {option.label}
+                        </button>
+                      );
+                    })}
+                    <div
+                      style={{
+                        marginTop: "6px",
+                        fontSize: "13px",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        color: "rgba(17,17,17,0.55)",
+                      }}
+                    >
+                      {dialogTypingComplete
+                        ? "Pick the driver's reply"
+                        : "Let the driver finish first"}
+                    </div>
                   </div>
-                </div>
-              ) : (
-                dialog.onContinue && (
+                ) : !dialog.autoAdvance && dialog.onContinue ? (
                   <div
                     style={{
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      gap: "14px",
-                      marginTop: "26px",
+                      gap: "16px",
+                      marginTop: "28px",
                     }}
                   >
                     <button
                       type="button"
                       onClick={dialog.onContinue}
+                      disabled={!dialogTypingComplete}
                       style={{
-                        padding: "10px 26px",
+                        padding: "12px 34px",
                         borderRadius: "999px",
-                        border: "none",
-                        background: "#f5f5f5",
-                        color: "#111",
-                        fontWeight: 600,
-                        cursor: "pointer",
-                        fontSize: "16px",
-                        boxShadow: "0 10px 18px rgba(0,0,0,0.35)",
+                        border: "3px solid #111",
+                        background: dialogTypingComplete
+                          ? "#8be9fd"
+                          : "rgba(139, 233, 253, 0.55)",
+                        color: "#0f1a2a",
+                        fontWeight: 700,
+                        fontSize: "18px",
+                        letterSpacing: "0.08em",
+                        textTransform: "uppercase",
+                        cursor: dialogTypingComplete ? "pointer" : "not-allowed",
+                        boxShadow: dialogTypingComplete
+                          ? "6px 6px 0 rgba(0,0,0,0.25)"
+                          : "none",
                         transition:
-                          "transform 0.15s ease, box-shadow 0.15s ease",
+                          "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
                       }}
                       onMouseDown={(event) => {
-                        event.currentTarget.style.transform = "scale(0.97)";
+                        if (!dialogTypingComplete) return;
+                        event.currentTarget.style.transform = "translateY(2px)";
                         event.currentTarget.style.boxShadow =
-                          "0 8px 14px rgba(0,0,0,0.4)";
+                          "2px 2px 0 rgba(0,0,0,0.25)";
                       }}
                       onMouseUp={(event) => {
-                        event.currentTarget.style.transform = "scale(1)";
+                        if (!dialogTypingComplete) return;
+                        event.currentTarget.style.transform = "translateY(0)";
                         event.currentTarget.style.boxShadow =
-                          "0 10px 18px rgba(0,0,0,0.35)";
+                          "6px 6px 0 rgba(0,0,0,0.25)";
                       }}
                       onMouseLeave={(event) => {
-                        event.currentTarget.style.transform = "scale(1)";
+                        if (!dialogTypingComplete) return;
+                        event.currentTarget.style.transform = "translateY(0)";
                         event.currentTarget.style.boxShadow =
-                          "0 10px 18px rgba(0,0,0,0.35)";
+                          "6px 6px 0 rgba(0,0,0,0.25)";
                       }}
                     >
-                      Continue
+                      {dialogTypingComplete ? "Continue" : "..."}
                     </button>
                     <div
                       style={{
                         fontSize: "13px",
-                        opacity: 0.75,
-                        letterSpacing: "0.04em",
+                        letterSpacing: "0.08em",
                         textTransform: "uppercase",
+                        color: "rgba(17,17,17,0.55)",
                       }}
                     >
-                      Press Space or click Continue
+                      {dialogTypingComplete
+                        ? "Press Space or click Continue"
+                        : "Wait for the line to finish"}
                     </div>
                   </div>
-                )
-              )}
+                ) : null}
+                {!dialogTypingComplete && !dialogHasOptions && (
+                  <div
+                    style={{
+                      position: "absolute",
+                      bottom: shouldCenterBubble ? "18px" : "16px",
+                      right: shouldCenterBubble ? "24px" : "22px",
+                      fontSize: "12px",
+                      letterSpacing: "0.12em",
+                      textTransform: "uppercase",
+                      color: "rgba(17,17,17,0.45)",
+                    }}
+                  >
+                    Tap to reveal
+                  </div>
+                )}
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: pointerOuterBottom,
+                    left: pointerPosition.left,
+                    transform: pointerPosition.transform,
+                    width: 0,
+                    height: 0,
+                    borderLeft: "26px solid transparent",
+                    borderRight: "26px solid transparent",
+                    borderTop: "32px solid #111",
+                  }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: pointerInnerBottom,
+                    left: pointerPosition.left,
+                    transform: pointerPosition.transform,
+                    width: 0,
+                    height: 0,
+                    borderLeft: "22px solid transparent",
+                    borderRight: "22px solid transparent",
+                    borderTop: "28px solid #ffeec9",
+                  }}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -1089,7 +1383,7 @@ function MissionCompletionCard({
               color: "rgba(255,255,255,0.9)",
             }}
           >
-            <strong>{currentStarEvent.label}</strong> —{" "}
+            <strong>{currentStarEvent.label}</strong> - {" "}
             {currentStarEvent.detail}
           </div>
         )}
@@ -1126,7 +1420,7 @@ function MissionCompletionCard({
               {formatCollisions(collisionCount)}
             </div>
             <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.75)" }}>
-              {collisionStars} / 2 stars · {formatBonus(collisionBonus)} bonus
+              {collisionStars} / 2 stars - {formatBonus(collisionBonus)} bonus
             </div>
             {collisionsToNext && collisionsToNext > 0 && (
               <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>
@@ -1160,7 +1454,7 @@ function MissionCompletionCard({
               {formatDuration(timeTaken)}
             </div>
             <div style={{ fontSize: "13px", color: "rgba(255,255,255,0.75)" }}>
-              {timeStars} / 3 stars · {formatBonus(timeBonus)} bonus
+              {timeStars} / 3 stars - {formatBonus(timeBonus)} bonus
             </div>
             {secondsToNext && secondsToNext > 0 && (
               <div style={{ fontSize: "12px", color: "rgba(255,255,255,0.7)" }}>
@@ -1254,7 +1548,7 @@ function formatBonus(value: number) {
 }
 
 function formatDuration(seconds: number | null) {
-  if (seconds === null || Number.isNaN(seconds)) return "—";
+  if (seconds === null || Number.isNaN(seconds)) return "--";
   if (seconds >= 60) {
     const minutes = Math.floor(seconds / 60);
     const remainder = seconds - minutes * 60;
