@@ -306,6 +306,7 @@ function GameWorld() {
                 <DestinationMarker destinationRef={destinationRef} />
                 <NavigationSystem
                   playerRef={playerPositionRef}
+                  playerObjectRef={chaseRef}
                   destinationRef={destinationRef}
                   onMiniMapCanvasChange={setMiniMapCanvas}
                 />
@@ -345,6 +346,7 @@ function GameWorld() {
               canvas={miniMapCanvas}
               missions={availableMissionTargets}
               playerRef={playerPositionRef}
+              playerObjectRef={chaseRef}
               size={220}
             />
             <MissionOverlay />

@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import type { MutableRefObject } from "react";
+import * as THREE from "three";
 import type { Vector3 } from "three";
 import type { MissionTargetInfo } from "../components/Missions/Mission";
 
@@ -7,16 +8,20 @@ type MiniMapOverlayProps = {
   canvas: HTMLCanvasElement | null;
   missions: MissionTargetInfo[];
   playerRef: MutableRefObject<Vector3>;
+  playerObjectRef?: MutableRefObject<THREE.Object3D | null>;
   size?: number;
 };
 
 const DEFAULT_SIZE = 220;
 const EDGE_PADDING = 18;
+const MINI_MAP_FORWARD = new THREE.Vector3();
+const MINI_MAP_QUATERNION = new THREE.Quaternion();
 
 export function MiniMapOverlay({
   canvas,
   missions,
   playerRef,
+  playerObjectRef,
   size = DEFAULT_SIZE,
 }: MiniMapOverlayProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -51,6 +56,22 @@ export function MiniMapOverlay({
         return;
       }
 
+      let rotateSin = 0;
+      let rotateCos = 1;
+      const playerObject = playerObjectRef?.current ?? null;
+      if (playerObject) {
+        playerObject.getWorldQuaternion(MINI_MAP_QUATERNION);
+        MINI_MAP_FORWARD.set(0, 0, -1).applyQuaternion(MINI_MAP_QUATERNION);
+        MINI_MAP_FORWARD.y = 0;
+        if (MINI_MAP_FORWARD.lengthSq() > 1e-6) {
+          MINI_MAP_FORWARD.normalize();
+          const theta =
+            Math.atan2(MINI_MAP_FORWARD.x, MINI_MAP_FORWARD.z) + Math.PI;
+          rotateSin = Math.sin(theta);
+          rotateCos = Math.cos(theta);
+        }
+      }
+
       const active = new Set<string>();
 
       for (let index = 0; index < missions.length; index++) {
@@ -72,7 +93,9 @@ export function MiniMapOverlay({
           continue;
         }
 
-        const angle = Math.atan2(dz, dx);
+        const rotatedDx = dx * rotateCos - dz * rotateSin;
+        const rotatedDz = dx * rotateSin + dz * rotateCos;
+        const angle = Math.atan2(rotatedDz, rotatedDx);
         const x = center + Math.cos(angle) * radius;
         const y = center + Math.sin(angle) * radius;
 
@@ -97,7 +120,7 @@ export function MiniMapOverlay({
       const frameId = animationFrameRef.current;
       if (frameId !== null) cancelAnimationFrame(frameId);
     };
-  }, [missions, playerRef, size]);
+  }, [missions, playerObjectRef, playerRef, size]);
 
   return (
     <div

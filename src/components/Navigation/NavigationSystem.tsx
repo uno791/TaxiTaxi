@@ -10,6 +10,7 @@ import { usePathVisualizer } from "../../hooks/usePathVisualizer";
 
 interface NavigationSystemProps {
   playerRef: MutableRefObject<THREE.Vector3>;
+  playerObjectRef: MutableRefObject<THREE.Object3D | null>;
   destinationRef: MutableRefObject<THREE.Vector3>;
   onMiniMapCanvasChange: (canvas: HTMLCanvasElement | null) => void;
 }
@@ -57,6 +58,7 @@ function computeRoadBounds(scene: THREE.Scene): GridBounds | null {
 
 export function NavigationSystem({
   playerRef,
+  playerObjectRef,
   destinationRef,
   onMiniMapCanvasChange,
 }: NavigationSystemProps) {
@@ -70,6 +72,7 @@ export function NavigationSystem({
     size: 220,
     padding: 24,
     visibleLayers: [0, 2],
+    playerObjectRef,
   });
   const gridData = useGridBuilder(scene, bounds, { cellSize: 1.2 });
   const { findPath } = usePathfinding(gridData);

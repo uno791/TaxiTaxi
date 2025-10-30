@@ -6,6 +6,7 @@ export interface MiniMapOptions {
   size?: number;
   padding?: number;
   visibleLayers?: number[];
+  playerObjectRef?: MutableRefObject<THREE.Object3D | null>;
 }
 
 interface SwapEntry {
@@ -27,6 +28,8 @@ const DESTINATION_MARKER_HEIGHT = 0.05;
 
 const TEMP_VEC2 = new THREE.Vector2();
 const TEMP_VEC3 = new THREE.Vector3();
+const TEMP_FORWARD = new THREE.Vector3();
+const TEMP_QUATERNION = new THREE.Quaternion();
 
 function boostColor(color: THREE.Color): THREE.Color {
   const boosted = color.clone().multiplyScalar(MINIMAP_COLOR_BOOST);
@@ -89,6 +92,7 @@ export function useMiniMap(
 ): MiniMapHandle {
   const size = options?.size ?? 220;
   const padding = options?.padding ?? 24;
+  const playerObjectRef = options?.playerObjectRef ?? null;
   const visibleLayersSet = new Set<number>((options?.visibleLayers ?? []).concat(0));
   const visibleLayers = Array.from(visibleLayersSet);
   if (!visibleLayers.includes(0)) {
@@ -200,6 +204,21 @@ export function useMiniMap(
       return;
     }
 
+    const playerObject = playerObjectRef?.current ?? null;
+    if (playerObject) {
+      playerObject.getWorldQuaternion(TEMP_QUATERNION);
+      TEMP_FORWARD.set(0, 0, -1).applyQuaternion(TEMP_QUATERNION);
+      TEMP_FORWARD.y = 0;
+      if (TEMP_FORWARD.lengthSq() > 1e-6) {
+        TEMP_FORWARD.normalize();
+        camera.up.set(TEMP_FORWARD.x, 0, TEMP_FORWARD.z);
+      } else {
+        camera.up.set(0, 0, -1);
+      }
+    } else {
+      camera.up.set(0, 0, -1);
+    }
+
     camera.position.set(playerPosition.x, MINIMAP_CAMERA_HEIGHT, playerPosition.z);
     camera.lookAt(playerPosition.x, 0, playerPosition.z);
 
@@ -266,7 +285,7 @@ export function useMiniMap(
 
     destinationMarker.position.copy(originalDestinationPosition);
     destinationMarker.visible = originalDestinationVisible;
-  }, [destinationRef, playerRef]);
+  }, [destinationRef, playerObjectRef, playerRef]);
 
   return useMemo(
     () => ({
