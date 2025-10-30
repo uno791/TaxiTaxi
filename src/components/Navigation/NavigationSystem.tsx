@@ -83,7 +83,7 @@ export function NavigationSystem({
     usePathVisualizer(scene, {
       mode: "line",
       color: 0xbfe5ff,
-      lineRadius: 0.44,
+      lineRadius: 0.04,
       lineHeightOffset: 0,
       opacity: 0.35,
       blending: THREE.AdditiveBlending,
