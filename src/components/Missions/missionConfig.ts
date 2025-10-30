@@ -625,7 +625,7 @@ const city3Missions: MissionConfig[] = [
     dialogue: [
       {
         speaker: "passenger",
-        text: "You ever notice the sound tires make on wet roads? Like slicing meat. All slick and tender. You made a stew out of time that night -- everything boiling over in red.",
+        text: "You ever notice the sound tires make on wet roads? Like slicing meat. All slick and tender. You made a stew out of time that night, everything boiling over in red.",
       },
       {
         speaker: "driver",
@@ -670,7 +670,7 @@ const city3Missions: MissionConfig[] = [
     dialogue: [
       {
         speaker: "passenger",
-        text: "Hahaha! Denial, guilt, bargaining, anger, acceptance -- five acts in the grand comedy of the damned! You're on act four, driver! Don't spoil the ending!",
+        text: "Hahaha! Denial, guilt, bargaining, anger, acceptance, five acts in the grand comedy of the damned! You're on act four, driver! Don't spoil the ending!",
       },
       {
         speaker: "driver",
@@ -711,7 +711,7 @@ const city3Missions: MissionConfig[] = [
     dialogue: [
       {
         speaker: "passenger",
-        text: "Forgiveness is the longest road of all. But you've been driving the wrong direction. You thought the meter would run out eventually -- but guilt doesn't charge by the mile. It charges by the memory.",
+        text: "Forgiveness is the longest road of all. But you've been driving the wrong direction. You thought the meter would run out eventually, but guilt doesn't charge by the mile. It charges by the memory.",
       },
       {
         speaker: "driver",
@@ -851,7 +851,7 @@ const city3Missions: MissionConfig[] = [
     dialogue: [
       {
         speaker: "passenger",
-        text: "You still drive in your dreams. I see you sometimes - headlights down by the water, sirens above. They pulled me out. Not you. I remember a paramedic's hand, not yours. You looked peaceful. Like you'd already left.",
+        text: "You still drive in your dreams. I see you sometimes, headlights down by the water, sirens above. They pulled me out. Not you. I remember a paramedic's hand, not yours. You looked peaceful. Like you'd already left.",
       },
       {
         speaker: "driver",
@@ -913,7 +913,7 @@ const city3Missions: MissionConfig[] = [
       },
       {
         speaker: "internal",
-        text: "His presence isn't cold -- it's hollow. Like standing where something once stood.",
+        text: "His presence isn't cold, it's hollow. Like standing where something once stood.",
       },
     ],
     passengerPreview: {
@@ -942,7 +942,7 @@ const city3Missions: MissionConfig[] = [
       {
         speaker: "passenger",
         speakerLabel: "Everyone",
-        text: "There was never a road. Only the rhythm of your heart slowing. Every mile you drove was a memory replayed. You didn't survive the crash, Eli. You've been ferrying us -- your ghosts -- home.",
+        text: "There was never a road. Only the rhythm of your heart slowing. Every mile you drove was a memory replayed. You didn't survive the crash, Eli. You've been ferrying us, your ghosts, home.",
       },
       {
         speaker: "driver",

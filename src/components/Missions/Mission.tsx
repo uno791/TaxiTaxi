@@ -13,6 +13,8 @@ import {
   type MissionPerformanceBreakdown,
   type MissionStarEvent,
 } from "./MissionPerformanceContext";
+import { getMissionEventComponent } from "./events";
+import { getMissionEventsForMission } from "./missionEvents";
 
 type MissionState =
   | "locked"
@@ -1004,6 +1006,8 @@ export default function Mission({
           (unlockAll && missionState === "completed");
         const dropoffActive = missionState === "active";
 
+        const missionEventPlacements = getMissionEventsForMission(config.id);
+
         return (
           <group key={config.id}>
             {pickupActive && (
@@ -1035,6 +1039,18 @@ export default function Mission({
                 onTaxiEnter={() => handleDropoffEnter(config.id)}
               />
             )}
+
+            {missionEventPlacements.map((placement, index) => {
+              const EventComponent = getMissionEventComponent(placement.event);
+              return (
+                <EventComponent
+                  key={`${placement.event}-${index}`}
+                  position={placement.position}
+                  taxiRef={taxiRef}
+                  active={missionState === "active"}
+                />
+              );
+            })}
           </group>
         );
       })}
