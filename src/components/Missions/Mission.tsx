@@ -1042,12 +1042,17 @@ export default function Mission({
 
             {missionEventPlacements.map((placement, index) => {
               const EventComponent = getMissionEventComponent(placement.event);
+              const eventActive =
+                missionState === "active" ||
+                missionState === "prompt" ||
+                missionState === "available" ||
+                (unlockAll && missionState === "completed");
               return (
                 <EventComponent
                   key={`${placement.event}-${index}`}
                   position={placement.position}
                   taxiRef={taxiRef}
-                  active={missionState === "active"}
+                  active={eventActive}
                 />
               );
             })}

@@ -60,15 +60,15 @@ export function HorrorDistortionPass({ intensity, ghostNDC }: Props) {
           float I = clamp(uIntensity, 0.0, 1.0);
           vec2 uv = vUv;
 
-          float wob = (sin(uTime * 1.2) * 0.003 + sin(uTime * 3.7) * 0.002) * (0.7 + 0.3 * I);
+          float wob = (sin(uTime * 1.2) * 0.004 + sin(uTime * 3.7) * 0.003) * (0.85 + 0.45 * I);
           vec2 wobDir = normalize(uv - uGhostNDC + 1e-5);
           uv += wobDir * wob * I;
 
-          float barrelAmt = mix(0.0, 0.35, I);
+          float barrelAmt = mix(0.0, 0.55, I);
           vec2 uvB = barrelAround(uv, uGhostNDC, barrelAmt);
 
-          float ca = mix(0.002, 0.02, I);
-          vec2 dir = (uvB - uGhostNDC) * (1.2 + 0.6 * I);
+          float ca = mix(0.004, 0.035, I);
+          vec2 dir = (uvB - uGhostNDC) * (1.45 + 0.85 * I);
           vec2 rUV = uvB + dir * ca;
           vec2 gUV = uvB;
           vec2 bUV = uvB - dir * ca;
@@ -79,13 +79,13 @@ export function HorrorDistortionPass({ intensity, ghostNDC }: Props) {
             texture2D(tDiffuse, bUV).b
           );
 
-          float scan = sin((uv.y + uTime * 0.25) * 920.0) * 0.06 * I;
-          float n = (hash(uv * uResolution.xy + uTime * 17.0) - 0.5) * 0.08 * I;
+          float scan = sin((uv.y + uTime * 0.35) * 980.0) * 0.08 * I;
+          float n = (hash(uv * uResolution.xy + uTime * 23.0) - 0.5) * 0.12 * I;
           col += n - scan;
 
           float d = distance(uv, uGhostNDC);
-          float vig = smoothstep(0.95, 0.25, 1.0 - d);
-          col *= mix(1.0, 0.65 + 0.35 * vig, 0.55 * I);
+          float vig = smoothstep(0.98, 0.18, 1.0 - d);
+          col *= mix(1.0, 0.55 + 0.45 * vig, 0.75 * I);
 
           gl_FragColor = vec4(col, 1.0);
         }

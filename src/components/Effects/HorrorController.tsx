@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
 import type { MutableRefObject } from "react";
 import type { Object3D } from "three";
@@ -21,6 +21,9 @@ type Props = {
   minRadius?: number;
 };
 
+const INTENSITY_EXPONENT = 0.6;
+const MIN_SPAN = 5;
+
 export function HorrorController({
   playerRef,
   ghostPosition,
@@ -33,16 +36,26 @@ export function HorrorController({
   const tmp = useMemo(() => new THREE.Vector3(), []);
   const last = useRef(0);
 
+  useEffect(() => {
+    last.current = 0;
+    setIntensity(0);
+  }, [ghostPosition]);
+
   useFrame(() => {
     const player = playerRef?.current;
     if (player) {
+      const effectiveMin = Math.max(0, Math.min(minRadius, maxRadius));
+      const effectiveMax = Math.max(maxRadius, effectiveMin + 5);
+      const span = Math.max(effectiveMax - effectiveMin, MIN_SPAN);
       const distance = player.position.distanceTo(ghostPosition);
-      const t =
-        1 - clamp01((distance - minRadius) / Math.max(maxRadius - minRadius, 0.0001));
-      const eased = smoothstep(0.0, 1.0, t);
-      if (Math.abs(eased - last.current) > 0.01) {
-        last.current = eased;
-        setIntensity(eased);
+      const t = 1 - clamp01((distance - effectiveMin) / span);
+      const shaped = Math.min(
+        1,
+        Math.pow(smoothstep(0.0, 1.0, t), INTENSITY_EXPONENT)
+      );
+      if (Math.abs(shaped - last.current) > 0.005) {
+        last.current = shaped;
+        setIntensity(shaped);
       }
     } else if (last.current !== 0) {
       last.current = 0;
