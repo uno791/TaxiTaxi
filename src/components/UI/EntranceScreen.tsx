@@ -1,8 +1,24 @@
 import { useMeta } from "../../context/MetaContext";
+import { useGameLifecycle } from "../../GameContext";
+import { CITY_SEQUENCE } from "../../constants/cities";
 import entranceBackground from "../../assets/entrance.png";
 
 export default function EntranceScreen() {
   const { currentUser, setAppStage, logout } = useMeta();
+  const { restartGame, setActiveCity } = useGameLifecycle();
+  const defaultCity = CITY_SEQUENCE[0] ?? "city1";
+
+  const handleStartCampaign = () => {
+    setActiveCity(defaultCity);
+    restartGame({ mode: "campaign" });
+    setAppStage("car");
+  };
+
+  const handleStartFreeRoam = () => {
+    setActiveCity(defaultCity);
+    restartGame({ mode: "freeRoam" });
+    setAppStage("car");
+  };
 
   return (
     <div
@@ -86,32 +102,68 @@ export default function EntranceScreen() {
         </p>
       </div>
 
-      {/* 🔹 Start button */}
-      <button
+      {/* 🔹 Start buttons */}
+      <div
         style={{
           zIndex: 1,
           marginBottom: "80px",
-          padding: "14px 36px",
-          fontSize: "20px",
-          fontWeight: "bold",
-          backgroundColor: "#ffcc00",
-          color: "#000",
-          border: "none",
-          borderRadius: "8px",
-          cursor: "pointer",
-          boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
-          transition: "transform 0.2s ease, background-color 0.2s ease",
+          display: "flex",
+          gap: "20px",
         }}
-        onClick={() => setAppStage("car")}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.backgroundColor = "#ffd633")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.backgroundColor = "#ffcc00")
-        }
       >
-        Start Game
-      </button>
+        <button
+          style={{
+            padding: "14px 36px",
+            fontSize: "20px",
+            fontWeight: "bold",
+            backgroundColor: "#ffcc00",
+            color: "#000",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
+            transition: "transform 0.2s ease, background-color 0.2s ease",
+          }}
+          onClick={handleStartCampaign}
+          onMouseEnter={(e) =>
+            (e.currentTarget.style.backgroundColor = "#ffd633")
+          }
+          onMouseLeave={(e) =>
+            (e.currentTarget.style.backgroundColor = "#ffcc00")
+          }
+        >
+          Start Game
+        </button>
+
+        <button
+          style={{
+            padding: "14px 36px",
+            fontSize: "20px",
+            fontWeight: "bold",
+            background:
+              "linear-gradient(135deg, rgba(57, 73, 171, 0.95), rgba(33, 150, 243, 0.95))",
+            color: "#fff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(33, 150, 243, 0.45)",
+            transition: "transform 0.2s ease, box-shadow 0.2s ease",
+          }}
+          onClick={handleStartFreeRoam}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.04)";
+            e.currentTarget.style.boxShadow =
+              "0 6px 20px rgba(33, 150, 243, 0.6)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow =
+              "0 4px 16px rgba(33, 150, 243, 0.45)";
+          }}
+        >
+          Free Roam
+        </button>
+      </div>
     </div>
   );
 }

@@ -63,16 +63,20 @@ function GameWorld() {
   const [isPaused, setIsPaused] = useState(false);
   const [dialogPaused, setDialogPaused] = useState(false); // ✅ added
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
-  const { activeCity, setActiveCity } = useGameLifecycle();
+  const previousLightingModeRef = useRef<"fake" | "fill">("fake");
+  const [clearWeather, setClearWeather] = useState(false);
+  const { activeCity, setActiveCity, isFreeRoam } = useGameLifecycle();
   const completedCitiesRef = useRef<Record<CityId, boolean>>({
     city1: false,
     city2: false,
     city3: false,
   });
-  const initialIntroCity: CityId | null = activeCity;
+  const initialIntroCity: CityId | null = isFreeRoam ? null : activeCity;
   const [introCity, setIntroCity] = useState<CityId | null>(initialIntroCity);
   const [storyCity, setStoryCity] = useState<CityId | null>(null);
-  const [storyPaused, setStoryPaused] = useState(initialIntroCity !== null);
+  const [storyPaused, setStoryPaused] = useState(
+    isFreeRoam ? false : initialIntroCity !== null
+  );
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
   const destinationRef = useRef(
@@ -144,10 +148,31 @@ function GameWorld() {
   const spawnPosition = CITY_SPAWN_POINTS[activeCity];
   const introData = introCity ? CITY_INTRO_DIALOGS[introCity] : null;
   const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
-  const [testMode, setTestMode] = useState(false);
+  const [testMode, setTestMode] = useState(isFreeRoam);
   // ✅ Add this here — after missions is defined
   const [missionsRemaining, setMissionsRemaining] = useState(missions.length);
   const [nextMissionName, setNextMissionName] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isFreeRoam) {
+      setTestMode(true);
+      setIntroCity(null);
+      setStoryCity(null);
+      setStoryPaused(false);
+    } else if (clearWeather) {
+      setLightingMode(previousLightingModeRef.current);
+      setClearWeather(false);
+    }
+  }, [
+    isFreeRoam,
+    clearWeather,
+    setLightingMode,
+    setTestMode,
+    setIntroCity,
+    setStoryCity,
+    setStoryPaused,
+    setClearWeather,
+  ]);
 
   const {
     enabled: flightEnabled,
@@ -159,22 +184,25 @@ function GameWorld() {
 
   const toggleLightingMode = useCallback(() => {
     setLightingMode((previous) => (previous === "fake" ? "fill" : "fake"));
-  }, []);
+  }, [setLightingMode]);
 
   const handleIntroOverlayContinue = useCallback(() => {
     setIntroCity(null);
     setStoryPaused(false);
   }, []);
 
-  const handleAllMissionsCompleted = useCallback((cityId: CityId) => {
-    if (completedCitiesRef.current[cityId]) return;
-    completedCitiesRef.current = {
-      ...completedCitiesRef.current,
-      [cityId]: true,
-    };
-    setStoryCity(cityId);
-    setStoryPaused(true);
-  }, []);
+  const handleAllMissionsCompleted = useCallback(
+    (cityId: CityId) => {
+      if (isFreeRoam || completedCitiesRef.current[cityId]) return;
+      completedCitiesRef.current = {
+        ...completedCitiesRef.current,
+        [cityId]: true,
+      };
+      setStoryCity(cityId);
+      setStoryPaused(true);
+    },
+    [isFreeRoam]
+  );
 
   const handleStoryOverlayContinue = useCallback(() => {
     if (!storyCity) {
@@ -205,18 +233,36 @@ function GameWorld() {
   const handleTestTravel = useCallback(
     (city: CityId) => {
       setStoryCity(null);
-      setIntroCity(city);
-      setStoryPaused(true);
+      if (!isFreeRoam) {
+        setIntroCity(city);
+        setStoryPaused(true);
+      } else {
+        setIntroCity(null);
+        setStoryPaused(false);
+      }
       setActiveCity(city);
       setAvailableMissionTargets([]);
       destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
     },
-    [setAvailableMissionTargets, setIntroCity, setActiveCity]
+    [isFreeRoam, setAvailableMissionTargets, setIntroCity, setActiveCity]
   );
 
   const toggleTestMode = useCallback(() => {
+    if (isFreeRoam) return;
     setTestMode((prev) => !prev);
-  }, []);
+  }, [isFreeRoam]);
+
+  const handleToggleClearWeather = useCallback(() => {
+    setClearWeather((prev) => {
+      if (!prev) {
+        previousLightingModeRef.current = lightingMode;
+        setLightingMode("fill");
+      } else {
+        setLightingMode(previousLightingModeRef.current);
+      }
+      return !prev;
+    });
+  }, [lightingMode, setLightingMode]);
 
   useEffect(() => {
     setAvailableMissionTargets([]);
@@ -241,7 +287,7 @@ function GameWorld() {
                 saturation={0} // keep at 0 for white/blue stars
                 fade // enables distance fade
               />
-              <FogEffect />
+              {clearWeather ? null : <FogEffect />}
               {/* dark blue night sky */}
               <Physics
                 gravity={[0, -9.81, 0]}
@@ -253,6 +299,22 @@ function GameWorld() {
                 maxSubSteps={4}
               >
                 {/* Lighting */}
+                {clearWeather ? (
+                  <>
+                    <ambientLight intensity={0.7} color="#dce5ff" />
+                    <directionalLight
+                      position={[12, 18, 8]}
+                      intensity={1.15}
+                      color="#ffffff"
+                      castShadow
+                    />
+                    <directionalLight
+                      position={[-10, 15, -12]}
+                      intensity={0.6}
+                      color="#f0f6ff"
+                    />
+                  </>
+                ) : null}
                 {lightingMode === "fill" ? (
                   <hemisphereLight args={["#8aa6ff", "#1b1e25", 0.35]} />
                 ) : null}
@@ -299,8 +361,11 @@ function GameWorld() {
                     handleAvailableMissionTargetsChange
                   }
                   onPauseChange={setDialogPaused} // ✅ added: mission can pause/resume game
-                  onAllMissionsCompleted={handleAllMissionsCompleted}
+                  onAllMissionsCompleted={
+                    isFreeRoam ? undefined : handleAllMissionsCompleted
+                  }
                   onMissionProgress={handleMissionProgress}
+                  unlockAll={isFreeRoam}
                 />
 
                 <DestinationMarker destinationRef={destinationRef} />
@@ -337,10 +402,12 @@ function GameWorld() {
             <GameOverPopup />
             <UpgradeMenu />
 
-            <MissionTrackerHUD
-              remaining={missionsRemaining}
-              nextMission={nextMissionName}
-            />
+            {!isFreeRoam ? (
+              <MissionTrackerHUD
+                remaining={missionsRemaining}
+                nextMission={nextMissionName}
+              />
+            ) : null}
 
             <MiniMapOverlay
               canvas={miniMapCanvas}
@@ -350,20 +417,24 @@ function GameWorld() {
               size={220}
             />
             <MissionOverlay />
-            <CityStoryOverlay
-              cityId={introCity}
-              story={introData}
-              onContinue={handleIntroOverlayContinue}
-            />
-            <CityStoryOverlay
-              cityId={storyCity}
-              story={storyData}
-              onContinue={handleStoryOverlayContinue}
-            />
+            {!isFreeRoam ? (
+              <>
+                <CityStoryOverlay
+                  cityId={introCity}
+                  story={introData}
+                  onContinue={handleIntroOverlayContinue}
+                />
+                <CityStoryOverlay
+                  cityId={storyCity}
+                  story={storyData}
+                  onContinue={handleStoryOverlayContinue}
+                />
+              </>
+            ) : null}
             <div
               style={{
                 position: "absolute",
-                bottom: 20,
+                bottom: 330,
                 left: 20,
                 display: "flex",
                 flexDirection: "column",
@@ -375,6 +446,7 @@ function GameWorld() {
               <button
                 type="button"
                 onClick={toggleTestMode}
+                disabled={isFreeRoam}
                 style={{
                   padding: "8px 14px",
                   borderRadius: "8px",
@@ -384,10 +456,20 @@ function GameWorld() {
                   color: "#f5f5f5",
                   border: "1px solid rgba(255,255,255,0.25)",
                   fontSize: "0.85rem",
-                  cursor: "pointer",
+                  cursor: isFreeRoam ? "default" : "pointer",
+                  opacity: isFreeRoam ? 0.85 : 1,
                 }}
+                title={
+                  isFreeRoam
+                    ? "City fast travel is always on in Free Roam."
+                    : "Toggle developer travel controls."
+                }
               >
-                {testMode ? "Test Travel: On" : "Enable Test Travel"}
+                {isFreeRoam
+                  ? "City Fast Travel (Free Roam)"
+                  : testMode
+                  ? "Test Travel: On"
+                  : "Enable Test Travel"}
               </button>
               {testMode ? (
                 <div
@@ -414,7 +496,7 @@ function GameWorld() {
                         fontSize: "0.8rem",
                       }}
                     >
-                      Travel to {city.toUpperCase()}
+                      To: {city}
                     </button>
                   ))}
                 </div>
@@ -424,29 +506,69 @@ function GameWorld() {
             <ColliderPainterOverlay />
             <MissionUrgencyEffects containerRef={containerRef} />
 
-            <button
-              type="button"
-              onClick={toggleLightingMode}
+            <div
               style={{
                 position: "absolute",
                 top: 16,
-                left: 84,
+                left: 80,
+                display: "flex",
+                flexDirection: "column",
+                gap: "8px",
                 zIndex: 30,
-                border: "1px solid rgba(255,255,255,0.25)",
-                borderRadius: 8,
-                background: "rgba(24, 28, 35, 0.8)",
-                color: "#f5f5f5",
-                padding: "6px 12px",
-                fontSize: "0.85rem",
-                cursor: "pointer",
-                backdropFilter: "blur(2px)",
+                pointerEvents: "auto",
               }}
-              title="Toggle between fake decal lighting and a global fill light."
             >
-              {lightingMode === "fake"
-                ? "Lighting: Decals Only"
-                : "Lighting: Global Fill"}
-            </button>
+              {isFreeRoam ? (
+                <button
+                  type="button"
+                  onClick={handleToggleClearWeather}
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    borderRadius: 8,
+                    background: clearWeather
+                      ? "rgba(33, 150, 243, 0.85)"
+                      : "rgba(0, 188, 212, 0.85)",
+                    color: "#0a0f1c",
+
+                    padding: "6px 12px",
+                    fontSize: "0.85rem",
+                    cursor: "pointer",
+                    fontWeight: 600,
+                    boxShadow: "0 8px 16px rgba(0,0,0,0.35)",
+                  }}
+                  title={
+                    clearWeather
+                      ? "Restore the city's atmospheric fog and original night lighting."
+                      : "Clear the fog and flood the city with bright lights."
+                  }
+                >
+                  {clearWeather ? "Restore Night Fog" : "Clear Skies (Fog Off)"}
+                </button>
+              ) : null}
+              <button
+                type="button"
+                onClick={toggleLightingMode}
+                disabled={clearWeather}
+                style={{
+                  border: "1px solid rgba(255,255,255,0.25)",
+                  borderRadius: 8,
+                  background: clearWeather
+                    ? "rgba(24, 28, 35, 0.45)"
+                    : "rgba(24, 28, 35, 0.8)",
+                  color: "#f5f5f5",
+                  padding: "6px 12px",
+                  fontSize: "0.85rem",
+                  cursor: clearWeather ? "default" : "pointer",
+                  backdropFilter: "blur(2px)",
+                  transition: "background-color 0.2s ease",
+                }}
+                title="Toggle between fake decal lighting and a global fill light."
+              >
+                {lightingMode === "fake"
+                  ? "Lighting: Decals Only"
+                  : "Lighting: Global Fill"}
+              </button>
+            </div>
           </div>
         </MissionPerformanceProvider>
       </MissionUIProvider>

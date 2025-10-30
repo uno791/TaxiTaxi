@@ -28,11 +28,13 @@ export type MissionTargetInfo = {
 };
 
 const createInitialMissionState = (
-  missions: MissionConfig[]
+  missions: MissionConfig[],
+  unlockAll: boolean
 ): Record<string, MissionState> => {
   const initialState: Record<string, MissionState> = {};
   missions.forEach((config, index) => {
-    initialState[config.id] = index === 0 ? "available" : "locked";
+    initialState[config.id] =
+      unlockAll || index === 0 ? "available" : "locked";
   });
   return initialState;
 };
@@ -78,6 +80,7 @@ type MissionProps = JSX.IntrinsicElements["group"] & {
   onPauseChange?: (paused: boolean) => void;
   onAllMissionsCompleted?: (cityId: CityId) => void;
   onMissionProgress?: (remaining: number, nextName: string | null) => void;
+  unlockAll?: boolean;
 };
 
 type CompletionInfo = {
@@ -102,11 +105,12 @@ export default function Mission({
   onPauseChange,
   onAllMissionsCompleted,
   onMissionProgress,
+  unlockAll = false,
   ...groupProps
 }: MissionProps) {
   const [missionStates, setMissionStates] = useState<
     Record<string, MissionState>
-  >(() => createInitialMissionState(missions));
+  >(() => createInitialMissionState(missions, unlockAll));
   const [promptMissionId, setPromptMissionId] = useState<string | null>(null);
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
   const [completionInfo, setCompletionInfo] = useState<CompletionInfo | null>(
@@ -201,7 +205,7 @@ export default function Mission({
   const lastGameOverRef = useRef(gameOver);
 
   useEffect(() => {
-    const initialState = createInitialMissionState(missions);
+    const initialState = createInitialMissionState(missions, unlockAll);
     missionStatesRef.current = initialState;
     setMissionStates(initialState);
     setPromptMissionId(null);
@@ -224,6 +228,7 @@ export default function Mission({
   }, [
     missions,
     cityId,
+    unlockAll,
     onDestinationChange,
     setMissionStates,
     setPromptMissionId,
@@ -284,6 +289,19 @@ export default function Mission({
     if (gameOver && !lastGameOverRef.current) {
       playMissionLoseSound();
       updateMissionStates((prev) => {
+        if (unlockAll) {
+          let mutated = false;
+          const next: Record<string, MissionState> = {};
+          for (const mission of missions) {
+            const previousState = prev[mission.id];
+            if (previousState !== "available") {
+              mutated = true;
+            }
+            next[mission.id] = "available";
+          }
+          return mutated ? next : prev;
+        }
+
         let mutated = false;
         const next: Record<string, MissionState> = {};
         let unlocked = false;
@@ -340,12 +358,18 @@ export default function Mission({
     setCompletionInfo,
     setTimeLeft,
     setTimer,
+    unlockAll,
   ]);
 
   const handlePickupEnter = useCallback(
     (missionId: string) => {
       const currentState = missionStatesRef.current[missionId];
-      if (currentState !== "available") return;
+      if (
+        currentState !== "available" &&
+        !(unlockAll && currentState === "completed")
+      ) {
+        return;
+      }
       const currentActive = activeMissionIdRef.current;
       if (currentActive && currentActive !== missionId) return;
       updateMissionStates((prev) => {
@@ -358,7 +382,7 @@ export default function Mission({
       setPromptMissionId(missionId);
       promptMissionIdRef.current = missionId;
     },
-    [updateMissionStates, setPromptMissionId]
+    [updateMissionStates, setPromptMissionId, unlockAll]
   );
 
   const handlePickupExit = useCallback(
@@ -570,24 +594,28 @@ export default function Mission({
     const targets: MissionTargetInfo[] = missions
       .filter((config) => {
         const state = missionStates[config.id];
-        return state === "available" || state === "prompt";
+        return (
+          state === "available" ||
+          state === "prompt" ||
+          (unlockAll && state === "completed")
+        );
       })
       .map((config) => ({
         id: config.id,
         position: [...config.pickupPosition] as [number, number, number],
       }));
     onAvailableMissionTargetsChange(targets);
-  }, [missionStates, missions, onAvailableMissionTargetsChange]);
+  }, [missionStates, missions, onAvailableMissionTargetsChange, unlockAll]);
 
   const checkForCityCompletion = useCallback(() => {
-    if (!missions.length) return;
+    if (!missions.length || unlockAll) return;
     const allCompleted = missions.every(
       (config) => missionStatesRef.current[config.id] === "completed"
     );
     if (allCompleted) {
       onAllMissionsCompleted?.(cityId);
     }
-  }, [missions, onAllMissionsCompleted, cityId]);
+  }, [missions, onAllMissionsCompleted, cityId, unlockAll]);
 
   const handleDropoffEnter = useCallback(
     (missionId: string) => {
@@ -599,9 +627,12 @@ export default function Mission({
       updateMissionStates((prev) => {
         if (prev[missionId] !== "active") return prev;
         completionApplied = true;
+        const completionState: MissionState = unlockAll
+          ? "available"
+          : "completed";
         return {
           ...prev,
-          [missionId]: "completed",
+          [missionId]: completionState,
         } as Record<string, MissionState>;
       });
       if (!completionApplied) return;
@@ -654,19 +685,21 @@ export default function Mission({
       }
 
       // ✅ Unlock next mission
-      const currentIndex = missions.findIndex(
-        (mission) => mission.id === missionId
-      );
-      if (currentIndex >= 0) {
-        const nextMission = missions[currentIndex + 1];
-        if (nextMission) {
-          updateMissionStates((prevStates) => {
-            if (prevStates[nextMission.id] !== "locked") return prevStates;
-            return {
-              ...prevStates,
-              [nextMission.id]: "available",
-            } as Record<string, MissionState>;
-          });
+      if (!unlockAll) {
+        const currentIndex = missions.findIndex(
+          (mission) => mission.id === missionId
+        );
+        if (currentIndex >= 0) {
+          const nextMission = missions[currentIndex + 1];
+          if (nextMission) {
+            updateMissionStates((prevStates) => {
+              if (prevStates[nextMission.id] !== "locked") return prevStates;
+              return {
+                ...prevStates,
+                [nextMission.id]: "available",
+              } as Record<string, MissionState>;
+            });
+          }
         }
       }
 
@@ -685,6 +718,7 @@ export default function Mission({
       setTimeLeft,
       setTimer,
       timeLeft,
+      unlockAll,
     ]
   );
 
@@ -965,7 +999,9 @@ export default function Mission({
       {missions.map((config) => {
         const missionState = missionStates[config.id];
         const pickupActive =
-          missionState === "available" || missionState === "prompt";
+          missionState === "available" ||
+          missionState === "prompt" ||
+          (unlockAll && missionState === "completed");
         const dropoffActive = missionState === "active";
 
         return (

@@ -7,6 +7,7 @@ import type {
   MissionPassengerModelId,
   MissionPassengerPreviewConfig,
 } from "./missionConfig";
+import { useGameLifecycle } from "../../GameContext";
 
 const DEFAULT_PREVIEW_POSITION: [number, number, number] = [0, -0.05, 0];
 const DEFAULT_PREVIEW_ROTATION: [number, number, number] = [0, 0, 0];
@@ -125,8 +126,18 @@ export default function MissionOverlay() {
     debugMissions,
     debugStartMission,
   } = useMissionUI();
+  const { isFreeRoam } = useGameLifecycle();
   const [debugMenuOpen, setDebugMenuOpen] = useState(false);
   const isDev = import.meta.env.DEV;
+  const showDebugTools = (isDev || isFreeRoam) && debugMissions.length > 0;
+  const panelTitle = isFreeRoam ? "Mission Tools" : "Mission Tester (DEV)";
+  const toggleLabel = debugMenuOpen
+    ? isFreeRoam
+      ? "Hide Mission Tools"
+      : "Hide Mission Tester"
+    : isFreeRoam
+      ? "Open Mission Tools"
+      : "Open Mission Tester";
   const vignetteRef = useRef<HTMLDivElement | null>(null);
   const urgencyIntensityRef = useRef(0);
   const urgencyTargetRef = useRef(0);
@@ -146,6 +157,12 @@ export default function MissionOverlay() {
 
   const starEvents = completion?.starEvents ?? [];
   const totalStars = completion?.stars ?? 0;
+
+  useEffect(() => {
+    if (isFreeRoam) {
+      setDebugMenuOpen(true);
+    }
+  }, [isFreeRoam]);
 
   // Watch for timer reaching zero → show mission failed popup
   useEffect(() => {
@@ -443,7 +460,7 @@ export default function MissionOverlay() {
         zIndex: 30,
       }}
     >
-      {isDev && debugMissions.length > 0 && (
+      {showDebugTools && (
         <div
           style={{
             position: "absolute",
@@ -465,15 +482,19 @@ export default function MissionOverlay() {
               borderRadius: "10px",
               border: "1px solid rgba(255,255,255,0.35)",
               background: debugMenuOpen
-                ? "rgba(25,118,210,0.85)"
-                : "rgba(33,33,33,0.85)",
-              color: "#f5f5f5",
+                ? isFreeRoam
+                  ? "rgba(2, 136, 209, 0.9)"
+                  : "rgba(25,118,210,0.85)"
+                : isFreeRoam
+                  ? "rgba(13, 71, 161, 0.7)"
+                  : "rgba(33,33,33,0.85)",
+              color: isFreeRoam ? "#eaf7ff" : "#f5f5f5",
               fontSize: "14px",
               cursor: "pointer",
               boxShadow: "0 8px 16px rgba(0,0,0,0.35)",
             }}
           >
-            {debugMenuOpen ? "Hide Mission Tester" : "Open Mission Tester"}
+            {toggleLabel}
           </button>
           {debugMenuOpen && (
             <div
@@ -501,7 +522,7 @@ export default function MissionOverlay() {
                   color: "rgba(255,255,255,0.75)",
                 }}
               >
-                Mission Tester (DEV)
+                {panelTitle}
               </div>
               {debugMissions.map((mission) => (
                 <div
@@ -582,7 +603,8 @@ export default function MissionOverlay() {
                   textAlign: "center",
                 }}
               >
-                Temporary testing panel. Use to jump into any mission dialog.
+                Jump into any mission instantly. Available in Free Roam and
+                development builds.
               </div>
             </div>
           )}

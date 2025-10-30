@@ -19,6 +19,8 @@ import {
 } from "./constants/upgrades";
 import { CITY_SEQUENCE, type CityId } from "./constants/cities";
 
+export type GameMode = "campaign" | "freeRoam";
+
 type GameContextType = {
   money: number;
   setMoney: React.Dispatch<React.SetStateAction<number>>;
@@ -45,13 +47,19 @@ type GameContextType = {
   speedUpgradePrice: number;
   brakeUpgradePrice: number;
   boostUpgradePrice: number;
+  gameMode: GameMode;
+  setGameMode: React.Dispatch<React.SetStateAction<GameMode>>;
+  isFreeRoam: boolean;
 };
 
 type GameLifecycleContextType = {
-  restartGame: () => void;
+  restartGame: (options?: { mode?: GameMode }) => void;
   gameInstance: number;
   activeCity: CityId;
   setActiveCity: React.Dispatch<React.SetStateAction<CityId>>;
+  gameMode: GameMode;
+  setGameMode: React.Dispatch<React.SetStateAction<GameMode>>;
+  isFreeRoam: boolean;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -74,9 +82,18 @@ const initialEconomyState: EconomyState = {
 };
 
 const DEFAULT_CITY = (CITY_SEQUENCE[0] ?? "city1") as CityId;
+const FREE_ROAM_MONEY = 999_999;
+
+const buildEconomyState = (mode: GameMode): EconomyState =>
+  mode === "freeRoam"
+    ? { ...initialEconomyState, money: FREE_ROAM_MONEY }
+    : { ...initialEconomyState };
 
 export function GameProvider({ children }: { children: ReactNode }) {
-  const [economy, setEconomy] = useState<EconomyState>(initialEconomyState);
+  const [gameMode, setGameMode] = useState<GameMode>("campaign");
+  const [economy, setEconomy] = useState<EconomyState>(() =>
+    buildEconomyState("campaign")
+  );
   const [kilometers, setKilometers] = useState(0);
   const [speed, setSpeed] = useState(0);
   const [boost, setBoost] = useState(0);
@@ -84,16 +101,30 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [gameOver, setGameOver] = useState(false);
   const [gameInstance, setGameInstance] = useState(0);
   const [activeCity, setActiveCity] = useState<CityId>(DEFAULT_CITY);
+  const isFreeRoam = gameMode === "freeRoam";
 
   const { money, speedLevel, brakeLevel, boostLevel } = economy;
 
   const setMoney = useCallback(
     (update: React.SetStateAction<number>) => {
       setEconomy((previous) => {
-        const rawNext =
+        const currentMoney = previous.money;
+        const nextValue =
           typeof update === "function"
-            ? (update as (value: number) => number)(previous.money)
+            ? (update as (value: number) => number)(currentMoney)
             : update;
+
+        if (gameMode === "freeRoam") {
+          const target = Math.max(
+            typeof nextValue === "number" ? nextValue : currentMoney,
+            FREE_ROAM_MONEY
+          );
+          if (target === currentMoney) return previous;
+          return { ...previous, money: target };
+        }
+
+        const rawNext =
+          typeof nextValue === "number" ? nextValue : currentMoney;
 
         // Clamp to zero so it never goes negative
         const nextMoney = Math.max(0, rawNext);
@@ -107,7 +138,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
         return { ...previous, money: nextMoney };
       });
     },
-    [setEconomy, setGameOver]
+    [setEconomy, setGameOver, gameMode]
   );
 
   const speedMultiplier = 1 + speedLevel * speedIncreasePerLevel;
@@ -118,10 +149,24 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const upgradeSpeed = useCallback(() => {
     setEconomy((previous) => {
-      if (
-        previous.speedLevel >= MAX_UPGRADE_LEVEL ||
-        previous.money < speedUpgradePrice
-      ) {
+      if (previous.speedLevel >= MAX_UPGRADE_LEVEL) {
+        if (gameMode === "freeRoam") {
+          const ensuredMoney = Math.max(previous.money, FREE_ROAM_MONEY);
+          if (ensuredMoney === previous.money) return previous;
+          return { ...previous, money: ensuredMoney };
+        }
+        return previous;
+      }
+
+      if (gameMode === "freeRoam") {
+        return {
+          ...previous,
+          speedLevel: previous.speedLevel + 1,
+          money: Math.max(previous.money, FREE_ROAM_MONEY),
+        };
+      }
+
+      if (previous.money < speedUpgradePrice) {
         return previous;
       }
 
@@ -131,14 +176,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
         money: previous.money - speedUpgradePrice,
       };
     });
-  }, []);
+  }, [gameMode]);
 
   const upgradeBrakes = useCallback(() => {
     setEconomy((previous) => {
-      if (
-        previous.brakeLevel >= MAX_UPGRADE_LEVEL ||
-        previous.money < brakeUpgradePrice
-      ) {
+      if (previous.brakeLevel >= MAX_UPGRADE_LEVEL) {
+        if (gameMode === "freeRoam") {
+          const ensuredMoney = Math.max(previous.money, FREE_ROAM_MONEY);
+          if (ensuredMoney === previous.money) return previous;
+          return { ...previous, money: ensuredMoney };
+        }
+        return previous;
+      }
+
+      if (gameMode === "freeRoam") {
+        return {
+          ...previous,
+          brakeLevel: previous.brakeLevel + 1,
+          money: Math.max(previous.money, FREE_ROAM_MONEY),
+        };
+      }
+
+      if (previous.money < brakeUpgradePrice) {
         return previous;
       }
 
@@ -148,14 +207,28 @@ export function GameProvider({ children }: { children: ReactNode }) {
         money: previous.money - brakeUpgradePrice,
       };
     });
-  }, []);
+  }, [gameMode]);
 
   const upgradeBoost = useCallback(() => {
     setEconomy((previous) => {
-      if (
-        previous.boostLevel >= MAX_UPGRADE_LEVEL ||
-        previous.money < boostUpgradePrice
-      ) {
+      if (previous.boostLevel >= MAX_UPGRADE_LEVEL) {
+        if (gameMode === "freeRoam") {
+          const ensuredMoney = Math.max(previous.money, FREE_ROAM_MONEY);
+          if (ensuredMoney === previous.money) return previous;
+          return { ...previous, money: ensuredMoney };
+        }
+        return previous;
+      }
+
+      if (gameMode === "freeRoam") {
+        return {
+          ...previous,
+          boostLevel: previous.boostLevel + 1,
+          money: Math.max(previous.money, FREE_ROAM_MONEY),
+        };
+      }
+
+      if (previous.money < boostUpgradePrice) {
         return previous;
       }
 
@@ -165,17 +238,34 @@ export function GameProvider({ children }: { children: ReactNode }) {
         money: previous.money - boostUpgradePrice,
       };
     });
-  }, []);
+  }, [gameMode]);
 
-  const restartGame = useCallback(() => {
-    setEconomy(() => ({ ...initialEconomyState }));
-    setKilometers(0);
-    setSpeed(0);
-    setBoost(0);
-    setIsBoosting(false);
-    setGameOver(false);
-    setGameInstance((value) => value + 1);
-  }, []);
+  const restartGame = useCallback(
+    (options?: { mode?: GameMode }) => {
+      const mode = options?.mode ?? gameMode;
+      if (mode !== gameMode) {
+        setGameMode(mode);
+      }
+      setEconomy(buildEconomyState(mode));
+      setKilometers(0);
+      setSpeed(0);
+      setBoost(0);
+      setIsBoosting(false);
+      setGameOver(false);
+      setGameInstance((value) => value + 1);
+    },
+    [
+      gameMode,
+      setGameMode,
+      setEconomy,
+      setKilometers,
+      setSpeed,
+      setBoost,
+      setIsBoosting,
+      setGameOver,
+      setGameInstance,
+    ]
+  );
 
   const stateValue = useMemo(
     () => ({
@@ -204,6 +294,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       speedUpgradePrice,
       brakeUpgradePrice,
       boostUpgradePrice,
+      gameMode,
+      setGameMode,
+      isFreeRoam,
     }),
     [
       money,
@@ -228,6 +321,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       upgradeSpeed,
       upgradeBrakes,
       upgradeBoost,
+      gameMode,
+      setGameMode,
+      isFreeRoam,
     ]
   );
 
@@ -237,8 +333,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
       gameInstance,
       activeCity,
       setActiveCity,
+      gameMode,
+      setGameMode,
+      isFreeRoam,
     }),
-    [restartGame, gameInstance, activeCity, setActiveCity]
+    [
+      restartGame,
+      gameInstance,
+      activeCity,
+      setActiveCity,
+      gameMode,
+      setGameMode,
+      isFreeRoam,
+    ]
   );
 
   return (
