@@ -1,7 +1,6 @@
 ﻿import { useMissionUI, type MissionCompletionState } from "./MissionUIContext";
 import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import type { Group } from "three";
+import { Canvas } from "@react-three/fiber";
 import { PassengerModel } from "../Ground/SceneObjects/PassengerModel";
 import type {
   MissionPassengerModelId,
@@ -15,38 +14,18 @@ const DEFAULT_PREVIEW_CAMERA: [number, number, number] = [0, 1.4, 3.2];
 const DEFAULT_PREVIEW_SCALE = 0.85;
 const DEFAULT_PREVIEW_FOV = 30;
 
-function RotatingPassengerModel({
+function PreviewPassengerModel({
   modelId,
   preview,
 }: {
   modelId: MissionPassengerModelId;
   preview?: MissionPassengerPreviewConfig;
 }) {
-  const groupRef = useRef<Group | null>(null);
-  const baseRotationRef = useRef<[number, number, number]>(
-    preview?.rotation ?? DEFAULT_PREVIEW_ROTATION
-  );
-  const spinRef = useRef(0);
-
-  useEffect(() => {
-    baseRotationRef.current = preview?.rotation ?? DEFAULT_PREVIEW_ROTATION;
-    spinRef.current = 0;
-    if (groupRef.current) {
-      const [x, y, z] = baseRotationRef.current;
-      groupRef.current.rotation.set(x, y, z);
-    }
-  }, [preview]);
-
-  useFrame((_, delta) => {
-    if (!groupRef.current) return;
-    spinRef.current += delta * 0.6;
-    const [baseX, baseY, baseZ] = baseRotationRef.current;
-    groupRef.current.rotation.set(baseX, baseY + spinRef.current, baseZ);
-  });
+  const rotation = preview?.rotation ?? DEFAULT_PREVIEW_ROTATION;
 
   return (
     <group position={preview?.position ?? DEFAULT_PREVIEW_POSITION}>
-      <group ref={groupRef}>
+      <group rotation={rotation}>
         <PassengerModel
           modelId={modelId}
           scale={preview?.scale ?? DEFAULT_PREVIEW_SCALE}
@@ -92,7 +71,7 @@ function MissionDialogModelPreview({
         <directionalLight position={[2, 3, 2]} intensity={1.1} />
         <directionalLight position={[-2, 3, -1]} intensity={0.5} />
         <Suspense fallback={null}>
-          <RotatingPassengerModel modelId={modelId} preview={preview} />
+          <PreviewPassengerModel modelId={modelId} preview={preview} />
         </Suspense>
       </Canvas>
       <div
