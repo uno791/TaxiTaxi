@@ -6,6 +6,7 @@ import { BuildingsLevel2 } from "./Buildings/BuildingsLevel2";
 import { ResLevel2 } from "./Buildings/ResLevel2";
 import { BitsLevel2 } from "./Buildings/BitsLevel2";
 import { Grass } from "../Ground/Grass";
+import { City2mountains } from "./City2mountains";
 import { City2Colliders } from "./City2Colliders";
 
 type Level2Props = JSX.IntrinsicElements["group"] & {
@@ -52,6 +53,11 @@ export default function Level2({
         cityOffset={cityOffset}
       />
       <Grass position={[0, -1, 0]} scale={[1000, 1, 1000]} />
+      <City2mountains
+        position={[259, 0.1, -110]}
+        scale={0.42}
+        rotation={[0, 0, 0]}
+      />
     </group>
   );
 }

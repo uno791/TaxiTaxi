@@ -7,6 +7,7 @@ import { City3Block2 } from "./City3Block2";
 import { City3Block3 } from "./City3Block3";
 import { Grass } from "../Ground/Grass";
 import { City3Colliders } from "./City3Colliders";
+import { Mountains } from "./Mountains";
 
 type NewCityRoadProps = JSX.IntrinsicElements["group"] & {
   playerPositionRef: MutableRefObject<Vector3>;
@@ -40,6 +41,7 @@ export default function NewCityRoad({
       />
       <City3Colliders playerPositionRef={playerPositionRef} />
       <Grass position={[0, -1, 0]} scale={[1000, 1, 1000]} />
+      <Mountains position={[27, 0, -449.3]} scale={0.3} rotation={[0, 0, 0]} />
     </group>
   );
 }

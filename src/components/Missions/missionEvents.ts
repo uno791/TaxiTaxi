@@ -10,18 +10,16 @@ const baseMap: MissionEventsById = Object.values(MISSIONS_BY_CITY)
     return acc;
   }, {});
 
-baseMap["night3-child"] = [
+baseMap["night1-mirror-man"] = [
   {
-    missionId: "night3-child",
+    missionId: "night1-mirror-man",
     event: "the-child-apparition",
-    position: [64, 0.15, -424],
+    position: [23.843, 1, -19.942],
   },
-];
-baseMap["night1-accountant"] = [
   {
-    missionId: "night1-accountant",
+    missionId: "night1-mirror-man",
     event: "the-child-apparition",
-    position: [26.689, 0.15, -36.048],
+    position: [12.159, 1, -54.178],
   },
 ];
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { ComponentProps, MutableRefObject } from "react";
 import * as THREE from "three";
 import { Canvas } from "@react-three/fiber";
@@ -13,7 +13,11 @@ import { NavigationSystem } from "./components/Navigation/NavigationSystem";
 import { DestinationMarker } from "./components/Navigation/DestinationMarker";
 import { MiniMapOverlay } from "./hooks/useMiniMapOverlay";
 
-import Mission, { type MissionTargetInfo } from "./components/Missions/Mission";
+import Mission, {
+  type MissionProgressSummary,
+  type MissionResumeState,
+  type MissionTargetInfo,
+} from "./components/Missions/Mission";
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
 import RestartControl from "./components/UI/RestartControl";
@@ -52,12 +56,19 @@ import {
   CITY_SPAWN_POINTS,
   CITY_STORY_DIALOGS,
   CITY_INTRO_DIALOGS,
+  GAME_INTRO_STORY,
   type CityId,
 } from "./constants/cities";
 import CityStoryOverlay from "./components/UI/CityStoryOverlay";
 import FogEffect from "./components/FogEffect";
+import {
+  saveGameProgress,
+  loadGameProgress,
+  clearGameProgress,
+} from "./utils/storage";
 
 function GameWorld() {
+  const savedProgress = useMemo(() => loadGameProgress(), []);
   const chaseRef = useRef<THREE.Object3D | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
@@ -66,17 +77,62 @@ function GameWorld() {
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
   const previousLightingModeRef = useRef<"fake" | "fill">("fake");
   const [clearWeather, setClearWeather] = useState(false);
-  const { activeCity, setActiveCity, isFreeRoam } = useGameLifecycle();
+  const { activeCity, setActiveCity, restartGame, isFreeRoam } =
+    useGameLifecycle();
+  const { setAppStage } = useMeta();
   const completedCitiesRef = useRef<Record<CityId, boolean>>({
     city1: false,
     city2: false,
     city3: false,
   });
-  const initialIntroCity: CityId | null = isFreeRoam ? null : activeCity;
+  const missionSummaryRef = useRef<MissionProgressSummary | null>(null);
+  const resumeStatesRef = useRef<Record<CityId, MissionResumeState | null>>({
+    city1:
+      savedProgress && savedProgress.cityId === "city1"
+        ? {
+            completedMissionIds: [...savedProgress.completedMissionIds],
+            nextMissionId: savedProgress.nextMissionId,
+          }
+        : null,
+    city2:
+      savedProgress && savedProgress.cityId === "city2"
+        ? {
+            completedMissionIds: [...savedProgress.completedMissionIds],
+            nextMissionId: savedProgress.nextMissionId,
+          }
+        : null,
+    city3:
+      savedProgress && savedProgress.cityId === "city3"
+        ? {
+            completedMissionIds: [...savedProgress.completedMissionIds],
+            nextMissionId: savedProgress.nextMissionId,
+          }
+        : null,
+  });
+
+  if (
+    savedProgress &&
+    missionSummaryRef.current === null &&
+    savedProgress.cityId === activeCity
+  ) {
+    missionSummaryRef.current = {
+      cityId: savedProgress.cityId,
+      activeMissionId: null,
+      nextMissionId: savedProgress.nextMissionId,
+      completedMissionIds: [...savedProgress.completedMissionIds],
+    };
+  }
+  const initialIntroCity: CityId | null = isFreeRoam
+    ? null
+    : savedProgress
+    ? null
+    : activeCity;
+  const initialGameIntro = !isFreeRoam && !savedProgress;
   const [introCity, setIntroCity] = useState<CityId | null>(initialIntroCity);
   const [storyCity, setStoryCity] = useState<CityId | null>(null);
+  const [showGameIntro, setShowGameIntro] = useState(initialGameIntro);
   const [storyPaused, setStoryPaused] = useState(
-    isFreeRoam ? false : initialIntroCity !== null
+    isFreeRoam ? false : initialGameIntro || initialIntroCity !== null
   );
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
@@ -145,14 +201,38 @@ function GameWorld() {
     []
   );
 
+  const handleMissionSummaryChange = useCallback(
+    (summary: MissionProgressSummary) => {
+      missionSummaryRef.current = summary;
+      resumeStatesRef.current[summary.cityId] = {
+        completedMissionIds: [...summary.completedMissionIds],
+        nextMissionId: summary.nextMissionId,
+      };
+    },
+    []
+  );
+
   const missions = MISSIONS_BY_CITY[activeCity];
+  const savedForActiveCity =
+    savedProgress && savedProgress.cityId === activeCity ? savedProgress : null;
   const spawnPosition = CITY_SPAWN_POINTS[activeCity];
   const introData = introCity ? CITY_INTRO_DIALOGS[introCity] : null;
   const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
   const [testMode, setTestMode] = useState(isFreeRoam);
   // ✅ Add this here — after missions is defined
-  const [missionsRemaining, setMissionsRemaining] = useState(missions.length);
-  const [nextMissionName, setNextMissionName] = useState<string | null>(null);
+  const [missionsRemaining, setMissionsRemaining] = useState(() => {
+    if (savedForActiveCity) {
+      const completedInCity = new Set(savedForActiveCity.completedMissionIds);
+      const completedCount = missions.filter((mission) =>
+        completedInCity.has(mission.id)
+      ).length;
+      return Math.max(missions.length - completedCount, 0);
+    }
+    return missions.length;
+  });
+  const [nextMissionName, setNextMissionName] = useState<string | null>(
+    savedForActiveCity ? savedForActiveCity.nextMissionId : null
+  );
 
   useEffect(() => {
     if (isFreeRoam) {
@@ -160,6 +240,7 @@ function GameWorld() {
       setIntroCity(null);
       setStoryCity(null);
       setStoryPaused(false);
+      setShowGameIntro(false);
     } else if (clearWeather) {
       setLightingMode(previousLightingModeRef.current);
       setClearWeather(false);
@@ -173,6 +254,7 @@ function GameWorld() {
     setStoryCity,
     setStoryPaused,
     setClearWeather,
+    setShowGameIntro,
   ]);
 
   const {
@@ -186,6 +268,10 @@ function GameWorld() {
   const toggleLightingMode = useCallback(() => {
     setLightingMode((previous) => (previous === "fake" ? "fill" : "fake"));
   }, [setLightingMode]);
+
+  const handleGameIntroContinue = useCallback(() => {
+    setShowGameIntro(false);
+  }, [setShowGameIntro]);
 
   const handleIntroOverlayContinue = useCallback(() => {
     setIntroCity(null);
@@ -264,6 +350,54 @@ function GameWorld() {
       return !prev;
     });
   }, [lightingMode, setLightingMode]);
+
+  const handleRestartLevel = useCallback(() => {
+    missionSummaryRef.current = null;
+    resumeStatesRef.current = {
+      city1: null,
+      city2: null,
+      city3: null,
+    } as Record<CityId, MissionResumeState | null>;
+    clearGameProgress();
+    setAvailableMissionTargets([]);
+    destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
+    setMissionsRemaining(missions.length);
+    setNextMissionName(missions.length > 0 ? missions[0].id : null);
+    restartGame();
+  }, [
+    missions,
+    restartGame,
+    setAvailableMissionTargets,
+    setMissionsRemaining,
+    setNextMissionName,
+    clearGameProgress,
+  ]);
+
+  const handleSaveAndExit = useCallback(() => {
+    const summary = missionSummaryRef.current;
+    const relevantSummary =
+      summary && summary.cityId === activeCity ? summary : null;
+
+    const completedMissionIds = relevantSummary
+      ? [...relevantSummary.completedMissionIds]
+      : savedForActiveCity
+      ? [...savedForActiveCity.completedMissionIds]
+      : [];
+
+    const nextMissionId = relevantSummary
+      ? relevantSummary.nextMissionId
+      : savedForActiveCity?.nextMissionId ?? null;
+
+    saveGameProgress({
+      cityId: activeCity,
+      completedMissionIds,
+      nextMissionId,
+      savedAt: Date.now(),
+    });
+
+    setIsPaused(false);
+    setAppStage("entrance");
+  }, [activeCity, savedForActiveCity, setAppStage, setIsPaused]);
 
   useEffect(() => {
     setAvailableMissionTargets([]);
@@ -367,6 +501,8 @@ function GameWorld() {
                     isFreeRoam ? undefined : handleAllMissionsCompleted
                   }
                   onMissionProgress={handleMissionProgress}
+                  onMissionSummaryChange={handleMissionSummaryChange}
+                  initialResumeState={resumeStatesRef.current[activeCity]}
                   unlockAll={isFreeRoam}
                 />
 
@@ -395,8 +531,9 @@ function GameWorld() {
               onControlModeChange={setControlMode}
               isPaused={isPaused}
               onPauseChange={setIsPaused}
+              onRestartLevel={handleRestartLevel}
+              onSaveAndExit={handleSaveAndExit}
             />
-            <RestartControl />
 
             {/* UI overlay */}
             <TaxiSpeedometer />
@@ -421,16 +558,27 @@ function GameWorld() {
             <MissionOverlay />
             {!isFreeRoam ? (
               <>
-                <CityStoryOverlay
-                  cityId={introCity}
-                  story={introData}
-                  onContinue={handleIntroOverlayContinue}
-                />
-                <CityStoryOverlay
-                  cityId={storyCity}
-                  story={storyData}
-                  onContinue={handleStoryOverlayContinue}
-                />
+                {showGameIntro ? (
+                  <CityStoryOverlay
+                    storyId="game-intro"
+                    story={GAME_INTRO_STORY}
+                    onContinue={handleGameIntroContinue}
+                  />
+                ) : null}
+                {!showGameIntro ? (
+                  <>
+                    <CityStoryOverlay
+                      storyId={introCity}
+                      story={introData}
+                      onContinue={handleIntroOverlayContinue}
+                    />
+                    <CityStoryOverlay
+                      storyId={storyCity}
+                      story={storyData}
+                      onContinue={handleStoryOverlayContinue}
+                    />
+                  </>
+                ) : null}
               </>
             ) : null}
             <div

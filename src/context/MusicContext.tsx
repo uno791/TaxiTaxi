@@ -21,12 +21,16 @@ type ActiveTrackState = {
   priority: number;
 };
 
+const VOLUME_STORAGE_KEY = "taxiTaxiMusicVolume";
+
 type MusicContextValue = {
   currentTrackId: MusicTrackId;
   currentTrack: MusicTrackConfig;
   isMuted: boolean;
   setMuted: (muted: boolean) => void;
   toggleMuted: () => void;
+  volume: number;
+  setVolume: (value: number) => void;
   requestTrack: (id: MusicTrackId, priorityOverride?: number) => void;
   releaseTrack: (id: MusicTrackId) => void;
   availableTracks: MusicTrackConfig[];
@@ -36,6 +40,14 @@ const MusicContext = createContext<MusicContextValue | undefined>(undefined);
 
 export function MusicProvider({ children }: { children: ReactNode }) {
   const [isMuted, setIsMuted] = useState(false);
+  const [volume, setVolumeState] = useState(() => {
+    if (typeof window === "undefined") return 1;
+    const stored = window.localStorage.getItem(VOLUME_STORAGE_KEY);
+    if (!stored) return 1;
+    const parsed = Number.parseFloat(stored);
+    if (!Number.isFinite(parsed)) return 1;
+    return Math.min(Math.max(parsed, 0), 1);
+  });
   const [activeTrack, setActiveTrack] = useState<ActiveTrackState>({
     id: DEFAULT_MUSIC_TRACK_ID,
     priority: MUSIC_TRACKS[DEFAULT_MUSIC_TRACK_ID].priority,
@@ -51,11 +63,19 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const hasInteractedRef = useRef(false);
   const activeTrackIdRef = useRef<MusicTrackId>(DEFAULT_MUSIC_TRACK_ID);
   const isMutedRef = useRef(isMuted);
+  const volumeRef = useRef(volume);
 
   const availableTracks = useMemo(
     () => Object.values(MUSIC_TRACKS),
     []
   );
+
+  const setVolume = useCallback((nextVolume: number) => {
+    const clamped = Number.isFinite(nextVolume)
+      ? Math.min(Math.max(nextVolume, 0), 1)
+      : volumeRef.current;
+    setVolumeState(clamped);
+  }, []);
 
   const evaluateTrack = useCallback(() => {
     setActiveTrack((previous) => {
@@ -145,7 +165,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         const audio = new Audio(config.src);
         audio.loop = Boolean(config.loop);
         audio.preload = "auto";
-        audio.volume = config.volume ?? 0.6;
+        const baseVolume = config.volume ?? 0.6;
+        audio.volume = baseVolume * volumeRef.current;
         audio.muted = false;
 
         if (playlistSet.has(trackId)) {
@@ -221,6 +242,24 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   }, [isMuted]);
 
   useEffect(() => {
+    volumeRef.current = volume;
+    if (typeof window !== "undefined") {
+      window.localStorage.setItem(
+        VOLUME_STORAGE_KEY,
+        volume.toString()
+      );
+    }
+
+    const audios = audioMapRef.current;
+    Object.entries(audios).forEach(([trackId, audio]) => {
+      if (!audio) return;
+      const config = MUSIC_TRACKS[trackId as MusicTrackId];
+      const baseVolume = config?.volume ?? 0.6;
+      audio.volume = baseVolume * volume;
+    });
+  }, [volume]);
+
+  useEffect(() => {
     if (typeof window === "undefined") return undefined;
 
     const handleInteraction = () => {
@@ -264,7 +303,8 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     if (!currentAudio) return;
 
     currentAudio.loop = Boolean(currentConfig.loop);
-    currentAudio.volume = currentConfig.volume ?? 0.6;
+    const baseVolume = currentConfig.volume ?? 0.6;
+    currentAudio.volume = baseVolume * volumeRef.current;
 
     Object.entries(audios).forEach(([trackId, audio]) => {
       if (!audio || (trackId as MusicTrackId) === currentId) return;
@@ -302,11 +342,13 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       isMuted,
       setMuted: setIsMuted,
       toggleMuted,
+      volume,
+      setVolume,
       requestTrack,
       releaseTrack,
       availableTracks,
     }),
-    [activeTrack.id, availableTracks, isMuted, releaseTrack, requestTrack, toggleMuted]
+    [activeTrack.id, availableTracks, isMuted, releaseTrack, requestTrack, toggleMuted, volume, setVolume]
   );
 
   return (
