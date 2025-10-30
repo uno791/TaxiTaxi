@@ -683,6 +683,13 @@ const city3Missions: MissionConfig[] = [
         text: "He leaves a balloon animal on the seat. It wheezes. It sounds like crying.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.7, 0],
+      rotation: [0, Math.PI, 0],
+      scale: 0.25,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night3-priest",
@@ -768,6 +775,13 @@ const city3Missions: MissionConfig[] = [
         text: "He leans forward and whispers something I can't hear. The steering wheel straightens itself. For a heartbeat, I feel peace... then the brakes screech again.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.7,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night3-child",
@@ -806,6 +820,13 @@ const city3Missions: MissionConfig[] = [
         text: "I turn to look. Just a toy car on the seat. Its wheels still spin.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.3,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night3-widow",
@@ -844,6 +865,13 @@ const city3Missions: MissionConfig[] = [
         text: "Her words weigh more than the wheel. She breathes air I'll never feel.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.25,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night3-reaper",
@@ -882,6 +910,13 @@ const city3Missions: MissionConfig[] = [
         text: "His presence isn't cold -- it's hollow. Like standing where something once stood.",
       },
     ],
+    passengerPreview: {
+      position: [0, -0.6, 0],
+      rotation: [0, Math.PI / 6, 0],
+      scale: 0.08,
+      cameraPosition: [0, 1.2, 2.8],
+      cameraFov: 26,
+    },
   },
   {
     id: "night3-voice",

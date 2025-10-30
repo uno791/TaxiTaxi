@@ -1,6 +1,12 @@
 import { memo, useEffect, useMemo, useRef } from "react";
 import { useFrame, useThree } from "@react-three/fiber";
-import { BackSide, Color, FogExp2 as ThreeFogExp2, Mesh, MeshBasicMaterial } from "three";
+import {
+  BackSide,
+  Color,
+  FogExp2 as ThreeFogExp2,
+  Mesh,
+  MeshBasicMaterial,
+} from "three";
 import { useGame } from "../GameContext";
 import { useMissionUI } from "./Missions/MissionUIContext";
 
@@ -11,7 +17,7 @@ type FogEffectProps = {
 
 function FogEffectComponent({
   color = "#4c565f",
-  density = 0.035,
+  density = 0.35,
 }: FogEffectProps) {
   const { scene, camera } = useThree();
   const { speed } = useGame();
@@ -61,10 +67,7 @@ function FogEffectComponent({
     const urgency = missionFailureActive ? 1 : timeUrgency;
     const normalizedSpeed = Math.min(speed / 140, 1);
 
-    const targetDensity =
-      0.018 +
-      (1 - normalizedSpeed) * 0.02 +
-      urgency * 0.03;
+    const targetDensity = 0.018 + (1 - normalizedSpeed) * 0.02 + urgency * 0.03;
 
     densityRef.current = lerp(
       densityRef.current,
@@ -87,10 +90,7 @@ function FogEffectComponent({
     const material = shellMaterialRef.current;
     if (material) {
       material.color.copy(currentColorRef.current);
-      const opacity = Math.min(
-        0.92,
-        Math.max(0.08, densityRef.current * 6.5)
-      );
+      const opacity = Math.min(0.92, Math.max(0.08, densityRef.current * 6.5));
       material.opacity = opacity;
     }
   });
