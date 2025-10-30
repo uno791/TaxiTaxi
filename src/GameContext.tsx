@@ -18,6 +18,7 @@ import {
   speedUpgradePrice,
 } from "./constants/upgrades";
 import { CITY_SEQUENCE, type CityId } from "./constants/cities";
+import { loadGameProgress } from "./utils/storage";
 
 export type GameMode = "campaign" | "freeRoam";
 
@@ -100,7 +101,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const [isBoosting, setIsBoosting] = useState(false);
   const [gameOver, setGameOver] = useState(false);
   const [gameInstance, setGameInstance] = useState(0);
-  const [activeCity, setActiveCity] = useState<CityId>(DEFAULT_CITY);
+  const [activeCity, setActiveCity] = useState<CityId>(() => {
+    const saved = loadGameProgress();
+    return saved?.cityId ?? DEFAULT_CITY;
+  });
   const isFreeRoam = gameMode === "freeRoam";
 
   const { money, speedLevel, brakeLevel, boostLevel } = economy;

@@ -14,13 +14,25 @@ import {
   type MissionStarEvent,
 } from "./MissionPerformanceContext";
 
-type MissionState =
+export type MissionState =
   | "locked"
   | "available"
   | "prompt"
   | "dialog"
   | "active"
   | "completed";
+
+export type MissionResumeState = {
+  completedMissionIds: string[];
+  nextMissionId: string | null;
+};
+
+export type MissionProgressSummary = {
+  cityId: CityId;
+  activeMissionId: string | null;
+  nextMissionId: string | null;
+  completedMissionIds: string[];
+};
 
 export type MissionTargetInfo = {
   id: string;
@@ -29,13 +41,47 @@ export type MissionTargetInfo = {
 
 const createInitialMissionState = (
   missions: MissionConfig[],
-  unlockAll: boolean
+
+  unlockAll: boolean,
+  resume?: MissionResumeState | null
 ): Record<string, MissionState> => {
   const initialState: Record<string, MissionState> = {};
   missions.forEach((config, index) => {
-    initialState[config.id] =
-      unlockAll || index === 0 ? "available" : "locked";
+    initialState[config.id] = unlockAll || index === 0 ? "available" : "locked";
   });
+
+  if (!resume) return initialState;
+
+  const completedSet = new Set(resume.completedMissionIds);
+  missions.forEach((config) => {
+    if (completedSet.has(config.id)) {
+      initialState[config.id] = "completed";
+    }
+  });
+
+  if (resume.nextMissionId) {
+    let nextAssigned = false;
+    for (const config of missions) {
+      if (completedSet.has(config.id)) {
+        continue;
+      }
+      if (!nextAssigned) {
+        initialState[config.id] =
+          config.id === resume.nextMissionId ? "available" : "locked";
+        if (config.id === resume.nextMissionId) {
+          nextAssigned = true;
+        }
+      } else {
+        initialState[config.id] = "locked";
+      }
+    }
+  } else if (completedSet.size >= missions.length && missions.length > 0) {
+    // All missions completed �?" reflect completion state
+    missions.forEach((config) => {
+      initialState[config.id] = "completed";
+    });
+  }
+
   return initialState;
 };
 
@@ -80,6 +126,8 @@ type MissionProps = JSX.IntrinsicElements["group"] & {
   onPauseChange?: (paused: boolean) => void;
   onAllMissionsCompleted?: (cityId: CityId) => void;
   onMissionProgress?: (remaining: number, nextName: string | null) => void;
+  onMissionSummaryChange?: (summary: MissionProgressSummary) => void;
+  initialResumeState?: MissionResumeState | null;
   unlockAll?: boolean;
 };
 
@@ -105,12 +153,14 @@ export default function Mission({
   onPauseChange,
   onAllMissionsCompleted,
   onMissionProgress,
+  onMissionSummaryChange,
+  initialResumeState = null,
   unlockAll = false,
   ...groupProps
 }: MissionProps) {
   const [missionStates, setMissionStates] = useState<
     Record<string, MissionState>
-  >(() => createInitialMissionState(missions, unlockAll));
+  >(() => createInitialMissionState(missions, unlockAll, initialResumeState));
   const [promptMissionId, setPromptMissionId] = useState<string | null>(null);
   const [activeMissionId, setActiveMissionId] = useState<string | null>(null);
   const [completionInfo, setCompletionInfo] = useState<CompletionInfo | null>(
@@ -123,6 +173,7 @@ export default function Mission({
   const missionLoseSoundRef = useRef<HTMLAudioElement | null>(null);
   const missionConfigByIdRef = useRef<Record<string, MissionConfig>>({});
   const missionPerformance = useMissionPerformance();
+  const resumeStateRef = useRef<MissionResumeState | null>(initialResumeState);
 
   const playMissionStartSound = useCallback(() => {
     const audio = missionStartSoundRef.current;
@@ -166,6 +217,30 @@ export default function Mission({
     onMissionProgress(remaining, nextMission);
   }, [missions, missionStates, onMissionProgress]);
 
+  useEffect(() => {
+    if (!onMissionSummaryChange) return;
+
+    const completedMissionIds = missions
+      .filter((m) => missionStates[m.id] === "completed")
+      .map((m) => m.id);
+
+    const nextMission =
+      missions.find((m) => missionStates[m.id] !== "completed")?.id || null;
+
+    onMissionSummaryChange({
+      cityId,
+      activeMissionId,
+      nextMissionId: nextMission,
+      completedMissionIds,
+    });
+  }, [
+    missions,
+    missionStates,
+    activeMissionId,
+    cityId,
+    onMissionSummaryChange,
+  ]);
+
   const missionStatesRef = useRef(missionStates);
   const updateMissionStates = useCallback(
     (
@@ -206,7 +281,16 @@ export default function Mission({
   const lastGameOverRef = useRef(gameOver);
 
   useEffect(() => {
-    const initialState = createInitialMissionState(missions, unlockAll);
+    resumeStateRef.current = initialResumeState ?? null;
+  }, [initialResumeState]);
+
+  useEffect(() => {
+    const resumeState = resumeStateRef.current;
+    const initialState = createInitialMissionState(
+      missions,
+      unlockAll,
+      resumeState
+    );
     missionStatesRef.current = initialState;
     setMissionStates(initialState);
     setPromptMissionId(null);
@@ -226,6 +310,7 @@ export default function Mission({
     if (onDestinationChange) {
       onDestinationChange(null);
     }
+    resumeStateRef.current = null;
   }, [
     missions,
     cityId,
@@ -530,10 +615,13 @@ export default function Mission({
     (missionId: string, config: MissionConfig) => {
       setDialogVisible(false);
       onPauseChange?.(false);
-      updateMissionStates((current) => ({
-        ...current,
-        [missionId]: "active",
-      }) as Record<string, MissionState>);
+      updateMissionStates(
+        (current) =>
+          ({
+            ...current,
+            [missionId]: "active",
+          } as Record<string, MissionState>)
+      );
       setMissionFailureActive(false);
       missionPerformance.beginMission(missionId);
       if (onDestinationChange) {
@@ -792,11 +880,7 @@ export default function Mission({
   }, [completion]);
 
   useEffect(() => {
-    if (
-      completionDisplayedRef.current &&
-      !completion &&
-      completionInfo
-    ) {
+    if (completionDisplayedRef.current && !completion && completionInfo) {
       completionDisplayedRef.current = false;
       setCompletionInfo(null);
     }
@@ -853,9 +937,7 @@ export default function Mission({
       ? entry.options.map((option, optionIndex) => {
           const optionId = `${missionId}-option-${dialogIndex}-${optionIndex}`;
           const nextIndex =
-            typeof option.nextIndex === "number"
-              ? option.nextIndex
-              : undefined;
+            typeof option.nextIndex === "number" ? option.nextIndex : undefined;
           return {
             id: optionId,
             label: option.label,
