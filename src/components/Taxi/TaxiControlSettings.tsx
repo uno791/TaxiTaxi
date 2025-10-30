@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 import infoIcon from "../../assets/info-circle-svgrepo-com.svg";
 import type { ControlMode } from "./useControls";
-import { useGameLifecycle } from "../../GameContext";
 import { useMusic } from "../../context/MusicContext";
 
 type Props = {
@@ -10,6 +9,7 @@ type Props = {
   onControlModeChange: (mode: ControlMode) => void;
   isPaused: boolean;
   onPauseChange: (paused: boolean) => void;
+  onRestartLevel: () => void;
   onSaveAndExit: () => void;
 };
 
@@ -30,10 +30,10 @@ export function TaxiControlSettings({
   onControlModeChange,
   isPaused,
   onPauseChange,
+  onRestartLevel,
   onSaveAndExit,
 }: Props) {
   const [infoTarget, setInfoTarget] = useState<ControlMode | null>(null);
-  const { restartGame } = useGameLifecycle();
   const { isMuted, toggleMuted, setMuted, volume, setVolume } = useMusic();
 
   const infoText = useMemo(
@@ -60,7 +60,7 @@ export function TaxiControlSettings({
   };
 
   const handleRestart = () => {
-    restartGame();
+    onRestartLevel();
     handleResume();
   };
 
@@ -177,8 +177,15 @@ export function TaxiControlSettings({
                 >
                   Game Paused
                 </h2>
-                <p style={{ margin: 0, color: "rgba(223, 228, 255, 0.7)", fontSize: 15 }}>
-                  Take a breather, adjust your setup, then dive back into the city.
+                <p
+                  style={{
+                    margin: 0,
+                    color: "rgba(223, 228, 255, 0.7)",
+                    fontSize: 15,
+                  }}
+                >
+                  Take a breather, adjust your setup, then dive back into the
+                  city.
                 </p>
               </div>
               <span
@@ -214,12 +221,11 @@ export function TaxiControlSettings({
                   borderRadius: 18,
                   border: "none",
                   background: "linear-gradient(135deg, #5de0a5, #3ab18c)",
-                  color: "#041626",
+                  color: "#ffffffff",
                   padding: "14px 20px",
                   fontSize: 17,
                   fontWeight: 700,
                   cursor: "pointer",
-                  boxShadow: "0 16px 36px rgba(60, 180, 150, 0.4)",
                 }}
               >
                 Resume Drive
@@ -255,7 +261,6 @@ export function TaxiControlSettings({
                   fontSize: 17,
                   fontWeight: 700,
                   cursor: "pointer",
-                  boxShadow: "0 16px 38px rgba(214, 74, 122, 0.45)",
                 }}
               >
                 Save & Exit
@@ -337,7 +342,13 @@ export function TaxiControlSettings({
                     </span>
                   </div>
                 </label>
-                <p style={{ margin: 0, fontSize: 13, color: "rgba(223, 228, 255, 0.6)" }}>
+                <p
+                  style={{
+                    margin: 0,
+                    fontSize: 13,
+                    color: "rgba(223, 228, 255, 0.6)",
+                  }}
+                >
                   Tweak the soundtrack mix to suit your ride. Raising the volume
                   automatically unmutes the music.
                 </p>
@@ -354,9 +365,17 @@ export function TaxiControlSettings({
                   gap: 16,
                 }}
               >
-                <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                <div
+                  style={{ display: "flex", flexDirection: "column", gap: 4 }}
+                >
                   <h3 style={{ margin: 0, fontSize: 18 }}>Driving Controls</h3>
-                  <p style={{ margin: 0, fontSize: 13, color: "rgba(223, 228, 255, 0.6)" }}>
+                  <p
+                    style={{
+                      margin: 0,
+                      fontSize: 13,
+                      color: "rgba(223, 228, 255, 0.6)",
+                    }}
+                  >
                     Pick a control scheme and review the layout.
                   </p>
                 </div>
@@ -474,7 +493,8 @@ export function TaxiControlSettings({
                 >
                   {QUICK_TIPS.map((tip) => (
                     <li key={tip.title}>
-                      <span style={{ fontWeight: 600 }}>{tip.title}:</span> {tip.detail}
+                      <span style={{ fontWeight: 600 }}>{tip.title}:</span>{" "}
+                      {tip.detail}
                     </li>
                   ))}
                 </ul>

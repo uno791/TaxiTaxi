@@ -59,7 +59,11 @@ import {
 } from "./constants/cities";
 import CityStoryOverlay from "./components/UI/CityStoryOverlay";
 import FogEffect from "./components/FogEffect";
-import { saveGameProgress, loadGameProgress } from "./utils/storage";
+import {
+  saveGameProgress,
+  loadGameProgress,
+  clearGameProgress,
+} from "./utils/storage";
 
 function GameWorld() {
   const savedProgress = useMemo(() => loadGameProgress(), []);
@@ -69,7 +73,7 @@ function GameWorld() {
   const [isPaused, setIsPaused] = useState(false);
   const [dialogPaused, setDialogPaused] = useState(false); // ✅ added
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
-  const { activeCity, setActiveCity } = useGameLifecycle();
+  const { activeCity, setActiveCity, restartGame } = useGameLifecycle();
   const { setAppStage } = useMeta();
   const completedCitiesRef = useRef<Record<CityId, boolean>>({
     city1: false,
@@ -187,6 +191,10 @@ function GameWorld() {
   const handleMissionSummaryChange = useCallback(
     (summary: MissionProgressSummary) => {
       missionSummaryRef.current = summary;
+      resumeStatesRef.current[summary.cityId] = {
+        completedMissionIds: [...summary.completedMissionIds],
+        nextMissionId: summary.nextMissionId,
+      };
     },
     []
   );
@@ -281,6 +289,28 @@ function GameWorld() {
   const toggleTestMode = useCallback(() => {
     setTestMode((prev) => !prev);
   }, []);
+
+  const handleRestartLevel = useCallback(() => {
+    missionSummaryRef.current = null;
+    resumeStatesRef.current = {
+      city1: null,
+      city2: null,
+      city3: null,
+    } as Record<CityId, MissionResumeState | null>;
+    clearGameProgress();
+    setAvailableMissionTargets([]);
+    destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
+    setMissionsRemaining(missions.length);
+    setNextMissionName(missions.length > 0 ? missions[0].id : null);
+    restartGame();
+  }, [
+    missions,
+    restartGame,
+    setAvailableMissionTargets,
+    setMissionsRemaining,
+    setNextMissionName,
+    clearGameProgress,
+  ]);
 
   const handleSaveAndExit = useCallback(() => {
     const summary = missionSummaryRef.current;
@@ -419,9 +449,9 @@ function GameWorld() {
               onControlModeChange={setControlMode}
               isPaused={isPaused}
               onPauseChange={setIsPaused}
+              onRestartLevel={handleRestartLevel}
               onSaveAndExit={handleSaveAndExit}
             />
-            <RestartControl />
 
             {/* UI overlay */}
             <TaxiSpeedometer />
