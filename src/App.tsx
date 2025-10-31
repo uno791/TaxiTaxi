@@ -77,7 +77,14 @@ function GameWorld() {
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
   const previousLightingModeRef = useRef<"fake" | "fill">("fake");
   const [clearWeather, setClearWeather] = useState(false);
-  const { activeCity, setActiveCity, restartGame, isFreeRoam } =
+  const {
+    activeCity,
+    setActiveCity,
+    restartGame,
+    isFreeRoam,
+    shouldSkipIntro,
+    clearIntroSkip,
+  } =
     useGameLifecycle();
   const { setAppStage } = useMeta();
   const completedCitiesRef = useRef<Record<CityId, boolean>>({
@@ -127,13 +134,19 @@ function GameWorld() {
     : savedProgress
     ? null
     : activeCity;
-  const initialGameIntro = !isFreeRoam && !savedProgress;
+  const initialGameIntro = !isFreeRoam && !savedProgress && !shouldSkipIntro;
   const [introCity, setIntroCity] = useState<CityId | null>(initialIntroCity);
   const [storyCity, setStoryCity] = useState<CityId | null>(null);
   const [showGameIntro, setShowGameIntro] = useState(initialGameIntro);
   const [storyPaused, setStoryPaused] = useState(
     isFreeRoam ? false : initialGameIntro || initialIntroCity !== null
   );
+
+  useEffect(() => {
+    if (shouldSkipIntro) {
+      clearIntroSkip();
+    }
+  }, [shouldSkipIntro, clearIntroSkip]);
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
   const destinationRef = useRef(
@@ -384,7 +397,7 @@ function GameWorld() {
     destinationRef.current.set(Number.NaN, Number.NaN, Number.NaN);
     setMissionsRemaining(missions.length);
     setNextMissionName(missions.length > 0 ? missions[0].id : null);
-    restartGame();
+    restartGame({ skipIntro: true });
   }, [
     missions,
     restartGame,

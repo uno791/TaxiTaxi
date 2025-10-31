@@ -1,0 +1,108 @@
+.entrance-button {
+  padding: 14px 36px;
+  font-size: 20px;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  background: var(--bg, #ffcc00);
+  color: var(--color, #fff);
+  box-shadow: var(--shadow, 0 4px 12px rgba(0, 0, 0, 0.5));
+  transition: transform 0.2s ease, box-shadow 0.2s ease,
+    background-color 0.2s ease, filter 0.2s ease;
+  filter: var(--filter, none);
+}
+
+.entrance-button:hover,
+.entrance-button:focus-visible {
+  transform: scale(1.04);
+  box-shadow: var(--hover-shadow, 0 6px 20px rgba(0, 0, 0, 0.6));
+  background: var(--hover-bg, var(--bg, #ffcc00));
+  filter: var(--hover-filter, var(--filter, none));
+}
+
+.entrance-button:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.7);
+  outline-offset: 2px;
+}
+
+.entrance-button:disabled {
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: var(--bg-disabled, var(--bg, #ffcc00));
+  color: var(--color-disabled, var(--color, #fff));
+  filter: none;
+}
+
+.entrance-button:disabled:hover,
+.entrance-button:disabled:focus-visible {
+  transform: none;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  background: var(--bg-disabled, var(--bg, #ffcc00));
+}
+
+.entrance-button--primary {
+  --bg: #ffcc00;
+  --hover-bg: #ffd633;
+  --color: #000;
+  --shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  --hover-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+}
+
+.entrance-button--success {
+  --bg: #4caf50;
+  --hover-bg: #5ec15f;
+  --color: #fff;
+  --shadow: 0 4px 16px rgba(76, 175, 80, 0.45);
+  --hover-shadow: 0 6px 22px rgba(76, 175, 80, 0.6);
+  --bg-disabled: rgba(255, 255, 255, 0.25);
+  --color-disabled: rgba(255, 255, 255, 0.6);
+}
+
+.entrance-button--secondary {
+  --bg: linear-gradient(
+    135deg,
+    rgba(57, 73, 171, 0.95),
+    rgba(33, 150, 243, 0.95)
+  );
+  --hover-bg: linear-gradient(
+    135deg,
+    rgba(57, 73, 171, 1),
+    rgba(33, 150, 243, 1)
+  );
+  --color: #fff;
+  --shadow: 0 4px 16px rgba(33, 150, 243, 0.45);
+  --hover-shadow: 0 6px 22px rgba(33, 150, 243, 0.6);
+}
+
+.entrance-button--light {
+  --bg: rgba(255, 255, 255, 0.85);
+  --hover-bg: rgba(255, 255, 255, 1);
+  --color: #000;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --hover-shadow: 0 3px 12px rgba(0, 0, 0, 0.35);
+  font-size: 14px;
+  padding: 8px 16px;
+  font-weight: 600;
+}
+
+.entrance-button--danger {
+  --bg: #ff5959;
+  --hover-bg: #ff7676;
+  --color: #fff;
+  --shadow: 0 4px 12px rgba(255, 89, 89, 0.45);
+  --hover-shadow: 0 6px 18px rgba(255, 89, 89, 0.6);
+  font-size: 16px;
+  padding: 10px 20px;
+}
+
+.entrance-button--ghost {
+  --bg: rgba(255, 255, 255, 0.2);
+  --hover-bg: rgba(255, 255, 255, 0.35);
+  --color: #fff;
+  --shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  --hover-shadow: 0 3px 12px rgba(0, 0, 0, 0.3);
+  font-size: 16px;
+  padding: 10px 20px;
+}

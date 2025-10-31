@@ -1,15 +1,50 @@
+import { useState } from "react";
 import { useMeta } from "../../context/MetaContext";
 import { useGameLifecycle } from "../../GameContext";
 import { CITY_SEQUENCE } from "../../constants/cities";
 import entranceBackground from "../../assets/entrance.png";
+import { clearGameProgress, loadGameProgress } from "../../utils/storage";
+import "./EntranceScreen.css";
 
 export default function EntranceScreen() {
   const { currentUser, setAppStage, logout } = useMeta();
   const { restartGame, setActiveCity } = useGameLifecycle();
   const defaultCity = CITY_SEQUENCE[0] ?? "city1";
+  const [savedProgress, setSavedProgress] = useState(() => loadGameProgress());
+  const [isConfirmingNewGame, setIsConfirmingNewGame] = useState(false);
+  const hasSavedGame = Boolean(savedProgress);
 
-  const handleStartCampaign = () => {
+  const startCampaignFlow = () => {
     setActiveCity(defaultCity);
+    restartGame({ mode: "campaign" });
+    setAppStage("car");
+  };
+
+  const handleStartNewGame = () => {
+    if (hasSavedGame) {
+      setIsConfirmingNewGame(true);
+      return;
+    }
+
+    clearGameProgress();
+    setSavedProgress(null);
+    startCampaignFlow();
+  };
+
+  const handleConfirmNewGame = () => {
+    clearGameProgress();
+    setSavedProgress(null);
+    setIsConfirmingNewGame(false);
+    startCampaignFlow();
+  };
+
+  const handleCancelNewGame = () => {
+    setIsConfirmingNewGame(false);
+  };
+
+  const handleContinueGame = () => {
+    if (!savedProgress) return;
+    setActiveCity(savedProgress.cityId);
     restartGame({ mode: "campaign" });
     setAppStage("car");
   };
@@ -54,27 +89,13 @@ export default function EntranceScreen() {
       {/* 🔹 Sign out button (top right) */}
       <button
         onClick={logout}
+        className="entrance-button entrance-button--light"
         style={{
           position: "absolute",
           top: "20px",
           right: "20px",
-          padding: "8px 16px",
-          backgroundColor: "rgba(255, 255, 255, 0.85)",
-          color: "#000",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer",
-          fontWeight: "bold",
-          fontSize: "14px",
           zIndex: 2,
-          boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
         }}
-        onMouseEnter={(e) =>
-          (e.currentTarget.style.backgroundColor = "rgba(255,255,255,1)")
-        }
-        onMouseLeave={(e) =>
-          (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.85)")
-        }
       >
         Sign Out
       </button>
@@ -112,58 +133,93 @@ export default function EntranceScreen() {
         }}
       >
         <button
-          style={{
-            padding: "14px 36px",
-            fontSize: "20px",
-            fontWeight: "bold",
-            backgroundColor: "#ffcc00",
-            color: "#000",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            boxShadow: "0 4px 12px rgba(0,0,0,0.5)",
-            transition: "transform 0.2s ease, background-color 0.2s ease",
-          }}
-          onClick={handleStartCampaign}
-          onMouseEnter={(e) =>
-            (e.currentTarget.style.backgroundColor = "#ffd633")
-          }
-          onMouseLeave={(e) =>
-            (e.currentTarget.style.backgroundColor = "#ffcc00")
-          }
+          className="entrance-button entrance-button--primary"
+          onClick={handleStartNewGame}
         >
-          Start Game
+          Start New Game
         </button>
 
         <button
-          style={{
-            padding: "14px 36px",
-            fontSize: "20px",
-            fontWeight: "bold",
-            background:
-              "linear-gradient(135deg, rgba(57, 73, 171, 0.95), rgba(33, 150, 243, 0.95))",
-            color: "#fff",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            boxShadow: "0 4px 16px rgba(33, 150, 243, 0.45)",
-            transition: "transform 0.2s ease, box-shadow 0.2s ease",
-          }}
+          className="entrance-button entrance-button--success"
+          disabled={!hasSavedGame}
+          onClick={handleContinueGame}
+        >
+          Continue Game
+        </button>
+
+        <button
+          className="entrance-button entrance-button--secondary"
           onClick={handleStartFreeRoam}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.04)";
-            e.currentTarget.style.boxShadow =
-              "0 6px 20px rgba(33, 150, 243, 0.6)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow =
-              "0 4px 16px rgba(33, 150, 243, 0.45)";
-          }}
         >
           Free Roam
         </button>
       </div>
+
+      {isConfirmingNewGame && (
+        <div
+          style={{
+            position: "absolute",
+            top: 0,
+            left: 0,
+            width: "100%",
+            height: "100%",
+            backgroundColor: "rgba(0, 0, 0, 0.65)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 3,
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "rgba(15, 23, 42, 0.95)",
+              borderRadius: "12px",
+              padding: "28px 32px",
+              width: "100%",
+              maxWidth: "420px",
+              textAlign: "center",
+              boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+            }}
+          >
+            <h2
+              style={{
+                fontSize: "24px",
+                marginBottom: "12px",
+                color: "#ffcc00",
+              }}
+            >
+              Start Fresh?
+            </h2>
+            <p
+              style={{
+                fontSize: "16px",
+                lineHeight: 1.5,
+                marginBottom: "24px",
+              }}
+            >
+              Starting a new game will erase your current progress. Are you sure
+              you want to continue?
+            </p>
+            <div
+              style={{ display: "flex", justifyContent: "center", gap: "16px" }}
+            >
+              <button
+                onClick={handleConfirmNewGame}
+                className="entrance-button entrance-button--danger"
+              >
+                Yes, start over
+              </button>
+              <button
+                onClick={handleCancelNewGame}
+                className="entrance-button entrance-button--ghost"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -9,7 +9,7 @@ export default function RestartControl() {
   const lastControllerRestart = useRef(false);
 
   const triggerRestart = useCallback(() => {
-    restartGame();
+    restartGame({ skipIntro: true });
   }, [restartGame]);
 
   useEffect(() => {
