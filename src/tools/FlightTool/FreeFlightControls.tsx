@@ -14,9 +14,14 @@ export type FreeFlightControlsProps = {
   slowMultiplier?: number;
   /** Higher values snap to target velocity faster, lower values feel floatier. */
   responsiveness?: number;
+  /** Mouse look sensitivity while flight mode is active. */
+  lookSensitivity?: number;
 };
 
 const WORLD_UP = new THREE.Vector3(0, 1, 0);
+const DEFAULT_FORWARD = new THREE.Vector3(0, 0, -1);
+const MIN_PITCH = THREE.MathUtils.degToRad(-89);
+const MAX_PITCH = THREE.MathUtils.degToRad(89);
 
 const HANDLED_KEYS = new Set([
   "w",
@@ -62,10 +67,12 @@ export function FreeFlightControls({
   boostMultiplier = 1.75,
   slowMultiplier = 0.2,
   responsiveness = 12,
+  lookSensitivity = 0.0025,
 }: FreeFlightControlsProps) {
-  const { camera, controls } = useThree((state) => ({
+  const { camera, controls, gl } = useThree((state) => ({
     camera: state.camera,
     controls: state.controls as OrbitControls | null,
+    gl: state.gl,
   }));
 
   const keysRef = useRef<Record<string, boolean>>({});
@@ -75,6 +82,11 @@ export function FreeFlightControls({
   const rightRef = useRef(new THREE.Vector3());
   const moveRef = useRef(new THREE.Vector3());
   const frameMoveRef = useRef(new THREE.Vector3());
+  const pointerLockedRef = useRef(false);
+  const yawRef = useRef(0);
+  const pitchRef = useRef(0);
+  const eulerRef = useRef(new THREE.Euler(0, 0, 0, "YXZ"));
+  const lookDirRef = useRef(new THREE.Vector3());
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -118,6 +130,89 @@ export function FreeFlightControls({
     velocityRef.current.set(0, 0, 0);
     targetVelocityRef.current.set(0, 0, 0);
   }, [enabled]);
+
+  useEffect(() => {
+    const canvas = gl?.domElement;
+    if (!canvas) return;
+
+    const updateAnglesFromCamera = () => {
+      const euler = eulerRef.current;
+      euler.setFromQuaternion(camera.quaternion, "YXZ");
+      yawRef.current = euler.y;
+      pitchRef.current = THREE.MathUtils.clamp(euler.x, MIN_PITCH, MAX_PITCH);
+    };
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (!enabled) return;
+      if (event.button !== 0) return;
+      if (document.pointerLockElement === canvas) return;
+      canvas.requestPointerLock?.();
+    };
+
+    const handlePointerLockChange = () => {
+      const locked = document.pointerLockElement === canvas;
+      pointerLockedRef.current = locked;
+      if (locked) {
+        updateAnglesFromCamera();
+      }
+    };
+
+    const handlePointerLockError = () => {
+      pointerLockedRef.current = false;
+    };
+
+    const handlePointerMove = (event: PointerEvent) => {
+      if (!enabled) return;
+      if (!pointerLockedRef.current) return;
+
+      const movementX = event.movementX || 0;
+      const movementY = event.movementY || 0;
+
+      const nextYaw = yawRef.current - movementX * lookSensitivity;
+      const nextPitch = THREE.MathUtils.clamp(
+        pitchRef.current - movementY * lookSensitivity,
+        MIN_PITCH,
+        MAX_PITCH
+      );
+
+      yawRef.current = nextYaw;
+      pitchRef.current = nextPitch;
+
+      const euler = eulerRef.current;
+      euler.set(nextPitch, nextYaw, 0, "YXZ");
+      camera.quaternion.setFromEuler(euler);
+
+      if (controls) {
+        const lookDir = lookDirRef.current;
+        lookDir.copy(DEFAULT_FORWARD).applyQuaternion(camera.quaternion);
+        controls.target.copy(camera.position).add(lookDir);
+        controls.update?.();
+      }
+    };
+
+    canvas.addEventListener("pointerdown", handlePointerDown);
+    document.addEventListener("pointerlockchange", handlePointerLockChange);
+    document.addEventListener("pointerlockerror", handlePointerLockError);
+    window.addEventListener("pointermove", handlePointerMove);
+
+    updateAnglesFromCamera();
+
+    return () => {
+      canvas.removeEventListener("pointerdown", handlePointerDown);
+      document.removeEventListener("pointerlockchange", handlePointerLockChange);
+      document.removeEventListener("pointerlockerror", handlePointerLockError);
+      window.removeEventListener("pointermove", handlePointerMove);
+    };
+  }, [camera, controls, enabled, gl, lookSensitivity]);
+
+  useEffect(() => {
+    if (enabled) return;
+    const canvas = gl?.domElement;
+    if (pointerLockedRef.current && canvas && document.pointerLockElement === canvas) {
+      document.exitPointerLock?.();
+    }
+    pointerLockedRef.current = false;
+  }, [enabled, gl]);
 
   useFrame((_, delta) => {
     const velocity = velocityRef.current;
@@ -191,6 +286,7 @@ export function FreeFlightControls({
 
     if (controls) {
       controls.target.add(frameMove);
+      controls.update?.();
     }
   });
 

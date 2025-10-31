@@ -315,6 +315,7 @@ function GameWorld() {
     overlay: flightOverlay,
     flightControls,
   } = useFlightMode({
+    allowToggle: isFreeRoam,
     onEnable: () => setIsPaused(false),
   });
 

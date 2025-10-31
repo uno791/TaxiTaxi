@@ -5,15 +5,25 @@ import { FreeFlightControls } from "./FreeFlightControls";
 export type FlightModeOptions = {
   onEnable?: () => void;
   onDisable?: () => void;
+  allowToggle?: boolean;
 };
 
 export function useFlightMode({
   onEnable,
   onDisable,
+  allowToggle = true,
 }: FlightModeOptions = {}) {
   const [enabled, setEnabled] = useState(false);
 
   useEffect(() => {
+    if (!allowToggle && enabled) {
+      setEnabled(false);
+    }
+  }, [allowToggle, enabled]);
+
+  useEffect(() => {
+    if (!allowToggle) return;
+
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.repeat || event.metaKey) return;
 
@@ -30,7 +40,7 @@ export function useFlightMode({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
+  }, [allowToggle]);
 
   useEffect(() => {
     if (enabled) onEnable?.();
@@ -38,7 +48,7 @@ export function useFlightMode({
   }, [enabled, onEnable, onDisable]);
 
   const overlay = useMemo(() => {
-    if (!enabled) return null;
+    if (!allowToggle || !enabled) return null;
 
     return (
       <div
@@ -61,16 +71,18 @@ export function useFlightMode({
         </strong>
         <div>WASD to move • Space/E up • Q/Ctrl down</div>
         <div>Shift to boost • Alt to trim speed</div>
+        <div>Click once to capture the mouse and look around</div>
         <div style={{ marginTop: 6, opacity: 0.75 }}>
-          Press ` to return to the chase camera.
+          Press ` to return to the chase camera • Esc to release the mouse.
         </div>
       </div>
     );
-  }, [enabled]);
+  }, [allowToggle, enabled]);
 
   const flightControls = useMemo(() => {
+    if (!allowToggle) return null;
     return <FreeFlightControls enabled={enabled} />;
-  }, [enabled]);
+  }, [allowToggle, enabled]);
 
   return { enabled, overlay, flightControls };
 }
