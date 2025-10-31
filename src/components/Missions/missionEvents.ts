@@ -21,7 +21,22 @@ baseMap["night1-mirror-man"] = [
     event: "the-child-apparition",
     position: [12.159, 1, -54.178],
   },
+  {
+    missionId: "night1-child",
+    event: "the-child-apparition",
+    position: [39.63, 1, -15.993],
+  },
 ];
+
+baseMap["night1-child"] = [
+  {
+    missionId: "night1-child",
+    event: "the-child-apparition",
+    position: [39.63, 1, -15.993],
+  },
+];
+
+
 
 export const MISSION_EVENTS_BY_ID: MissionEventsById = baseMap;
 
