@@ -34,6 +34,9 @@ type MusicContextValue = {
   requestTrack: (id: MusicTrackId, priorityOverride?: number) => void;
   releaseTrack: (id: MusicTrackId) => void;
   availableTracks: MusicTrackConfig[];
+  isSuppressed: boolean;
+  suppressPlayback: () => void;
+  releasePlayback: () => void;
 };
 
 const MusicContext = createContext<MusicContextValue | undefined>(undefined);
@@ -64,6 +67,9 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   const activeTrackIdRef = useRef<MusicTrackId>(DEFAULT_MUSIC_TRACK_ID);
   const isMutedRef = useRef(isMuted);
   const volumeRef = useRef(volume);
+  const suppressionCountRef = useRef(0);
+  const suppressedRef = useRef(false);
+  const [isSuppressedState, setIsSuppressedState] = useState(false);
 
   const availableTracks = useMemo(
     () => Object.values(MUSIC_TRACKS),
@@ -190,7 +196,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     readyRef.current = true;
 
-    if (hasInteractedRef.current && !isMutedRef.current) {
+    if (hasInteractedRef.current && !isMutedRef.current && !suppressedRef.current) {
       const currentAudio = audioMapRef.current[activeTrackIdRef.current];
       if (currentAudio) {
         const playPromise = currentAudio.play();
@@ -219,10 +225,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
 
     Object.values(audios).forEach((audio) => {
       if (!audio) return;
-      audio.muted = isMuted;
+      audio.muted = isMuted || isSuppressedState;
     });
 
-    if (!isMuted && hasInteractedRef.current) {
+    if (!isMuted && !isSuppressedState && hasInteractedRef.current) {
       const currentAudio = audios[activeTrackIdRef.current];
       if (currentAudio && currentAudio.paused) {
         const playPromise = currentAudio.play();
@@ -231,7 +237,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
         }
       }
     }
-  }, [isMuted]);
+  }, [isMuted, isSuppressedState]);
 
   useEffect(() => {
     activeTrackIdRef.current = activeTrack.id;
@@ -240,6 +246,10 @@ export function MusicProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     isMutedRef.current = isMuted;
   }, [isMuted]);
+
+  useEffect(() => {
+    suppressedRef.current = isSuppressedState;
+  }, [isSuppressedState]);
 
   useEffect(() => {
     volumeRef.current = volume;
@@ -267,7 +277,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       hasInteractedRef.current = true;
       removeListeners();
 
-      if (isMutedRef.current) return;
+      if (isMutedRef.current || suppressedRef.current) return;
 
       const audio = audioMapRef.current[activeTrackIdRef.current];
       if (!audio) return;
@@ -321,7 +331,7 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       currentAudio.currentTime = 0;
     }
 
-    if (!isMuted && hasInteractedRef.current) {
+    if (!isMuted && !suppressedRef.current && hasInteractedRef.current) {
       const playPromise = currentAudio.play();
       if (playPromise) {
         void playPromise.catch(() => undefined);
@@ -335,6 +345,25 @@ export function MusicProvider({ children }: { children: ReactNode }) {
     setIsMuted((previous) => !previous);
   }, []);
 
+  const updateSuppressedState = useCallback(() => {
+    const suppressed = suppressionCountRef.current > 0;
+    if (suppressedRef.current !== suppressed) {
+      suppressedRef.current = suppressed;
+      setIsSuppressedState(suppressed);
+    }
+  }, []);
+
+  const suppressPlayback = useCallback(() => {
+    suppressionCountRef.current += 1;
+    updateSuppressedState();
+  }, [updateSuppressedState]);
+
+  const releasePlayback = useCallback(() => {
+    if (suppressionCountRef.current === 0) return;
+    suppressionCountRef.current -= 1;
+    updateSuppressedState();
+  }, [updateSuppressedState]);
+
   const contextValue = useMemo<MusicContextValue>(
     () => ({
       currentTrackId: activeTrack.id,
@@ -347,8 +376,23 @@ export function MusicProvider({ children }: { children: ReactNode }) {
       requestTrack,
       releaseTrack,
       availableTracks,
+      isSuppressed: isSuppressedState,
+      suppressPlayback,
+      releasePlayback,
     }),
-    [activeTrack.id, availableTracks, isMuted, releaseTrack, requestTrack, toggleMuted, volume, setVolume]
+    [
+      activeTrack.id,
+      availableTracks,
+      isMuted,
+      releaseTrack,
+      requestTrack,
+      toggleMuted,
+      volume,
+      setVolume,
+      isSuppressedState,
+      suppressPlayback,
+      releasePlayback,
+    ]
   );
 
   return (
