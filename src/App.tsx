@@ -249,7 +249,10 @@ function GameWorld() {
   const missions = MISSIONS_BY_CITY[activeCity];
   const savedForActiveCity =
     savedProgress && savedProgress.cityId === activeCity ? savedProgress : null;
-  const spawnPosition = CITY_SPAWN_POINTS[activeCity];
+  const defaultSpawnPosition = CITY_SPAWN_POINTS[activeCity];
+  const [spawnPosition, setSpawnPosition] = useState<[number, number, number]>(
+    defaultSpawnPosition
+  );
   const introData = introCity ? CITY_INTRO_DIALOGS[introCity] : null;
   const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
   const [testMode, setTestMode] = useState(isFreeRoam);
@@ -266,6 +269,22 @@ function GameWorld() {
   });
   const [nextMissionName, setNextMissionName] = useState<string | null>(
     savedForActiveCity ? savedForActiveCity.nextMissionId : null
+  );
+
+  useEffect(() => {
+    const citySpawn = CITY_SPAWN_POINTS[activeCity];
+    setSpawnPosition([citySpawn[0], citySpawn[1], citySpawn[2]]);
+  }, [activeCity, setSpawnPosition]);
+
+  const handleMissionFailedTeleport = useCallback(
+    (startPosition: [number, number, number]) => {
+      setSpawnPosition([
+        startPosition[0],
+        startPosition[1],
+        startPosition[2],
+      ]);
+    },
+    [setSpawnPosition]
   );
 
   useEffect(() => {
@@ -536,6 +555,7 @@ function GameWorld() {
                   }
                   onMissionProgress={handleMissionProgress}
                   onMissionSummaryChange={handleMissionSummaryChange}
+                  onMissionFailed={handleMissionFailedTeleport}
                   initialResumeState={resumeStatesRef.current[activeCity]}
                   unlockAll={isFreeRoam}
                 />

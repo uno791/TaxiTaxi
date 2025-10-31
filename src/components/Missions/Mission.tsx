@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { JSX } from "react/jsx-runtime";
 import type { MutableRefObject } from "react";
-import type { Object3D } from "three";
+import { Vector3, type Object3D } from "three";
 import { useGame } from "../../GameContext";
 import { MissionZone } from "./MissionZone";
 import { PassengerModel } from "../Ground/SceneObjects/PassengerModel";
@@ -127,6 +127,7 @@ type MissionProps = JSX.IntrinsicElements["group"] & {
   onAllMissionsCompleted?: (cityId: CityId) => void;
   onMissionProgress?: (remaining: number, nextName: string | null) => void;
   onMissionSummaryChange?: (summary: MissionProgressSummary) => void;
+  onMissionFailed?: (startPosition: [number, number, number]) => void;
   initialResumeState?: MissionResumeState | null;
   unlockAll?: boolean;
 };
@@ -154,6 +155,7 @@ export default function Mission({
   onAllMissionsCompleted,
   onMissionProgress,
   onMissionSummaryChange,
+  onMissionFailed,
   initialResumeState = null,
   unlockAll = false,
   ...groupProps
@@ -174,6 +176,10 @@ export default function Mission({
   const missionConfigByIdRef = useRef<Record<string, MissionConfig>>({});
   const missionPerformance = useMissionPerformance();
   const resumeStateRef = useRef<MissionResumeState | null>(initialResumeState);
+  const missionStartPositionsRef = useRef<
+    Record<string, [number, number, number]>
+  >({});
+  const missionStartScratchRef = useRef(new Vector3());
 
   const playMissionStartSound = useCallback(() => {
     const audio = missionStartSoundRef.current;
@@ -292,6 +298,7 @@ export default function Mission({
       resumeState
     );
     missionStatesRef.current = initialState;
+    missionStartPositionsRef.current = {};
     setMissionStates(initialState);
     setPromptMissionId(null);
     promptMissionIdRef.current = null;
@@ -371,8 +378,63 @@ export default function Mission({
     promptMissionIdRef.current = promptMissionId;
   }, [promptMissionId]);
 
+  const recordMissionStartPosition = useCallback(
+    (missionId: string, config: MissionConfig) => {
+      let startPosition: [number, number, number];
+      const taxi = taxiRef?.current ?? null;
+      if (taxi) {
+        const scratch = missionStartScratchRef.current;
+        taxi.updateMatrixWorld(true);
+        taxi.getWorldPosition(scratch);
+        startPosition = [scratch.x, scratch.y, scratch.z];
+      } else if (config.pickupPosition) {
+        startPosition = [
+          config.pickupPosition[0],
+          config.pickupPosition[1],
+          config.pickupPosition[2],
+        ];
+      } else {
+        startPosition = [0, 0, 0];
+      }
+      missionStartPositionsRef.current[missionId] = startPosition;
+    },
+    [taxiRef]
+  );
+
+  const teleportToMissionStart = useCallback(
+    (missionId: string) => {
+      const recorded = missionStartPositionsRef.current[missionId];
+      let target = recorded;
+      if (!target) {
+        const config = missionConfigByIdRef.current[missionId];
+        if (config?.pickupPosition) {
+          target = [
+            config.pickupPosition[0],
+            config.pickupPosition[1],
+            config.pickupPosition[2],
+          ];
+        }
+      }
+      if (target && onMissionFailed) {
+        onMissionFailed([
+          target[0],
+          target[1],
+          target[2],
+        ] as [number, number, number]);
+      }
+      if (recorded) {
+        delete missionStartPositionsRef.current[missionId];
+      }
+    },
+    [onMissionFailed]
+  );
+
   useEffect(() => {
     if (gameOver && !lastGameOverRef.current) {
+      const activeId = activeMissionIdRef.current;
+      if (activeId) {
+        teleportToMissionStart(activeId);
+      }
       playMissionLoseSound();
       updateMissionStates((prev) => {
         if (unlockAll) {
@@ -438,6 +500,7 @@ export default function Mission({
     missions,
     playMissionLoseSound,
     updateMissionStates,
+    teleportToMissionStart,
     setActiveMissionId,
     setPromptMissionId,
     setDialogVisible,
@@ -623,6 +686,7 @@ export default function Mission({
           } as Record<string, MissionState>)
       );
       setMissionFailureActive(false);
+      recordMissionStartPosition(missionId, config);
       missionPerformance.beginMission(missionId);
       if (onDestinationChange) {
         onDestinationChange(config.dropoffPosition);
@@ -645,6 +709,7 @@ export default function Mission({
       updateMissionStates,
       setTimeLeft,
       setTimer,
+      recordMissionStartPosition,
       setMissionFailureActive,
     ]
   );
@@ -755,6 +820,8 @@ export default function Mission({
         onDestinationChange(null);
       }
 
+      delete missionStartPositionsRef.current[missionId];
+
       // ✅ Stop timer AFTER computing bonus
       if (timerRef.current) {
         window.clearInterval(timerRef.current);
@@ -842,6 +909,7 @@ export default function Mission({
             setDialogVisible(false);
             setCompletionInfo(null);
             if (onDestinationChange) onDestinationChange(null);
+            teleportToMissionStart(activeId);
             setTimer({ secondsLeft: 0 }); // Triggers MissionOverlay popup instead of browser alert
             playMissionLoseSound();
           }
@@ -867,6 +935,7 @@ export default function Mission({
     setActiveMissionId,
     setCompletionInfo,
     setDialogVisible,
+    teleportToMissionStart,
     updateMissionStates,
     setPromptMissionId,
     setTimer,
@@ -1065,6 +1134,7 @@ export default function Mission({
       setCompletion(null);
       setTimer(null); // TIMER: reset on unmount
       setMissionFailureActive(false);
+      missionStartPositionsRef.current = {};
       if (onDestinationChange) {
         onDestinationChange(null);
       }
