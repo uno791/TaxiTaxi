@@ -4,7 +4,7 @@ import type { JSX } from "react/jsx-runtime";
 import { tagRoadSurfaces } from "../../utils/markRoadSurfaces";
 
 export function NewRoadtest(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/City3RoadsFixed.glb");
+  const { scene } = useGLTF("/models/all_roads_City3.glb");
   const preparedScene = useMemo(() => {
     tagRoadSurfaces(scene, { includeNameHints: ["road"] });
     return scene;
@@ -17,4 +17,4 @@ export function NewRoadtest(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/City3RoadsFixed.glb");
+useGLTF.preload("/models/all_roads_City3.glb");

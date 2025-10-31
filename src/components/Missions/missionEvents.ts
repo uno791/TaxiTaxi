@@ -89,7 +89,7 @@ baseMap["night2-officer"] = [
   {
     missionId: "night2-officer",
     event: "the-weeping-spirit",
-    position: [92.196, 1, -91.063 ],
+    position: [92.196, 1, -91.063],
   },
 ];
 
@@ -102,7 +102,7 @@ baseMap["night3-reaper"] = [
   {
     missionId: "night3-reaper",
     event: "the-weeping-spirit",
-    position: [77.87, 1, -473.354  ],
+    position: [77.87, 1, -473.354],
   },
 ];
 
@@ -110,12 +110,12 @@ baseMap["night3-priest"] = [
   {
     missionId: "night3-priest",
     event: "the-child-apparition",
-    position: [28.979, 1, -483.624],
+    position: [19.719, 1, -526.845],
   },
   {
     missionId: "night3-priest",
     event: "the-weeping-spirit",
-    position: [35.368, 1, -511.384],
+    position: [-33.233, 1, -506.554],
   },
 ];
 
@@ -171,12 +171,10 @@ baseMap["night3-voice"] = [
   },
 ];
 
-
 export const MISSION_EVENTS_BY_ID: MissionEventsById = baseMap;
 
-export const ALL_MISSION_EVENTS: MissionEventPlacement[] = Object.values(
-  MISSION_EVENTS_BY_ID
-).flat();
+export const ALL_MISSION_EVENTS: MissionEventPlacement[] =
+  Object.values(MISSION_EVENTS_BY_ID).flat();
 
 export const getMissionEventsForMission = (
   missionId: string
