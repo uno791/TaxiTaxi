@@ -265,7 +265,7 @@ const city1Missions: MissionConfig[] = [
     dropoffPosition: [77.82, 0, -21.603],
     dropoffHint: "the overpass mirror stand",
     reward: 450,
-    timeLimit: 30,
+    timeLimit: 80,
     pickupRadius: 4,
     dropoffRadius: 4.5,
     passengerRotation: [0, Math.PI, 0],

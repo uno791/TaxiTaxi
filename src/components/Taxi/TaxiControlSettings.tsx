@@ -19,10 +19,15 @@ const CONTROL_OPTIONS: Array<{ mode: ControlMode; label: string }> = [
   { mode: "controller", label: "Controller" },
 ];
 
-const QUICK_TIPS: Array<{ title: string; detail: string }> = [
-  { title: "Shift + R", detail: "Quickly restart the current night." },
-  { title: "Space / Cross", detail: "Tap to boost or engage the handbrake." },
-  { title: "M", detail: "Toggle the mission tracker overlay." },
+const GAME_TIPS = [
+  "Follow the “M” marker on the minimap to locate your next mission, or use the “Find Next Mission” button if you have any finders available.",
+  "In the Upgrade Menu, you can purchase extra speed, improved boost duration, and additional Mission Finder charges for R400 each.",
+  "Avoid collisions — they drain both your fuel money and your boost energy much faster.",
+];
+const CONTROL_GUIDE = [
+  "Drive using the Arrow Keys or W/A/S/D.",
+  "Press Space to activate your boost.",
+  "Press C to switch between different camera views.",
 ];
 
 export function TaxiControlSettings({
@@ -140,6 +145,7 @@ export function TaxiControlSettings({
             justifyContent: "center",
             zIndex: 30,
             backdropFilter: "blur(4px)",
+            fontFamily: "'Poppins', 'Roboto', 'Segoe UI', sans-serif",
           }}
           onClick={handleResume}
         >
@@ -147,6 +153,8 @@ export function TaxiControlSettings({
             onClick={(event) => event.stopPropagation()}
             style={{
               width: "min(860px, 92vw)",
+              maxHeight: "80vh", // limit menu to screen height
+              overflowY: "auto", // scroll inside menu instead of page
               background: "linear-gradient(155deg, #101727 0%, #1c2740 100%)",
               borderRadius: 26,
               padding: "32px 36px",
@@ -188,22 +196,6 @@ export function TaxiControlSettings({
                   city.
                 </p>
               </div>
-              <span
-                style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  width: 48,
-                  height: 48,
-                  borderRadius: 16,
-                  background: "rgba(255, 255, 255, 0.12)",
-                  fontWeight: 700,
-                  fontSize: 20,
-                  letterSpacing: "0.3em",
-                }}
-              >
-                II
-              </span>
             </div>
 
             <div
@@ -468,6 +460,7 @@ export function TaxiControlSettings({
                 )}
               </section>
 
+              {/* Game Tips Section */}
               <section
                 style={{
                   background: "rgba(9, 14, 28, 0.55)",
@@ -479,7 +472,9 @@ export function TaxiControlSettings({
                   gap: 12,
                 }}
               >
-                <h3 style={{ margin: 0, fontSize: 18 }}>Quick Tips</h3>
+                <h3 style={{ margin: 0, fontSize: 18, color: "#ffcc00" }}>
+                  Game Tips
+                </h3>
                 <ul
                   style={{
                     margin: 0,
@@ -489,13 +484,44 @@ export function TaxiControlSettings({
                     gap: 8,
                     fontSize: 13,
                     color: "rgba(223, 228, 255, 0.7)",
+                    lineHeight: 1.6,
                   }}
                 >
-                  {QUICK_TIPS.map((tip) => (
-                    <li key={tip.title}>
-                      <span style={{ fontWeight: 600 }}>{tip.title}:</span>{" "}
-                      {tip.detail}
-                    </li>
+                  {GAME_TIPS.map((tip, index) => (
+                    <li key={index}>{tip}</li>
+                  ))}
+                </ul>
+              </section>
+
+              {/* Controls Section */}
+              <section
+                style={{
+                  background: "rgba(9, 14, 28, 0.55)",
+                  borderRadius: 18,
+                  padding: "20px 22px",
+                  border: "1px solid rgba(84, 112, 180, 0.3)",
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 12,
+                }}
+              >
+                <h3 style={{ margin: 0, fontSize: 18, color: "#ffcc00" }}>
+                  Controls
+                </h3>
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: 18,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    fontSize: 13,
+                    color: "rgba(223, 228, 255, 0.7)",
+                    lineHeight: 1.6,
+                  }}
+                >
+                  {CONTROL_GUIDE.map((ctrl, index) => (
+                    <li key={index}>{ctrl}</li>
                   ))}
                 </ul>
               </section>
