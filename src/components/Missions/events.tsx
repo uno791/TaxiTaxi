@@ -5,6 +5,7 @@ import { useFrame } from "@react-three/fiber";
 import * as THREE from "three";
 import type { Group, PointLight, Object3D } from "three";
 import { HorrorController } from "../Effects/HorrorController";
+import { useMusic } from "../../context/MusicContext";
 
 export type MissionEventProps = {
   position: [number, number, number];
@@ -98,6 +99,7 @@ const createSpiritApparition = ({
     const insideJumpscareRef = useRef(false);
     const [blackout, setBlackout] = useState(false);
     const overlayElementRef = useRef<HTMLDivElement | null>(null);
+    const { suppressPlayback, releasePlayback } = useMusic();
     const glowUniforms = useMemo(
       () => ({
         uTime: { value: 0 },
@@ -143,6 +145,14 @@ const createSpiritApparition = ({
         screamAudioRef.current = null;
       };
     }, [cryingSound]);
+
+    useEffect(() => {
+      if (!active) return;
+      suppressPlayback();
+      return () => {
+        releasePlayback();
+      };
+    }, [active, suppressPlayback, releasePlayback]);
 
     const clearBlackoutTimeout = useCallback(() => {
       if (blackoutTimeoutRef.current !== null) {

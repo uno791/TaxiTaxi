@@ -15,7 +15,6 @@ import {
 } from "./MissionPerformanceContext";
 import { getMissionEventComponent } from "./events";
 import { getMissionEventsForMission } from "./missionEvents";
-import { useMusic } from "../../context/MusicContext";
 
 export type MissionState =
   | "locked"
@@ -273,8 +272,6 @@ export default function Mission({
   const timerRef = useRef<number | null>(null);
   const completionDisplayedRef = useRef(false);
 
-  const { suppressPlayback, releasePlayback } = useMusic();
-  const suppressedMissionRef = useRef<string | null>(null);
   const { setMoney, gameOver } = useGame();
   // TIMER: include setTimer
   const {
@@ -325,10 +322,6 @@ export default function Mission({
     if (onDestinationChange) {
       onDestinationChange(null);
     }
-    if (suppressedMissionRef.current) {
-      releasePlayback();
-      suppressedMissionRef.current = null;
-    }
     resumeStateRef.current = null;
   }, [
     missions,
@@ -345,7 +338,6 @@ export default function Mission({
     setTimer,
     setMissionFailureActive,
     setMissionFailureMessage,
-    releasePlayback,
   ]);
 
   useEffect(() => {
@@ -507,10 +499,6 @@ export default function Mission({
       if (onDestinationChange) {
         onDestinationChange(null);
       }
-      if (suppressedMissionRef.current) {
-        releasePlayback();
-        suppressedMissionRef.current = null;
-      }
     }
     lastGameOverRef.current = gameOver;
   }, [
@@ -528,7 +516,6 @@ export default function Mission({
     setTimer,
     setMissionFailureMessage,
     unlockAll,
-    releasePlayback,
   ]);
 
   const handlePickupEnter = useCallback(
@@ -678,11 +665,6 @@ export default function Mission({
 
       teleportToMissionStart(activeId);
 
-      if (suppressedMissionRef.current === activeId) {
-        releasePlayback();
-        suppressedMissionRef.current = null;
-      }
-
       setMissionFailureMessage(options?.message ?? "Mission Failed.");
 
       setMissionFailureActive(true);
@@ -704,7 +686,6 @@ export default function Mission({
       setMissionFailureMessage,
       setMissionFailureActive,
       playMissionLoseSound,
-      releasePlayback,
     ]
   );
 
@@ -712,11 +693,6 @@ export default function Mission({
     (missionId: string) => {
       const config = missionConfigByIdRef.current[missionId];
       if (!config) return;
-
-      if (suppressedMissionRef.current) {
-        releasePlayback();
-        suppressedMissionRef.current = null;
-      }
 
       if (timerRef.current) {
         window.clearInterval(timerRef.current);
@@ -774,7 +750,6 @@ export default function Mission({
       setTimeLeft,
       setTimer,
       updateMissionStates,
-      releasePlayback,
     ]
   );
 
@@ -807,14 +782,6 @@ export default function Mission({
       const missionHasEvents =
         getMissionEventsForMission(missionId).length > 0;
       if (missionHasEvents) {
-        if (
-          suppressedMissionRef.current &&
-          suppressedMissionRef.current !== missionId
-        ) {
-          releasePlayback();
-        }
-        suppressPlayback();
-        suppressedMissionRef.current = missionId;
         showEventWarning(missionId);
       }
       if (onDestinationChange) {
@@ -841,8 +808,6 @@ export default function Mission({
       recordMissionStartPosition,
       setMissionFailureActive,
       showEventWarning,
-      suppressPlayback,
-      releasePlayback,
     ]
   );
 
@@ -972,11 +937,6 @@ export default function Mission({
         onDestinationChange(null);
       }
 
-      if (suppressedMissionRef.current === missionId) {
-        releasePlayback();
-        suppressedMissionRef.current = null;
-      }
-
       // ✅ Unlock next mission
       if (!unlockAll) {
         const currentIndex = missions.findIndex(
@@ -1012,7 +972,6 @@ export default function Mission({
       setTimer,
       timeLeft,
       unlockAll,
-      releasePlayback,
     ]
   );
 
@@ -1235,15 +1194,6 @@ export default function Mission({
     setDebugStartMission(() => debugStartMission);
     return () => setDebugStartMission(undefined);
   }, [debugStartMission, setDebugStartMission]);
-
-  useEffect(() => {
-    return () => {
-      if (suppressedMissionRef.current) {
-        releasePlayback();
-        suppressedMissionRef.current = null;
-      }
-    };
-  }, [releasePlayback]);
 
   useEffect(() => {
     setDebugMissions(
