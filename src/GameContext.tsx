@@ -86,7 +86,7 @@ const initialEconomyState: EconomyState = {
   speedLevel: 0,
   brakeLevel: 0,
   boostLevel: 0,
-  missionFinderCharges: 1,
+  missionFinderCharges: 5,
 };
 
 const DEFAULT_CITY = (CITY_SEQUENCE[0] ?? "city1") as CityId;
