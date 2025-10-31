@@ -34,7 +34,9 @@ export default function MissionTrackerHUD({
         position: "absolute",
         bottom: 280,
         right: 24,
-        background: "rgba(0, 0, 0, 0.6)",
+        background: "rgba(0, 10, 20, 0.7)",
+        border: "1px solid rgba(255,255,255,0.15)",
+        boxShadow: "0 0 20px rgba(255,255,255,0.08)",
         color: "#fff",
         padding: "10px 14px",
         borderRadius: "8px",
@@ -65,9 +67,11 @@ export default function MissionTrackerHUD({
           style={{
             display: "flex",
             flexDirection: "column",
-            alignItems: "flex-start",
-            gap: 4,
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 6,
             width: "100%",
+            textAlign: "center",
           }}
         >
           <button
@@ -75,24 +79,35 @@ export default function MissionTrackerHUD({
             onClick={handleClick}
             disabled={findDisabled}
             style={{
-              marginTop: 4,
-              padding: "6px 10px",
+              marginTop: 6,
+              padding: "10px 18px",
               border: "none",
-              borderRadius: 6,
-              background: findDisabled ? "rgba(255, 255, 255, 0.18)" : "#007bff",
-              color: findDisabled ? "rgba(255, 255, 255, 0.6)" : "white",
-              cursor: findDisabled ? "default" : "pointer",
-              fontSize: "0.9rem",
-              fontWeight: 500,
-              transition: "background 0.2s ease",
+              borderRadius: 999,
+              background: findDisabled
+                ? "rgba(255, 255, 255, 0.18)"
+                : "linear-gradient(145deg, #ffffff, #e8e8e8)",
+              color: findDisabled ? "rgba(255,255,255,0.6)" : "#000",
+              fontWeight: 700,
+              fontSize: "1rem",
+              cursor: findDisabled ? "not-allowed" : "pointer",
+              boxShadow: findDisabled
+                ? "none"
+                : "0 0 16px rgba(255, 255, 255, 0.6), 0 0 32px rgba(255, 255, 255, 0.3)",
+              textShadow: findDisabled
+                ? "none"
+                : "0 0 4px rgba(255,255,255,0.7)",
+              transition: "all 0.2s ease",
+              alignSelf: "center",
             }}
             onMouseEnter={(event) => {
               if (findDisabled) return;
-              (event.target as HTMLButtonElement).style.background = "#0056b3";
+              (event.target as HTMLButtonElement).style.boxShadow =
+                "0 0 24px rgba(255, 255, 255, 0.9), 0 0 48px rgba(255, 255, 255, 0.5)";
             }}
             onMouseLeave={(event) => {
               if (findDisabled) return;
-              (event.target as HTMLButtonElement).style.background = "#007bff";
+              (event.target as HTMLButtonElement).style.boxShadow =
+                "0 0 16px rgba(255, 255, 255, 0.6), 0 0 32px rgba(255, 255, 255, 0.3)";
             }}
           >
             Find Mission
@@ -102,6 +117,7 @@ export default function MissionTrackerHUD({
               fontSize: "0.8rem",
               color: "rgba(255,255,255,0.75)",
               paddingLeft: 2,
+              textAlign: "center",
             }}
           >
             {missionFinderCharges} left
