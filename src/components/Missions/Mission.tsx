@@ -1306,10 +1306,8 @@ export default function Mission({
                   key={`${placement.event}-${index}`}
                   position={placement.position}
                   taxiRef={taxiRef}
-                  active={
-                    missionState === "active" ||
-                    (unlockAll && missionState === "completed")
-                  }
+                  // Only enable spooky effects while mission is actually active
+                  active={missionState === "active"}
                   onMissionFailed={(options) =>
                     failActiveMission({
                       message: options?.message,
