@@ -10,6 +10,7 @@ export const boostCapacityIncreasePerLevel = 0.25; // +25% boost capacity per le
 export const speedUpgradePrice = 150;
 export const brakeUpgradePrice = 200;
 export const boostUpgradePrice = 300;
+export const missionFinderPrice = 400;
 
 // Base stats (before upgrades)
 export const baseMaxBoost = 100;

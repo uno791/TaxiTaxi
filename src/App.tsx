@@ -20,7 +20,6 @@ import Mission, {
 } from "./components/Missions/Mission";
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
-import RestartControl from "./components/UI/RestartControl";
 import { Physics } from "@react-three/cannon";
 import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
@@ -200,6 +199,27 @@ function GameWorld() {
     },
     []
   );
+
+  // 🧭 Add this near other callbacks (for example after handleMissionProgress):
+
+  const handleFindMission = useCallback(() => {
+    if (!missionSummaryRef.current) return false;
+
+    const nextMissionId = missionSummaryRef.current.nextMissionId;
+    if (!nextMissionId) return false;
+
+    const missionData = MISSIONS_BY_CITY[activeCity].find(
+      (mission) => mission.id === nextMissionId
+    );
+    if (!missionData || !missionData.pickupPosition) return false;
+
+    destinationRef.current.set(
+      missionData.pickupPosition[0],
+      missionData.pickupPosition[1],
+      missionData.pickupPosition[2]
+    );
+    return true;
+  }, [activeCity]);
 
   const handleMissionSummaryChange = useCallback(
     (summary: MissionProgressSummary) => {
@@ -545,6 +565,7 @@ function GameWorld() {
               <MissionTrackerHUD
                 remaining={missionsRemaining}
                 nextMission={nextMissionName}
+                onFindMission={handleFindMission}
               />
             ) : null}
 
@@ -581,94 +602,96 @@ function GameWorld() {
                 ) : null}
               </>
             ) : null}
-            <div
-              style={{
-                position: "absolute",
-                bottom: 330,
-                left: 20,
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                zIndex: 40,
-                pointerEvents: "auto",
-              }}
-            >
-              <button
-                type="button"
-                onClick={toggleTestMode}
-                disabled={isFreeRoam}
+            {isFreeRoam && (
+              <div
                 style={{
-                  padding: "8px 14px",
-                  borderRadius: "8px",
-                  background: testMode
-                    ? "rgba(46, 125, 50, 0.85)"
-                    : "rgba(24, 28, 35, 0.85)",
-                  color: "#f5f5f5",
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  fontSize: "0.85rem",
-                  cursor: isFreeRoam ? "default" : "pointer",
-                  opacity: isFreeRoam ? 0.85 : 1,
+                  position: "absolute",
+                  bottom: 330,
+                  left: 20,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  zIndex: 40,
+                  pointerEvents: "auto",
                 }}
-                title={
-                  isFreeRoam
-                    ? "City fast travel is always on in Free Roam."
-                    : "Toggle developer travel controls."
-                }
               >
-                {isFreeRoam
-                  ? "City Fast Travel (Free Roam)"
-                  : testMode
-                  ? "Test Travel: On"
-                  : "Enable Test Travel"}
-              </button>
-              {testMode ? (
-                <div
+                <button
+                  type="button"
+                  onClick={toggleTestMode}
+                  disabled={isFreeRoam}
                   style={{
-                    display: "flex",
-                    gap: "8px",
+                    padding: "8px 14px",
+                    borderRadius: "8px",
+                    background: testMode
+                      ? "rgba(46, 125, 50, 0.85)"
+                      : "rgba(24, 28, 35, 0.85)",
+                    color: "#f5f5f5",
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    fontSize: "0.85rem",
+                    cursor: isFreeRoam ? "default" : "pointer",
+                    opacity: isFreeRoam ? 0.85 : 1,
                   }}
+                  title={
+                    isFreeRoam
+                      ? "City fast travel is always on in Free Roam."
+                      : "Toggle developer travel controls."
+                  }
                 >
-                  {CITY_SEQUENCE.map((city) => (
-                    <button
-                      key={city}
-                      type="button"
-                      onClick={() => handleTestTravel(city)}
-                      style={{
-                        padding: "8px 12px",
-                        borderRadius: "8px",
-                        border: "1px solid rgba(255,255,255,0.25)",
-                        background:
-                          activeCity === city
-                            ? "rgba(46, 125, 50, 0.85)"
-                            : "rgba(24, 28, 35, 0.75)",
-                        color: "#f5f5f5",
-                        cursor: "pointer",
-                        fontSize: "0.8rem",
-                      }}
-                    >
-                      To: {city}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
+                  {isFreeRoam
+                    ? "City Fast Travel (Free Roam)"
+                    : testMode
+                    ? "Test Travel: On"
+                    : "Enable Test Travel"}
+                </button>
+                {testMode ? (
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "8px",
+                    }}
+                  >
+                    {CITY_SEQUENCE.map((city) => (
+                      <button
+                        key={city}
+                        type="button"
+                        onClick={() => handleTestTravel(city)}
+                        style={{
+                          padding: "8px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid rgba(255,255,255,0.25)",
+                          background:
+                            activeCity === city
+                              ? "rgba(46, 125, 50, 0.85)"
+                              : "rgba(24, 28, 35, 0.75)",
+                          color: "#f5f5f5",
+                          cursor: "pointer",
+                          fontSize: "0.8rem",
+                        }}
+                      >
+                        To: {city}
+                      </button>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
+            )}
             {flightOverlay}
             <ColliderPainterOverlay />
             <MissionUrgencyEffects containerRef={containerRef} />
 
-            <div
-              style={{
-                position: "absolute",
-                top: 16,
-                left: 80,
-                display: "flex",
-                flexDirection: "column",
-                gap: "8px",
-                zIndex: 30,
-                pointerEvents: "auto",
-              }}
-            >
-              {isFreeRoam ? (
+            {isFreeRoam && (
+              <div
+                style={{
+                  position: "absolute",
+                  top: 16,
+                  left: 80,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "8px",
+                  zIndex: 30,
+                  pointerEvents: "auto",
+                }}
+              >
                 <button
                   type="button"
                   onClick={handleToggleClearWeather}
@@ -694,31 +717,31 @@ function GameWorld() {
                 >
                   {clearWeather ? "Restore Night Fog" : "Clear Skies (Fog Off)"}
                 </button>
-              ) : null}
-              <button
-                type="button"
-                onClick={toggleLightingMode}
-                disabled={clearWeather}
-                style={{
-                  border: "1px solid rgba(255,255,255,0.25)",
-                  borderRadius: 8,
-                  background: clearWeather
-                    ? "rgba(24, 28, 35, 0.45)"
-                    : "rgba(24, 28, 35, 0.8)",
-                  color: "#f5f5f5",
-                  padding: "6px 12px",
-                  fontSize: "0.85rem",
-                  cursor: clearWeather ? "default" : "pointer",
-                  backdropFilter: "blur(2px)",
-                  transition: "background-color 0.2s ease",
-                }}
-                title="Toggle between fake decal lighting and a global fill light."
-              >
-                {lightingMode === "fake"
-                  ? "Lighting: Decals Only"
-                  : "Lighting: Global Fill"}
-              </button>
-            </div>
+                <button
+                  type="button"
+                  onClick={toggleLightingMode}
+                  disabled={clearWeather}
+                  style={{
+                    border: "1px solid rgba(255,255,255,0.25)",
+                    borderRadius: 8,
+                    background: clearWeather
+                      ? "rgba(24, 28, 35, 0.45)"
+                      : "rgba(24, 28, 35, 0.8)",
+                    color: "#f5f5f5",
+                    padding: "6px 12px",
+                    fontSize: "0.85rem",
+                    cursor: clearWeather ? "default" : "pointer",
+                    backdropFilter: "blur(2px)",
+                    transition: "background-color 0.2s ease",
+                  }}
+                  title="Toggle between fake decal lighting and a global fill light."
+                >
+                  {lightingMode === "fake"
+                    ? "Lighting: Decals Only"
+                    : "Lighting: Global Fill"}
+                </button>
+              </div>
+            )}
           </div>
         </MissionPerformanceProvider>
       </MissionUIProvider>

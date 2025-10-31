@@ -38,6 +38,9 @@ export default function UpgradeMenu() {
     upgradeSpeed,
     upgradeBrakes,
     upgradeBoost,
+    missionFinderCharges,
+    missionFinderPrice,
+    purchaseMissionFinder,
   } = useGame();
 
   useEffect(() => {
@@ -114,6 +117,7 @@ export default function UpgradeMenu() {
     },
   ];
 
+  const missionFinderDisabled = money < missionFinderPrice;
   return (
     <div
       style={{
@@ -308,6 +312,82 @@ export default function UpgradeMenu() {
                 </div>
               )
             )}
+            <div
+              style={{
+                display: "flex",
+                flexDirection: "column",
+                gap: 6,
+                padding: "10px 12px",
+                borderRadius: 12,
+                background: "rgba(255,255,255,0.05)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  gap: 12,
+                }}
+              >
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: "0.95rem" }}>
+                    Mission Finder
+                  </div>
+                  <div
+                    style={{
+                      fontSize: "0.75rem",
+                      color: "rgba(255,255,255,0.7)",
+                    }}
+                  >
+                    Mark the next mission pickup instantly.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (missionFinderDisabled) return;
+                    playUpgradeSound();
+                    purchaseMissionFinder();
+                  }}
+                  disabled={missionFinderDisabled}
+                  style={{
+                    border: "none",
+                    borderRadius: 999,
+                    padding: "6px 14px",
+                    fontSize: "0.75rem",
+                    fontWeight: 700,
+                    cursor: missionFinderDisabled ? "not-allowed" : "pointer",
+                    color: missionFinderDisabled
+                      ? "rgba(255,255,255,0.4)"
+                      : "#1c1304",
+                    background: missionFinderDisabled
+                      ? "rgba(255,255,255,0.12)"
+                      : "linear-gradient(135deg, #80deea, #26c6da)",
+                    boxShadow: missionFinderDisabled
+                      ? "none"
+                      : "0 4px 12px rgba(38, 198, 218, 0.35)",
+                    transition: "transform 0.1s ease",
+                  }}
+                >
+                  + R{missionFinderPrice}
+                </button>
+              </div>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  fontSize: "0.8rem",
+                  color: "rgba(255,255,255,0.75)",
+                  marginTop: 4,
+                  paddingRight: 2,
+                }}
+              >
+                <span>Finders left</span>
+                <span>{missionFinderCharges}</span>
+              </div>
+            </div>
           </div>
         </div>
       ) : null}

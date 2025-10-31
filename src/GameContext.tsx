@@ -16,6 +16,7 @@ import {
   boostUpgradePrice,
   speedIncreasePerLevel,
   speedUpgradePrice,
+  missionFinderPrice,
 } from "./constants/upgrades";
 import { CITY_SEQUENCE, type CityId } from "./constants/cities";
 import { loadGameProgress } from "./utils/storage";
@@ -48,6 +49,10 @@ type GameContextType = {
   speedUpgradePrice: number;
   brakeUpgradePrice: number;
   boostUpgradePrice: number;
+  missionFinderPrice: number;
+  missionFinderCharges: number;
+  purchaseMissionFinder: () => void;
+  consumeMissionFinderCharge: () => boolean;
   gameMode: GameMode;
   setGameMode: React.Dispatch<React.SetStateAction<GameMode>>;
   isFreeRoam: boolean;
@@ -73,6 +78,7 @@ type EconomyState = {
   speedLevel: number;
   brakeLevel: number;
   boostLevel: number;
+  missionFinderCharges: number;
 };
 
 const initialEconomyState: EconomyState = {
@@ -80,6 +86,7 @@ const initialEconomyState: EconomyState = {
   speedLevel: 0,
   brakeLevel: 0,
   boostLevel: 0,
+  missionFinderCharges: 5,
 };
 
 const DEFAULT_CITY = (CITY_SEQUENCE[0] ?? "city1") as CityId;
@@ -107,7 +114,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
   });
   const isFreeRoam = gameMode === "freeRoam";
 
-  const { money, speedLevel, brakeLevel, boostLevel } = economy;
+  const { money, speedLevel, brakeLevel, boostLevel, missionFinderCharges } =
+    economy;
 
   const setMoney = useCallback(
     (update: React.SetStateAction<number>) => {
@@ -244,6 +252,43 @@ export function GameProvider({ children }: { children: ReactNode }) {
     });
   }, [gameMode]);
 
+  const consumeMissionFinderCharge = useCallback(() => {
+    let didConsume = false;
+    setEconomy((previous) => {
+      if (previous.missionFinderCharges <= 0) {
+        return previous;
+      }
+      didConsume = true;
+      return {
+        ...previous,
+        missionFinderCharges: previous.missionFinderCharges - 1,
+      };
+    });
+    return didConsume;
+  }, []);
+
+  const purchaseMissionFinder = useCallback(() => {
+    setEconomy((previous) => {
+      if (gameMode === "freeRoam") {
+        return {
+          ...previous,
+          missionFinderCharges: previous.missionFinderCharges + 1,
+          money: Math.max(previous.money, FREE_ROAM_MONEY),
+        };
+      }
+
+      if (previous.money < missionFinderPrice) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        money: previous.money - missionFinderPrice,
+        missionFinderCharges: previous.missionFinderCharges + 1,
+      };
+    });
+  }, [gameMode]);
+
   const restartGame = useCallback(
     (options?: { mode?: GameMode }) => {
       const mode = options?.mode ?? gameMode;
@@ -298,6 +343,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       speedUpgradePrice,
       brakeUpgradePrice,
       boostUpgradePrice,
+      missionFinderPrice,
+      missionFinderCharges,
+      purchaseMissionFinder,
+      consumeMissionFinderCharge,
       gameMode,
       setGameMode,
       isFreeRoam,
@@ -325,6 +374,10 @@ export function GameProvider({ children }: { children: ReactNode }) {
       upgradeSpeed,
       upgradeBrakes,
       upgradeBoost,
+      missionFinderPrice,
+      missionFinderCharges,
+      purchaseMissionFinder,
+      consumeMissionFinderCharge,
       gameMode,
       setGameMode,
       isFreeRoam,

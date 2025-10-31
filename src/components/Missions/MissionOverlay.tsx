@@ -1,7 +1,13 @@
 ﻿import { useMissionUI, type MissionCompletionState } from "./MissionUIContext";
-import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
-import type { Group } from "three";
+import {
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import { Canvas } from "@react-three/fiber";
 import { PassengerModel } from "../Ground/SceneObjects/PassengerModel";
 import type {
   MissionPassengerModelId,
@@ -15,38 +21,20 @@ const DEFAULT_PREVIEW_CAMERA: [number, number, number] = [0, 1.4, 3.2];
 const DEFAULT_PREVIEW_SCALE = 0.85;
 const DEFAULT_PREVIEW_FOV = 30;
 
-function RotatingPassengerModel({
+const DIALOG_BACKGROUND_COLOR = "#1d0105";
+
+function PreviewPassengerModel({
   modelId,
   preview,
 }: {
   modelId: MissionPassengerModelId;
   preview?: MissionPassengerPreviewConfig;
 }) {
-  const groupRef = useRef<Group | null>(null);
-  const baseRotationRef = useRef<[number, number, number]>(
-    preview?.rotation ?? DEFAULT_PREVIEW_ROTATION
-  );
-  const spinRef = useRef(0);
-
-  useEffect(() => {
-    baseRotationRef.current = preview?.rotation ?? DEFAULT_PREVIEW_ROTATION;
-    spinRef.current = 0;
-    if (groupRef.current) {
-      const [x, y, z] = baseRotationRef.current;
-      groupRef.current.rotation.set(x, y, z);
-    }
-  }, [preview]);
-
-  useFrame((_, delta) => {
-    if (!groupRef.current) return;
-    spinRef.current += delta * 0.6;
-    const [baseX, baseY, baseZ] = baseRotationRef.current;
-    groupRef.current.rotation.set(baseX, baseY + spinRef.current, baseZ);
-  });
+  const rotation = preview?.rotation ?? DEFAULT_PREVIEW_ROTATION;
 
   return (
     <group position={preview?.position ?? DEFAULT_PREVIEW_POSITION}>
-      <group ref={groupRef}>
+      <group rotation={rotation}>
         <PassengerModel
           modelId={modelId}
           scale={preview?.scale ?? DEFAULT_PREVIEW_SCALE}
@@ -76,8 +64,9 @@ function MissionDialogModelPreview({
         overflow: "hidden",
         position: "relative",
         background:
-          "linear-gradient(180deg, rgba(18,18,26,0.95), rgba(5,5,9,0.85))",
-        boxShadow: "0 18px 32px rgba(0,0,0,0.45)",
+          "linear-gradient(180deg, rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 1))",
+        boxShadow: "0 18px 32px rgba(0, 0, 0, 1), 0 0 18px rgba(0, 0, 0, 1)",
+        border: "2px solid rgba(0, 0, 0, 0.08)",
         flexShrink: 0,
         pointerEvents: "none",
       }}
@@ -92,7 +81,7 @@ function MissionDialogModelPreview({
         <directionalLight position={[2, 3, 2]} intensity={1.1} />
         <directionalLight position={[-2, 3, -1]} intensity={0.5} />
         <Suspense fallback={null}>
-          <RotatingPassengerModel modelId={modelId} preview={preview} />
+          <PreviewPassengerModel modelId={modelId} preview={preview} />
         </Suspense>
       </Canvas>
       <div
@@ -100,8 +89,19 @@ function MissionDialogModelPreview({
           position: "absolute",
           inset: 0,
           background:
-            "radial-gradient(circle at 50% 15%, rgba(255,255,255,0.16), transparent 55%)",
-          opacity: 0.6,
+            "radial-gradient(circle at 50% 20%, rgba(255,255,255,0.3), transparent 60%)",
+          opacity: 0.4,
+          pointerEvents: "none",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          inset: 0,
+          background:
+            "linear-gradient(180deg, rgba(255,255,255,0.12), rgba(0,0,0,0) 55%)",
+          opacity: 0.55,
+          pointerEvents: "none",
         }}
       />
     </div>
@@ -131,16 +131,15 @@ export default function MissionOverlay() {
   } = useMissionUI();
   const { isFreeRoam } = useGameLifecycle();
   const [debugMenuOpen, setDebugMenuOpen] = useState(false);
-  const isDev = import.meta.env.DEV;
-  const showDebugTools = (isDev || isFreeRoam) && debugMissions.length > 0;
+  const showDebugTools = isFreeRoam && debugMissions.length > 0;
   const panelTitle = isFreeRoam ? "Mission Tools" : "Mission Tester (DEV)";
   const toggleLabel = debugMenuOpen
     ? isFreeRoam
       ? "Hide Mission Tools"
       : "Hide Mission Tester"
     : isFreeRoam
-      ? "Open Mission Tools"
-      : "Open Mission Tester";
+    ? "Open Mission Tools"
+    : "Open Mission Tester";
   const vignetteRef = useRef<HTMLDivElement | null>(null);
   const urgencyIntensityRef = useRef(0);
   const urgencyTargetRef = useRef(0);
@@ -171,7 +170,9 @@ export default function MissionOverlay() {
   const dialogSpeaker = dialog?.speaker ?? null;
   const dialogAutoAdvance = dialog?.autoAdvance;
   const dialogOnContinue = dialog?.onContinue;
-  const dialogHasOptions = Boolean(dialog?.options && dialog.options.length > 0);
+  const dialogHasOptions = Boolean(
+    dialog?.options && dialog.options.length > 0
+  );
 
   useEffect(() => {
     if (isFreeRoam) {
@@ -381,7 +382,7 @@ export default function MissionOverlay() {
     } else if (nextChar === " ") {
       const previousChar = dialogText.charAt(displayedDialogText.length - 1);
       if (previousChar === "-" || previousChar === "\u2014") {
-          delay = baseDelay * 2.5;
+        delay = baseDelay * 2.5;
       }
     }
 
@@ -450,15 +451,18 @@ export default function MissionOverlay() {
     setDialogTyping(false);
   }, [dialogId, dialogText, dialogTypingComplete, setDialogTyping]);
 
-  const isPassengerDialog = dialog?.speaker === "passenger";
-  const shouldCenterBubble = Boolean(
-    dialog && (!isPassengerDialog || dialog.passengerModel === "none")
+  const showingPassengerPreview = Boolean(
+    dialog &&
+      dialog.passengerModel &&
+      dialog.passengerModel !== "none" &&
+      dialog.speaker !== "driver"
   );
+  const shouldCenterBubble = Boolean(dialog && !showingPassengerPreview);
   const pointerPosition = shouldCenterBubble
     ? { left: "50%", transform: "translateX(-50%)" }
     : { left: "12%", transform: "translateX(-50%)" };
-  const pointerOuterBottom = "-32px";
-  const pointerInnerBottom = "-28px";
+  const pointerOuterBottom = "-28px";
+  const pointerInnerBottom = "-24px";
 
   useEffect(() => {
     if (dialogId === null) {
@@ -683,8 +687,8 @@ export default function MissionOverlay() {
                   ? "rgba(2, 136, 209, 0.9)"
                   : "rgba(25,118,210,0.85)"
                 : isFreeRoam
-                  ? "rgba(13, 71, 161, 0.7)"
-                  : "rgba(33,33,33,0.85)",
+                ? "rgba(13, 71, 161, 0.7)"
+                : "rgba(33,33,33,0.85)",
               color: isFreeRoam ? "#eaf7ff" : "#f5f5f5",
               fontSize: "14px",
               cursor: "pointer",
@@ -920,10 +924,11 @@ export default function MissionOverlay() {
               color: "#fff",
               fontFamily: "Arial, sans-serif",
               fontWeight: 600,
+              marginTop: "50px",
               boxShadow: "0 6px 12px rgba(0,0,0,0.3)",
             }}
           >
-            Drop off the passenger at {active.dropoffHint}.
+            Drop off the passenger.
           </div>
         </div>
       )}
@@ -974,23 +979,23 @@ export default function MissionOverlay() {
               flexDirection: shouldCenterBubble ? "column" : "row",
               alignItems: shouldCenterBubble ? "center" : "flex-end",
               justifyContent: "center",
-              width: "min(94%, 980px)",
-              gap: shouldCenterBubble ? "32px" : "28px",
-              rowGap: "24px",
+              width: "min(90%, 820px)",
+              gap: shouldCenterBubble ? "22px" : "20px",
+              rowGap: "18px",
               flexWrap: shouldCenterBubble ? "nowrap" : "wrap",
             }}
           >
             {dialog.passengerModel &&
               dialog.passengerModel !== "none" &&
               dialog.speaker !== "driver" && (
-              <MissionDialogModelPreview
-                modelId={dialog.passengerModel}
-                preview={dialog.passengerPreview}
-              />
-            )}
+                <MissionDialogModelPreview
+                  modelId={dialog.passengerModel}
+                  preview={dialog.passengerPreview}
+                />
+              )}
             <div
               style={{
-                flex: shouldCenterBubble ? "0 1 560px" : "1 1 340px",
+                flex: shouldCenterBubble ? "0 1 480px" : "1 1 300px",
                 display: "flex",
                 justifyContent: shouldCenterBubble ? "center" : "flex-start",
                 width: "100%",
@@ -999,53 +1004,51 @@ export default function MissionOverlay() {
               <div
                 style={{
                   position: "relative",
-                  background:
-                    "linear-gradient(180deg, #fffdf4 0%, #ffeec9 100%)",
-                  border: "4px solid #111",
-                  borderRadius: "32px",
-                  padding: "28px 34px 34px",
+                  backgroundColor: DIALOG_BACKGROUND_COLOR,
+                  border: "3px solid rgba(80, 0, 6, 0.9)",
+                  borderRadius: "18px",
+                  padding: "18px 22px 22px",
                   width: "100%",
-                  maxWidth: "560px",
-                  color: "#111",
-                  fontFamily:
-                    "'Comic Neue', 'Comic Sans MS', 'Chalkboard SE', sans-serif",
+                  maxWidth: "480px",
+                  color: "#f6ecec",
+                  fontFamily: "'Helvetica Neue', Arial, sans-serif",
                   textAlign: shouldCenterBubble ? "center" : "left",
-                  lineHeight: 1.55,
-                  boxShadow: "10px 14px 0 rgba(0,0,0,0.25)",
+                  lineHeight: 1.45,
+                  boxShadow: "0 18px 28px rgba(0,0,0,0.55)",
                   overflow: "visible",
                   cursor: dialogTypingComplete ? "default" : "pointer",
-                  transition: "transform 0.2s ease",
+                  transition: "transform 0.16s ease",
                 }}
                 onClick={handleSkipTyping}
               >
                 <div
                   style={{
                     position: "absolute",
-                    inset: "12px",
-                    borderRadius: "24px",
-                    border: "2px dashed rgba(17,17,17,0.14)",
+                    inset: "10px",
+                    borderRadius: "18px",
+                    border: "1px solid rgba(255,255,255,0.1)",
                     pointerEvents: "none",
                   }}
                 />
                 <div
                   style={{
-                    fontSize: "15px",
-                    letterSpacing: "0.18em",
+                    fontSize: "13px",
+                    letterSpacing: "0.12em",
                     textTransform: "uppercase",
-                    color: "rgba(17,17,17,0.62)",
-                    marginBottom: "18px",
-                    fontWeight: 700,
+                    color: "rgba(255,255,255,0.72)",
+                    marginBottom: "12px",
+                    fontWeight: 600,
                   }}
                 >
                   {dialog.speakerLabel}
                 </div>
                 <div
                   style={{
-                    fontSize: "22px",
-                    fontWeight: 700,
+                    fontSize: "19px",
+                    fontWeight: 600,
                     whiteSpace: "pre-wrap",
-                    textShadow: "1px 1px 0 rgba(255,255,255,0.45)",
-                    minHeight: "90px",
+                    textShadow: "0 2px 12px rgba(0,0,0,0.65)",
+                    minHeight: "72px",
                     letterSpacing: "0.01em",
                   }}
                 >
@@ -1059,8 +1062,8 @@ export default function MissionOverlay() {
                     style={{
                       display: "flex",
                       flexDirection: "column",
-                      gap: "16px",
-                      marginTop: "28px",
+                      gap: "12px",
+                      marginTop: "20px",
                       alignItems: "center",
                     }}
                   >
@@ -1073,44 +1076,45 @@ export default function MissionOverlay() {
                           onClick={option.onSelect}
                           disabled={disabled}
                           style={{
-                            padding: "14px 28px",
-                            borderRadius: "999px",
-                            border: "3px solid #34040a",
+                            padding: "10px 18px",
+                            borderRadius: "6px",
+                            border: "1px solid rgba(255,255,255,0.18)",
                             background: disabled
-                              ? "rgba(144, 10, 22, 0.55)"
-                              : "#b3121d",
-                            color: "#f8f5f5",
+                              ? "rgba(90, 12, 18, 0.65)"
+                              : "#861017",
+                            color: "#f6eaea",
                             cursor: disabled ? "not-allowed" : "pointer",
-                            fontWeight: 700,
-                            fontSize: "17px",
-                            letterSpacing: "0.08em",
-                            textTransform: "uppercase",
+                            fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                            fontWeight: 600,
+                            fontSize: "15px",
+                            letterSpacing: "0.01em",
+                            textTransform: "none",
                             boxShadow: disabled
                               ? "none"
-                              : "8px 8px 0 rgba(0,0,0,0.35)",
+                              : "0 10px 24px rgba(0,0,0,0.45)",
                             transition:
                               "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
                           }}
                           onMouseDown={(event) => {
                             if (disabled) return;
                             event.currentTarget.style.transform =
-                              "translateY(2px)";
+                              "translateY(1px)";
                             event.currentTarget.style.boxShadow =
-                              "4px 4px 0 rgba(0,0,0,0.35)";
+                              "0 6px 16px rgba(0,0,0,0.45)";
                           }}
                           onMouseUp={(event) => {
                             if (disabled) return;
                             event.currentTarget.style.transform =
                               "translateY(0)";
                             event.currentTarget.style.boxShadow =
-                              "8px 8px 0 rgba(0,0,0,0.35)";
+                              "0 10px 24px rgba(0,0,0,0.45)";
                           }}
                           onMouseLeave={(event) => {
                             if (disabled) return;
                             event.currentTarget.style.transform =
                               "translateY(0)";
                             event.currentTarget.style.boxShadow =
-                              "8px 8px 0 rgba(0,0,0,0.35)";
+                              "0 10px 24px rgba(0,0,0,0.45)";
                           }}
                         >
                           {option.label}
@@ -1119,11 +1123,12 @@ export default function MissionOverlay() {
                     })}
                     <div
                       style={{
-                        marginTop: "6px",
-                        fontSize: "13px",
-                        letterSpacing: "0.08em",
+                        marginTop: "2px",
+                        fontSize: "12px",
+                        letterSpacing: "0.05em",
                         textTransform: "uppercase",
-                        color: "rgba(17,17,17,0.55)",
+                        color: "rgba(255,255,255,0.55)",
+                        fontFamily: "'Helvetica Neue', Arial, sans-serif",
                       }}
                     >
                       {dialogTypingComplete
@@ -1137,8 +1142,8 @@ export default function MissionOverlay() {
                       display: "flex",
                       flexDirection: "column",
                       alignItems: "center",
-                      gap: "16px",
-                      marginTop: "28px",
+                      gap: "12px",
+                      marginTop: "20px",
                     }}
                   >
                     <button
@@ -1146,51 +1151,55 @@ export default function MissionOverlay() {
                       onClick={dialog.onContinue}
                       disabled={!dialogTypingComplete}
                       style={{
-                        padding: "12px 34px",
-                        borderRadius: "999px",
-                        border: "3px solid #34040a",
+                        padding: "10px 20px",
+                        borderRadius: "6px",
+                        border: "1px solid rgba(255,255,255,0.18)",
                         background: dialogTypingComplete
-                          ? "#c21807"
-                          : "rgba(194, 24, 7, 0.5)",
-                        color: "#f8f5f5",
-                        fontWeight: 700,
-                        fontSize: "18px",
-                        letterSpacing: "0.08em",
-                        textTransform: "uppercase",
-                        cursor: dialogTypingComplete ? "pointer" : "not-allowed",
+                          ? "#9c151c"
+                          : "rgba(104, 13, 20, 0.55)",
+                        color: "#f6eaea",
+                        fontFamily: "'Helvetica Neue', Arial, sans-serif",
+                        fontWeight: 600,
+                        fontSize: "15px",
+                        letterSpacing: "0.03em",
+                        textTransform: "none",
+                        cursor: dialogTypingComplete
+                          ? "pointer"
+                          : "not-allowed",
                         boxShadow: dialogTypingComplete
-                          ? "8px 8px 0 rgba(0,0,0,0.35)"
+                          ? "0 10px 24px rgba(0,0,0,0.45)"
                           : "none",
                         transition:
                           "transform 0.12s ease, box-shadow 0.12s ease, background 0.12s ease",
                       }}
                       onMouseDown={(event) => {
                         if (!dialogTypingComplete) return;
-                        event.currentTarget.style.transform = "translateY(2px)";
+                        event.currentTarget.style.transform = "translateY(1px)";
                         event.currentTarget.style.boxShadow =
-                          "4px 4px 0 rgba(0,0,0,0.35)";
+                          "0 6px 16px rgba(0,0,0,0.45)";
                       }}
                       onMouseUp={(event) => {
                         if (!dialogTypingComplete) return;
                         event.currentTarget.style.transform = "translateY(0)";
                         event.currentTarget.style.boxShadow =
-                          "8px 8px 0 rgba(0,0,0,0.35)";
+                          "0 10px 24px rgba(0,0,0,0.45)";
                       }}
                       onMouseLeave={(event) => {
                         if (!dialogTypingComplete) return;
                         event.currentTarget.style.transform = "translateY(0)";
                         event.currentTarget.style.boxShadow =
-                          "8px 8px 0 rgba(0,0,0,0.35)";
+                          "0 10px 24px rgba(0,0,0,0.45)";
                       }}
                     >
                       {dialogTypingComplete ? "Continue" : "..."}
                     </button>
                     <div
                       style={{
-                        fontSize: "13px",
-                        letterSpacing: "0.08em",
+                        fontSize: "12px",
+                        letterSpacing: "0.05em",
                         textTransform: "uppercase",
-                        color: "rgba(17,17,17,0.55)",
+                        color: "rgba(255,255,255,0.55)",
+                        fontFamily: "'Helvetica Neue', Arial, sans-serif",
                       }}
                     >
                       {dialogTypingComplete
@@ -1205,10 +1214,11 @@ export default function MissionOverlay() {
                       position: "absolute",
                       bottom: shouldCenterBubble ? "18px" : "16px",
                       right: shouldCenterBubble ? "24px" : "22px",
-                      fontSize: "12px",
-                      letterSpacing: "0.12em",
+                      fontSize: "11px",
+                      letterSpacing: "0.06em",
                       textTransform: "uppercase",
-                      color: "rgba(17,17,17,0.45)",
+                      color: "rgba(255,255,255,0.52)",
+                      fontFamily: "'Helvetica Neue', Arial, sans-serif",
                     }}
                   >
                     Tap to reveal
@@ -1222,9 +1232,9 @@ export default function MissionOverlay() {
                     transform: pointerPosition.transform,
                     width: 0,
                     height: 0,
-                    borderLeft: "26px solid transparent",
-                    borderRight: "26px solid transparent",
-                    borderTop: "32px solid #111",
+                    borderLeft: "22px solid transparent",
+                    borderRight: "22px solid transparent",
+                    borderTop: "28px solid rgba(80,0,6,0.9)",
                   }}
                 />
                 <div
@@ -1235,9 +1245,9 @@ export default function MissionOverlay() {
                     transform: pointerPosition.transform,
                     width: 0,
                     height: 0,
-                    borderLeft: "22px solid transparent",
-                    borderRight: "22px solid transparent",
-                    borderTop: "28px solid #ffeec9",
+                    borderLeft: "18px solid transparent",
+                    borderRight: "18px solid transparent",
+                    borderTop: "22px solid #1d0105",
                   }}
                 />
               </div>
@@ -1400,7 +1410,7 @@ function MissionCompletionCard({
               color: "rgba(255,255,255,0.9)",
             }}
           >
-            <strong>{currentStarEvent.label}</strong> - {" "}
+            <strong>{currentStarEvent.label}</strong> -{" "}
             {currentStarEvent.detail}
           </div>
         )}
