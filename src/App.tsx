@@ -201,6 +201,27 @@ function GameWorld() {
     []
   );
 
+  // 🧭 Add this near other callbacks (for example after handleMissionProgress):
+
+  const handleFindMission = useCallback(() => {
+    if (!missionSummaryRef.current) return;
+
+    const nextMissionId = missionSummaryRef.current.nextMissionId;
+    if (!nextMissionId) return;
+
+    const missionData = MISSIONS_BY_CITY[activeCity].find(
+      (m) => m.id === nextMissionId
+    );
+    if (!missionData || !missionData.pickupPosition) return;
+
+    // 👇 Set the destinationRef to the pickup position for navigation
+    destinationRef.current.set(
+      missionData.pickupPosition[0],
+      missionData.pickupPosition[1],
+      missionData.pickupPosition[2]
+    );
+  }, [activeCity]);
+
   const handleMissionSummaryChange = useCallback(
     (summary: MissionProgressSummary) => {
       missionSummaryRef.current = summary;
@@ -545,6 +566,7 @@ function GameWorld() {
               <MissionTrackerHUD
                 remaining={missionsRemaining}
                 nextMission={nextMissionName}
+                onFindMission={handleFindMission}
               />
             ) : null}
 
