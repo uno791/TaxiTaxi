@@ -7,7 +7,7 @@ import { clearGameProgress, loadGameProgress } from "../../utils/storage";
 import "./EntranceScreen.css";
 
 export default function EntranceScreen() {
-  const { currentUser, setAppStage, logout } = useMeta();
+  const { currentUser, setAppStage, logout, setSelectedCar } = useMeta();
   const { restartGame, setActiveCity } = useGameLifecycle();
   const defaultCity = CITY_SEQUENCE[0] ?? "city1";
   const [savedProgress, setSavedProgress] = useState(() => loadGameProgress());
@@ -17,7 +17,8 @@ export default function EntranceScreen() {
   const startCampaignFlow = () => {
     setActiveCity(defaultCity);
     restartGame({ mode: "campaign" });
-    setAppStage("car");
+    setSelectedCar(null);
+    setAppStage("cinematic");
   };
 
   const handleStartNewGame = () => {
@@ -46,7 +47,8 @@ export default function EntranceScreen() {
     if (!savedProgress) return;
     setActiveCity(savedProgress.cityId);
     restartGame({ mode: "campaign" });
-    setAppStage("car");
+    setSelectedCar(null);
+    setAppStage("level");
   };
 
   const handleStartFreeRoam = () => {

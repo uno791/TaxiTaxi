@@ -676,6 +676,8 @@ export default function Mission({
         onDestinationChange(null);
       }
 
+      teleportToMissionStart(activeId);
+
       if (suppressedMissionRef.current === activeId) {
         releasePlayback();
         suppressedMissionRef.current = null;
@@ -698,6 +700,7 @@ export default function Mission({
       setTimeLeft,
       setTimer,
       onDestinationChange,
+      teleportToMissionStart,
       setMissionFailureMessage,
       setMissionFailureActive,
       playMissionLoseSound,
