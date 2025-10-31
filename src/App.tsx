@@ -36,6 +36,7 @@ import { Stars } from "@react-three/drei";
 import LoginScreen from "./components/UI/LoginScreen";
 import EntranceScreen from "./components/UI/EntranceScreen";
 import CarSelector from "./components/CarSelector/CarSelector";
+import IntroCinematic from "./components/UI/IntroCinematic";
 import MissionTrackerHUD from "./components/UI/MissionTrackerHUD";
 
 import { MetaProvider, useMeta } from "./context/MetaContext";
@@ -857,6 +858,7 @@ function AppContent() {
   if (appStage === "login") return <LoginScreen />;
   if (appStage === "entrance") return <EntranceScreen />;
   if (appStage === "car") return <CarSelector />;
+  if (appStage === "cinematic") return <IntroCinematic />;
 
   return <GameWorld key={`game-${gameInstance}`} />;
 }

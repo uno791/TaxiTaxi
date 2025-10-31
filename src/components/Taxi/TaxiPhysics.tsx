@@ -370,7 +370,7 @@ export function TaxiPhysics({
     if (carSpeed < 5) return; // ignore light taps
 
     // Calculate loss based on speed
-    const loss = Math.min(carSpeed * 2, 500); // tune multiplier and cap
+    const loss = Math.min(carSpeed * 5, 1000); // tune multiplier and cap
     setMoney((prev) => Math.max(prev - loss, 0));
     missionPerformance.registerCollision();
   }, [missionPerformance, setMoney]);
@@ -603,7 +603,7 @@ export function TaxiPhysics({
       if (kilometers <= 0) return;
       setKilometers((value) => value + kilometers);
       //const fuelCost = kilometers * 45;
-      const fuelCost = kilometers * (40 + speed * 0.3 + (boost > 0 ? 15 : 0));
+      const fuelCost = kilometers * (80 + speed * 0.3 + (boost > 0 ? 30 : 0));
       if (fuelCost <= 0) return;
       setMoney((value) => {
         if (fuelCost < 1e-6) return value;
