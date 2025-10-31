@@ -775,6 +775,18 @@ export default function Mission({
     ]
   );
 
+  const showEventWarning = useCallback(
+    (missionId: string) => {
+      setNotification({
+        id: `${missionId}-event-omen`,
+        message: "The spirits are upset, be careful.",
+        tone: "warning",
+        durationMs: 6000,
+      });
+    },
+    [setNotification]
+  );
+
   const concludeDialogAndStartMission = useCallback(
     (missionId: string, config: MissionConfig) => {
       setDialogVisible(false);
@@ -800,12 +812,7 @@ export default function Mission({
         }
         suppressPlayback();
         suppressedMissionRef.current = missionId;
-        setNotification({
-          id: `${missionId}-event-omen`,
-          message: "The spirits are angry this drive. Be careful.",
-          tone: "warning",
-          durationMs: 6000,
-        });
+        showEventWarning(missionId);
       }
       if (onDestinationChange) {
         onDestinationChange(config.dropoffPosition);
@@ -830,7 +837,7 @@ export default function Mission({
       setTimer,
       recordMissionStartPosition,
       setMissionFailureActive,
-      setNotification,
+      showEventWarning,
       suppressPlayback,
       releasePlayback,
     ]
@@ -1074,7 +1081,6 @@ export default function Mission({
     setTimer,
     missionPerformance,
   ]);
-  }, [timeLeft, failActiveMission, setTimer]);
 
   useEffect(() => {
     if (completion) {

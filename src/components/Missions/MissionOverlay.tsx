@@ -465,6 +465,14 @@ export default function MissionOverlay() {
     : { left: "12%", transform: "translateX(-50%)" };
   const pointerOuterBottom = "-28px";
   const pointerInnerBottom = "-24px";
+  const showNotification = Boolean(notification);
+  const showActiveInstruction = Boolean(active && !showNotification);
+  const notificationHeading =
+    notification?.tone === "warning"
+      ? "Warning"
+      : notification?.tone === "info"
+      ? "Notice"
+      : null;
 
   useEffect(() => {
     if (!notification) return;
@@ -821,28 +829,93 @@ export default function MissionOverlay() {
           )}
         </div>
       )}
-      {notification && (
+      {showNotification && notification && (
         <div
           style={{
             position: "absolute",
-            top: 32,
-            left: 28,
-            padding: "12px 18px",
-            borderRadius: "12px",
-            background: "rgba(22, 24, 34, 0.92)",
-            color: "#f5f5f5",
-            fontFamily: "'Helvetica Neue', Arial, sans-serif",
-            fontSize: "14px",
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            boxShadow: "0 10px 24px rgba(0,0,0,0.45)",
-            border: "1px solid rgba(255,255,255,0.12)",
+            top: 24,
+            left: 0,
+            width: "100%",
+            display: "flex",
+            justifyContent: "center",
             pointerEvents: "none",
-            zIndex: 80,
-            maxWidth: "320px",
+            zIndex: 90,
           }}
         >
-          {notification.message}
+          <div
+            style={{
+              position: "relative",
+              backgroundColor: DIALOG_BACKGROUND_COLOR,
+              borderRadius: "18px",
+              border: "3px solid rgba(80, 0, 6, 0.9)",
+              padding: "18px 28px 22px",
+              maxWidth: "520px",
+              color: "#f6ecec",
+              fontFamily: "'Helvetica Neue', Arial, sans-serif",
+              textAlign: "center",
+              boxShadow: "0 18px 32px rgba(0,0,0,0.6)",
+              letterSpacing: "0.02em",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: "10px",
+                borderRadius: "14px",
+                border: "1px solid rgba(255,255,255,0.1)",
+                pointerEvents: "none",
+              }}
+            />
+            {notificationHeading && (
+              <div
+                style={{
+                  fontSize: "12px",
+                  letterSpacing: "0.18em",
+                  textTransform: "uppercase",
+                  color: "rgba(255,255,255,0.74)",
+                  marginBottom: "10px",
+                  fontWeight: 600,
+                }}
+              >
+                {notificationHeading}
+              </div>
+            )}
+            <div
+              style={{
+                position: "relative",
+                fontSize: "18px",
+                fontWeight: 600,
+                textShadow: "0 2px 12px rgba(0,0,0,0.65)",
+                whiteSpace: "pre-wrap",
+              }}
+            >
+              {notification.message}
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-14px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: "24px",
+                height: "24px",
+                overflow: "hidden",
+                pointerEvents: "none",
+              }}
+            >
+              <div
+                style={{
+                  width: "24px",
+                  height: "24px",
+                  backgroundColor: DIALOG_BACKGROUND_COLOR,
+                  borderBottom: "3px solid rgba(80, 0, 6, 0.9)",
+                  borderRight: "3px solid rgba(80, 0, 6, 0.9)",
+                  transform: "translateY(-12px) rotate(45deg)",
+                  boxShadow: "0 12px 18px rgba(0,0,0,0.4)",
+                }}
+              />
+            </div>
+          </div>
         </div>
       )}
       <div
@@ -938,7 +1011,7 @@ export default function MissionOverlay() {
       )}
 
       {/* ACTIVE INSTRUCTION */}
-      {active && (
+      {showActiveInstruction && (
         <div
           style={{
             position: "absolute",
