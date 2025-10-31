@@ -7,7 +7,7 @@ import {
   clearCurrentUser,
 } from "../utils/storage";
 
-type AppStage = "login" | "entrance" | "car" | "level" | "game";
+type AppStage = "login" | "entrance" | "car" | "cinematic" | "level" | "game";
 
 type MetaContextType = {
   currentUser: UserData | null;

@@ -141,7 +141,7 @@ export default function CarSelector() {
           onClick={() => {
             if (isUnlocked) {
               setSelectedCar(car.modelPath); // store chosen car
-              setAppStage("level"); // move to level select
+              setAppStage("cinematic"); // play intro cinematic before level select
             }
           }}
           disabled={!isUnlocked}
