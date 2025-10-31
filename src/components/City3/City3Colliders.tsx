@@ -4,6 +4,7 @@ import { useFrame, type ThreeElements } from "@react-three/fiber";
 import { useCompoundBody } from "@react-three/cannon";
 import { ColliderBox } from "../Taxi/ColliderBox";
 import { ColliderCylinder } from "../Taxi/ColliderCylinder";
+import { ColliderRamp } from "../Taxi/ColliderRamp";
 import {
   useColliderPainter,
   type ColliderDescriptor,
@@ -11,6 +12,7 @@ import {
 import { CITY_SPAWN_POINTS, type CityId } from "../../constants/cities";
 import type { Vector3 } from "three";
 import type { CompoundBodyProps } from "@pmndrs/cannon-worker-api";
+import { CITY3_RAMP_CONFIGS } from "./City3Ramp";
 
 export type CityCollidersProps = ThreeElements["group"] & {
   debug?: boolean;
@@ -6396,7 +6398,16 @@ const STATIC_COLLIDERS: readonly ColliderDescriptor[] = [
     width: 0.287,
     length: 0.374,
   },
+  {
+    shape: "box",
+    mapPosition: { x: 19.671, y: 1.1, z: -472.315 },
+    height: 0.08,
+    width: 2.073,
+    length: 31.977,
+  },
 ];
+
+const RAMP_COLLIDERS = CITY3_RAMP_CONFIGS;
 
 type Triplet = [number, number, number];
 
@@ -6683,6 +6694,19 @@ export function City3Colliders({
       {dynamicColliders.map((collider) =>
         renderCollider(collider, collider.id)
       )}
+      {RAMP_COLLIDERS.map((ramp, index) => (
+        <ColliderRamp
+          key={`city3-ramp-${index}`}
+          mapPosition={ramp.mapPosition}
+          width={ramp.width}
+          length={ramp.length}
+          startHeight={ramp.startHeight}
+          endHeight={ramp.endHeight}
+          axis={ramp.axis}
+          direction={ramp.direction}
+          debug={false}
+        />
+      ))}
     </group>
   );
 }
