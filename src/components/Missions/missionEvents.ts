@@ -80,6 +80,97 @@ baseMap["night2-coroner"] = [
   },
 ];
 
+baseMap["night2-officer"] = [
+  {
+    missionId: "night2-officer",
+    event: "the-child-apparition",
+    position: [96.24, 1, -99.525],
+  },
+  {
+    missionId: "night2-officer",
+    event: "the-weeping-spirit",
+    position: [92.196, 1, -91.063 ],
+  },
+];
+
+baseMap["night3-reaper"] = [
+  {
+    missionId: "night3-reaper",
+    event: "the-child-apparition",
+    position: [72.753, 1, -455.149],
+  },
+  {
+    missionId: "night3-reaper",
+    event: "the-weeping-spirit",
+    position: [77.87, 1, -473.354  ],
+  },
+];
+
+baseMap["night3-priest"] = [
+  {
+    missionId: "night3-priest",
+    event: "the-child-apparition",
+    position: [28.979, 1, -483.624],
+  },
+  {
+    missionId: "night3-priest",
+    event: "the-weeping-spirit",
+    position: [35.368, 1, -511.384],
+  },
+];
+
+baseMap["night3-widow"] = [
+  {
+    missionId: "night3-widow",
+    event: "the-child-apparition",
+    position: [23.856, 1, -449.045],
+  },
+  {
+    missionId: "night3-widow",
+    event: "the-weeping-spirit",
+    position: [-12.715, 1, -428.281],
+  },
+];
+
+baseMap["night3-jester"] = [
+  {
+    missionId: "night3-jester",
+    event: "the-child-apparition",
+    position: [72.776, 1, -433.533],
+  },
+  {
+    missionId: "night3-jester",
+    event: "the-weeping-spirit",
+    position: [77.57, 1, -473.391],
+  },
+];
+
+baseMap["night3-child"] = [
+  {
+    missionId: "night3-child",
+    event: "the-child-apparition",
+    position: [72.52, 1, -407.82],
+  },
+  {
+    missionId: "night3-child",
+    event: "the-weeping-spirit",
+    position: [77.014, 1, -419.796],
+  },
+];
+
+baseMap["night3-voice"] = [
+  {
+    missionId: "night3-voice",
+    event: "the-child-apparition",
+    position: [35.565, 1, -530.439],
+  },
+  {
+    missionId: "night3-voice",
+    event: "the-weeping-spirit",
+    position: [12.303, 1, -545.359],
+  },
+];
+
 
 export const MISSION_EVENTS_BY_ID: MissionEventsById = baseMap;
 
