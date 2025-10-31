@@ -126,6 +126,8 @@ export default function MissionOverlay() {
     setMissionFailureMessage,
     setCompletion,
     setDialogTyping,
+    notification,
+    setNotification,
     debugMissions,
     debugStartMission,
   } = useMissionUI();
@@ -463,6 +465,18 @@ export default function MissionOverlay() {
     : { left: "12%", transform: "translateX(-50%)" };
   const pointerOuterBottom = "-28px";
   const pointerInnerBottom = "-24px";
+
+  useEffect(() => {
+    if (!notification) return;
+    const timeoutId = window.setTimeout(() => {
+      setNotification(null);
+    }, notification.durationMs ?? 6000);
+    return () => window.clearTimeout(timeoutId);
+  }, [notification, setNotification]);
+
+  const handleDismissNotification = useCallback(() => {
+    setNotification(null);
+  }, [setNotification]);
 
   useEffect(() => {
     if (dialogId === null) {
@@ -809,6 +823,104 @@ export default function MissionOverlay() {
               </div>
             </div>
           )}
+        </div>
+      )}
+      {notification && (
+        <div
+          onClick={handleDismissNotification}
+          style={{
+            position: "absolute",
+            top: 28,
+            left: "50%",
+            transform: "translateX(-50%)",
+            zIndex: 80,
+            pointerEvents: "auto",
+            paddingBottom: "24px",
+          }}
+        >
+          <div
+            style={{
+              position: "relative",
+              backgroundColor: DIALOG_BACKGROUND_COLOR,
+              border: "3px solid rgba(120, 0, 10, 0.92)",
+              borderRadius: "18px",
+              padding: "18px 26px 22px",
+              color: "#f6ecec",
+              fontFamily: "'Helvetica Neue', Arial, sans-serif",
+              textAlign: "center",
+              minWidth: "280px",
+              maxWidth: "420px",
+              boxShadow: "0 16px 28px rgba(0,0,0,0.55)",
+              cursor: "pointer",
+            }}
+          >
+            <div
+              style={{
+                position: "absolute",
+                inset: "10px",
+                borderRadius: "12px",
+                border: "1px solid rgba(255,255,255,0.08)",
+                pointerEvents: "none",
+              }}
+            />
+            <div
+              style={{
+                fontSize: "12px",
+                letterSpacing: "0.12em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.6)",
+                marginBottom: "6px",
+              }}
+            >
+              Omen
+            </div>
+            <div
+              style={{
+                fontSize: "18px",
+                lineHeight: 1.5,
+                fontWeight: 600,
+              }}
+            >
+              {notification.message}
+            </div>
+            <div
+              style={{
+                marginTop: "10px",
+                fontSize: "11px",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "rgba(255,255,255,0.5)",
+              }}
+            >
+              Click to dismiss
+            </div>
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-24px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 0,
+                height: 0,
+                borderLeft: "20px solid transparent",
+                borderRight: "20px solid transparent",
+                borderTop: "24px solid rgba(120, 0, 10, 0.92)",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                bottom: "-18px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 0,
+                height: 0,
+                borderLeft: "16px solid transparent",
+                borderRight: "16px solid transparent",
+                borderTop: "18px solid #1d0105",
+              }}
+            />
+          </div>
         </div>
       )}
       <div

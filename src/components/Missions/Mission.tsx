@@ -280,6 +280,7 @@ export default function Mission({
     setMissionFailureMessage,
     setDebugMissions,
     setDebugStartMission,
+    setNotification,
   } = useMissionUI();
   const lastGameOverRef = useRef(gameOver);
 
@@ -699,6 +700,16 @@ export default function Mission({
       );
       setMissionFailureActive(false);
       missionPerformance.beginMission(missionId);
+      const missionHasEvents =
+        getMissionEventsForMission(missionId).length > 0;
+      if (missionHasEvents) {
+        setNotification({
+          id: `${missionId}-event-omen`,
+          message: "The spirits are angry this drive. Be careful.",
+          tone: "warning",
+          durationMs: 6000,
+        });
+      }
       if (onDestinationChange) {
         onDestinationChange(config.dropoffPosition);
       }
@@ -721,6 +732,7 @@ export default function Mission({
       setTimeLeft,
       setTimer,
       setMissionFailureActive,
+      setNotification,
     ]
   );
 

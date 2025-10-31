@@ -28,6 +28,13 @@ type MissionActiveState = {
   dropoffHint: string;
 };
 
+export type MissionNotificationState = {
+  id: string;
+  message: string;
+  tone?: "info" | "warning";
+  durationMs?: number;
+};
+
 export type MissionDialogSpeaker =
   | "driver"
   | "passenger"
@@ -93,6 +100,10 @@ type MissionUIContextValue = {
   setMissionFailureActive: React.Dispatch<React.SetStateAction<boolean>>;
   missionFailureMessage: string | null;
   setMissionFailureMessage: React.Dispatch<React.SetStateAction<string | null>>;
+  notification: MissionNotificationState | null;
+  setNotification: React.Dispatch<
+    React.SetStateAction<MissionNotificationState | null>
+  >;
   debugMissions: MissionDebugEntry[];
   setDebugMissions: React.Dispatch<React.SetStateAction<MissionDebugEntry[]>>;
   debugStartMission?: (missionId: string) => void;
@@ -122,6 +133,8 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
   const [debugStartMission, setDebugStartMission] = useState<
     ((missionId: string) => void) | undefined
   >(undefined);
+  const [notification, setNotification] =
+    useState<MissionNotificationState | null>(null);
 
   const value = useMemo(
     () => ({
@@ -141,6 +154,8 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       setMissionFailureActive,
       missionFailureMessage,
       setMissionFailureMessage,
+      notification,
+      setNotification,
       debugMissions,
       setDebugMissions,
       debugStartMission,
@@ -155,6 +170,7 @@ export function MissionUIProvider({ children }: { children: ReactNode }) {
       timer,
       missionFailureActive,
       missionFailureMessage,
+      notification,
       debugMissions,
       debugStartMission,
     ]

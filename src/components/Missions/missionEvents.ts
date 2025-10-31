@@ -36,6 +36,49 @@ baseMap["night1-child"] = [
   },
 ];
 
+baseMap["night2-doctor"] = [
+  {
+    missionId: "night2-doctor",
+    event: "the-weeping-spirit",
+    position: [106.48, 1, -175.236],
+  },
+  {
+    missionId: "night2-doctor",
+    event: "the-child-apparition",
+    position: [109.226, 1, -149.225],
+  },
+];
+
+baseMap["night2-nun"] = [
+  {
+    missionId: "night2-nun",
+    event: "the-weeping-spirit",
+    position: [109.425, 1, -149.221],
+  },
+  {
+    missionId: "night2-nun",
+    event: "the-child-apparition",
+    position: [109.26, 1, -108.509],
+  },
+];
+
+baseMap["night2-coroner"] = [
+  {
+    missionId: "night2-coroner",
+    event: "the-weeping-spirit",
+    position: [121.835, 1, -114.386],
+  },
+  {
+    missionId: "night2-coroner",
+    event: "the-child-apparition",
+    position: [158.383, 1, -113.204],
+  },
+  {
+    missionId: "night2-coroner",
+    event: "the-child-apparition",
+    position: [163.821, 1, -108.618],
+  },
+];
 
 
 export const MISSION_EVENTS_BY_ID: MissionEventsById = baseMap;
