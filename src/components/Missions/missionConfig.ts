@@ -886,7 +886,7 @@ const city3Missions: MissionConfig[] = [
     dropoffPosition: [60, 0.1, -500],
     dropoffHint: "the last mile marker before the void",
     reward: 1500,
-    timeLimit: 20,
+    timeLimit: 30,
     pickupRadius: 4.5,
     dropoffRadius: 5,
     passengerRotation: [0, Math.PI, 0],
