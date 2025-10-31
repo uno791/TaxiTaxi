@@ -7,7 +7,7 @@ export default function GameOverPopup() {
   if (!gameOver) return null;
 
   const handleRestart = () => {
-    restartGame();
+    restartGame({ skipIntro: true });
   };
 
   return (

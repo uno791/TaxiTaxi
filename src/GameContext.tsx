@@ -58,14 +58,21 @@ type GameContextType = {
   isFreeRoam: boolean;
 };
 
+type RestartOptions = {
+  mode?: GameMode;
+  skipIntro?: boolean;
+};
+
 type GameLifecycleContextType = {
-  restartGame: (options?: { mode?: GameMode }) => void;
+  restartGame: (options?: RestartOptions) => void;
   gameInstance: number;
   activeCity: CityId;
   setActiveCity: React.Dispatch<React.SetStateAction<CityId>>;
   gameMode: GameMode;
   setGameMode: React.Dispatch<React.SetStateAction<GameMode>>;
   isFreeRoam: boolean;
+  shouldSkipIntro: boolean;
+  clearIntroSkip: () => void;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -112,6 +119,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     const saved = loadGameProgress();
     return saved?.cityId ?? DEFAULT_CITY;
   });
+  const [shouldSkipIntro, setShouldSkipIntro] = useState(false);
   const isFreeRoam = gameMode === "freeRoam";
 
   const { money, speedLevel, brakeLevel, boostLevel, missionFinderCharges } =
@@ -290,11 +298,12 @@ export function GameProvider({ children }: { children: ReactNode }) {
   }, [gameMode]);
 
   const restartGame = useCallback(
-    (options?: { mode?: GameMode }) => {
+    (options?: RestartOptions) => {
       const mode = options?.mode ?? gameMode;
       if (mode !== gameMode) {
         setGameMode(mode);
       }
+      setShouldSkipIntro(Boolean(options?.skipIntro));
       setEconomy(buildEconomyState(mode));
       setKilometers(0);
       setSpeed(0);
@@ -313,8 +322,13 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setIsBoosting,
       setGameOver,
       setGameInstance,
+      setShouldSkipIntro,
     ]
   );
+
+  const clearIntroSkip = useCallback(() => {
+    setShouldSkipIntro(false);
+  }, [setShouldSkipIntro]);
 
   const stateValue = useMemo(
     () => ({
@@ -393,6 +407,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       gameMode,
       setGameMode,
       isFreeRoam,
+      shouldSkipIntro,
+      clearIntroSkip,
     }),
     [
       restartGame,
@@ -402,6 +418,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       gameMode,
       setGameMode,
       isFreeRoam,
+      shouldSkipIntro,
+      clearIntroSkip,
     ]
   );
 

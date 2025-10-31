@@ -152,42 +152,51 @@ export default function FlickeringBillboard({
       <Text
         ref={mainTextRef}
         position={[0, 3.2, 0.12]}
-        fontSize={0.7}
+        fontSize={0.6}
         color="#ffffff"
         anchorX="center"
         anchorY="middle"
         fontWeight="bold"
         material-transparent
+        maxWidth={5.5}
+        textAlign="center"
+        lineHeight={1.1}
       >
-        3 PEOPLE MISSING
+        BRANDEN AND PRAVESH CAUGHT IN A FREAK OFF.....6 DEAD
       </Text>
 
       {/* Red RGB Split */}
       <Text
         ref={redRef}
         position={[0.05, 3.2, 0.11]}
-        fontSize={0.7}
+        fontSize={0.6}
         color="#ff0033"
         anchorX="center"
         anchorY="middle"
         fontWeight="bold"
         material-transparent
+        maxWidth={5.5}
+        textAlign="center"
+        lineHeight={1.1}
       >
-        3 PEOPLE MISSING
+        BRANDEN AND PRAVESH CAUGHT IN A FREAK OFF.....6 DEAD
       </Text>
 
       {/* Cyan RGB Split */}
       <Text
         ref={cyanRef}
         position={[-0.05, 3.2, 0.11]}
-        fontSize={0.7}
+        fontSize={0.6}
         color="#00ffff"
         anchorX="center"
         anchorY="middle"
         fontWeight="bold"
         material-transparent
+        maxWidth={5.5}
+        textAlign="center"
+        lineHeight={1.1}
       >
-        3 PEOPLE MISSING
+       BRANDEN AND PRAVESH CAUGHT IN A FREAK OFF.....6 DEAD
       </Text>
     </group>
   );
