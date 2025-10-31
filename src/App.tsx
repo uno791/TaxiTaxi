@@ -20,7 +20,6 @@ import Mission, {
 } from "./components/Missions/Mission";
 import GameUI from "./components/UI/GameUI";
 import GameOverPopup from "./components/UI/GameOverPopup";
-import RestartControl from "./components/UI/RestartControl";
 import { Physics } from "@react-three/cannon";
 import type { ControlMode } from "./components/Taxi/useControls";
 import { TaxiControlSettings } from "./components/Taxi/TaxiControlSettings";
@@ -204,22 +203,22 @@ function GameWorld() {
   // 🧭 Add this near other callbacks (for example after handleMissionProgress):
 
   const handleFindMission = useCallback(() => {
-    if (!missionSummaryRef.current) return;
+    if (!missionSummaryRef.current) return false;
 
     const nextMissionId = missionSummaryRef.current.nextMissionId;
-    if (!nextMissionId) return;
+    if (!nextMissionId) return false;
 
     const missionData = MISSIONS_BY_CITY[activeCity].find(
-      (m) => m.id === nextMissionId
+      (mission) => mission.id === nextMissionId
     );
-    if (!missionData || !missionData.pickupPosition) return;
+    if (!missionData || !missionData.pickupPosition) return false;
 
-    // 👇 Set the destinationRef to the pickup position for navigation
     destinationRef.current.set(
       missionData.pickupPosition[0],
       missionData.pickupPosition[1],
       missionData.pickupPosition[2]
     );
+    return true;
   }, [activeCity]);
 
   const handleMissionSummaryChange = useCallback(

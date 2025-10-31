@@ -1,9 +1,10 @@
-import React from "react";
+import { useCallback, useMemo } from "react";
+import { useGame } from "../../GameContext";
 
 type MissionTrackerHUDProps = {
   remaining: number;
   nextMission: string | null;
-  onFindMission?: () => void;
+  onFindMission?: () => boolean;
 };
 
 export default function MissionTrackerHUD({
@@ -11,6 +12,22 @@ export default function MissionTrackerHUD({
   nextMission,
   onFindMission,
 }: MissionTrackerHUDProps) {
+  const { missionFinderCharges, consumeMissionFinderCharge } = useGame();
+
+  const canAttemptFind = useMemo(
+    () => typeof onFindMission === "function" && nextMission !== null,
+    [onFindMission, nextMission]
+  );
+
+  const findDisabled = !canAttemptFind || missionFinderCharges <= 0;
+
+  const handleClick = useCallback(() => {
+    if (!onFindMission || findDisabled) return;
+    const didSetDestination = onFindMission();
+    if (!didSetDestination) return;
+    void consumeMissionFinderCharge();
+  }, [onFindMission, consumeMissionFinderCharge, findDisabled]);
+
   return (
     <div
       style={{
@@ -43,31 +60,54 @@ export default function MissionTrackerHUD({
         </div>
       )}
 
-      {onFindMission && nextMission && (
-        <button
-          onClick={onFindMission}
+      {canAttemptFind && nextMission ? (
+        <div
           style={{
-            marginTop: 4,
-            padding: "6px 10px",
-            border: "none",
-            borderRadius: 6,
-            background: "#007bff",
-            color: "white",
-            cursor: "pointer",
-            fontSize: "0.9rem",
-            fontWeight: 500,
-            transition: "background 0.2s ease",
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-start",
+            gap: 4,
+            width: "100%",
           }}
-          onMouseEnter={(e) =>
-            ((e.target as HTMLButtonElement).style.background = "#0056b3")
-          }
-          onMouseLeave={(e) =>
-            ((e.target as HTMLButtonElement).style.background = "#007bff")
-          }
         >
-          Find Mission
-        </button>
-      )}
+          <button
+            type="button"
+            onClick={handleClick}
+            disabled={findDisabled}
+            style={{
+              marginTop: 4,
+              padding: "6px 10px",
+              border: "none",
+              borderRadius: 6,
+              background: findDisabled ? "rgba(255, 255, 255, 0.18)" : "#007bff",
+              color: findDisabled ? "rgba(255, 255, 255, 0.6)" : "white",
+              cursor: findDisabled ? "default" : "pointer",
+              fontSize: "0.9rem",
+              fontWeight: 500,
+              transition: "background 0.2s ease",
+            }}
+            onMouseEnter={(event) => {
+              if (findDisabled) return;
+              (event.target as HTMLButtonElement).style.background = "#0056b3";
+            }}
+            onMouseLeave={(event) => {
+              if (findDisabled) return;
+              (event.target as HTMLButtonElement).style.background = "#007bff";
+            }}
+          >
+            Find Mission
+          </button>
+          <span
+            style={{
+              fontSize: "0.8rem",
+              color: "rgba(255,255,255,0.75)",
+              paddingLeft: 2,
+            }}
+          >
+            {missionFinderCharges} left
+          </span>
+        </div>
+      ) : null}
     </div>
   );
 }

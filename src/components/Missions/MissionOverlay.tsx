@@ -129,7 +129,6 @@ export default function MissionOverlay() {
   } = useMissionUI();
   const { isFreeRoam } = useGameLifecycle();
   const [debugMenuOpen, setDebugMenuOpen] = useState(false);
-  const isDev = import.meta.env.DEV;
   const showDebugTools = isFreeRoam && debugMissions.length > 0;
   const panelTitle = isFreeRoam ? "Mission Tools" : "Mission Tester (DEV)";
   const toggleLabel = debugMenuOpen
