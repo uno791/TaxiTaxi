@@ -66,6 +66,9 @@ type SpiritEventConfig = {
   lightColor: string;
   overlayColor: string;
   cryingSound: string;
+  idleIntensityMultiplier?: number;
+  scareIntensity?: number;
+  distortionIntensityMultiplier?: number;
 };
 
 const createSpiritApparition = ({
@@ -73,6 +76,9 @@ const createSpiritApparition = ({
   lightColor,
   overlayColor,
   cryingSound,
+  idleIntensityMultiplier = 1,
+  scareIntensity = 1.6,
+  distortionIntensityMultiplier = 1,
 }: SpiritEventConfig): MissionEventComponent => {
   const Apparition: MissionEventComponent = ({
     position,
@@ -324,9 +330,15 @@ const createSpiritApparition = ({
       }
       insideJumpscareRef.current = withinJumpscare;
 
-      const targetIntensity = jumpscareTriggeredRef.current
-        ? 1.6
-        : clamp(1 - distance / CRY_RADIUS, 0, 1);
+      const calmTarget =
+        clamp(1 - distance / CRY_RADIUS, 0, 1) * idleIntensityMultiplier;
+      const desiredIntensity = jumpscareTriggeredRef.current
+        ? scareIntensity
+        : calmTarget;
+      const targetIntensity = Math.min(
+        Math.max(desiredIntensity, 0),
+        scareIntensity
+      );
       const lerpFactor = clamp(delta * 4, 0, 1);
       glowUniforms.uIntensity.value = THREE.MathUtils.lerp(
         glowUniforms.uIntensity.value,
@@ -385,7 +397,7 @@ const createSpiritApparition = ({
         {active ? (
           <HorrorController
             ghostPosition={ghostPosition}
-            intensity={DISTORTION_INTENSITY}
+            intensity={DISTORTION_INTENSITY * distortionIntensityMultiplier}
           />
         ) : null}
       </>
@@ -409,9 +421,31 @@ const WeepingSpiritEvent = createSpiritApparition({
   cryingSound: "sounds/girlcrying.mp3",
 });
 
+const TheChildEventIntense = createSpiritApparition({
+  baseColor: 0xf7b0ff,
+  lightColor: "#ffadc6",
+  overlayColor: "white",
+  cryingSound: "sounds/cryingchild.mp3",
+  idleIntensityMultiplier: 1.4,
+  scareIntensity: 2.4,
+  distortionIntensityMultiplier: 1.6,
+});
+
+const WeepingSpiritEventIntense = createSpiritApparition({
+  baseColor: 0x7abfff,
+  lightColor: "#82cdff",
+  overlayColor: "rgba(40, 94, 188, 0.94)",
+  cryingSound: "sounds/girlcrying.mp3",
+  idleIntensityMultiplier: 1.6,
+  scareIntensity: 2.6,
+  distortionIntensityMultiplier: 1.75,
+});
+
 export const missionEventRegistry = {
   "the-child-apparition": TheChildEvent,
   "the-weeping-spirit": WeepingSpiritEvent,
+  "the-child-apparition-intense": TheChildEventIntense,
+  "the-weeping-spirit-intense": WeepingSpiritEventIntense,
 } as const;
 
 export type MissionEventId = keyof typeof missionEventRegistry;

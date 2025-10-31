@@ -161,12 +161,12 @@ baseMap["night3-child"] = [
 baseMap["night3-voice"] = [
   {
     missionId: "night3-voice",
-    event: "the-child-apparition",
+    event: "the-child-apparition-intense",
     position: [35.565, 1, -530.439],
   },
   {
     missionId: "night3-voice",
-    event: "the-weeping-spirit",
+    event: "the-weeping-spirit-intense",
     position: [12.303, 1, -545.359],
   },
 ];
