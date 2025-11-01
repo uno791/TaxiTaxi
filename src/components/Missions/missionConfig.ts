@@ -33,6 +33,7 @@ export type MissionDialogueEntry = {
   text: string;
   speakerLabel?: string;
   options?: MissionDialogueOptionConfig[];
+  nextIndex?: number;
 };
 
 export type MissionPassengerPreviewConfig = {
@@ -86,14 +87,25 @@ const city1Missions: MissionConfig[] = [
         speaker: "driver",
         text: "What do you tell them?",
         options: [
-          { label: "Are you alright?" },
-          { label: "You should see someone." },
-          { label: "That's not how ledgers work." },
+          { label: "Are you alright?", nextIndex: 2 },
+          { label: "You should see someone.", nextIndex: 3 },
+          { label: "That's not how ledgers work.", nextIndex: 4 },
         ],
       },
       {
         speaker: "passenger",
         text: "Balance is everything. You'll see soon enough.",
+        nextIndex: 5,
+      },
+      {
+        speaker: "passenger",
+        text: "Balance is everything. You'll see soon enough.",
+        nextIndex: 5,
+      },
+      {
+        speaker: "passenger",
+        text: "Balance is everything. You'll see soon enough.",
+        nextIndex: 5,
       },
     ],
     passengerPreview: {
@@ -127,14 +139,24 @@ const city1Missions: MissionConfig[] = [
         speaker: "driver",
         text: "Pick a reply.",
         options: [
-          { label: "You've seen too much." },
-          { label: "You've been through a lot." },
+          { label: "You've seen too much.", nextIndex: 2 },
+          { label: "You've been through a lot.", nextIndex: 3 },
         ],
       },
       {
         speaker: "passenger",
-        text: "We all have. Some of us just forget slower.",
+        text: "We all have. Some of us just forget slower",
+        nextIndex: 4,
       },
+      {
+        speaker: "passenger",
+        text: "a Lot? Every muzzle flash turns back into the convoy you abandoned. The war never left; you just kept driving in circles.",
+        nextIndex: 4,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "We all have. Some of us just forget slower.",
+      // },
     ],
     passengerPreview: {
       position: [0, -0.8, 0],
@@ -167,14 +189,24 @@ const city1Missions: MissionConfig[] = [
         speaker: "driver",
         text: "How do you answer?",
         options: [
-          { label: "You talk like you know me." },
-          { label: "Do you know me?" },
+          { label: "You talk like you know me.", nextIndex: 2 },
+          { label: "Do you know me?", nextIndex: 3 },
         ],
       },
       {
         speaker: "passenger",
-        text: "Everyone in this city knows you. They're just waiting for you to stop.",
+        text: "Because the gutters repeat your name every dawn. The stains on the tar keep chanting it back at me.",
+        nextIndex: 4,
       },
+      {
+        speaker: "passenger",
+        text: "Everyone in this city knows you. They're just waiting for you to stop.",
+        nextIndex: 4,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "",
+      // },
     ],
     passengerPreview: {
       position: [0, -0.6, 0],
@@ -324,15 +356,30 @@ const city2Missions: MissionConfig[] = [
         speaker: "driver",
         text: "Offer her something.",
         options: [
-          { label: "I'm sorry for your loss." },
-          { label: "Accidents happen." },
-          { label: "What happened?" },
+          { label: "I'm sorry for your loss.", nextIndex: 2 },
+          { label: "Accidents happen.", nextIndex: 3 },
+          { label: "What happened?", nextIndex: 4 },
         ],
       },
       {
         speaker: "passenger",
         text: "You talk like you weren't there.",
+        nextIndex: 5,
       },
+      {
+        speaker: "passenger",
+        text: "You talk like you weren't there.",
+        nextIndex: 5,
+      },
+      {
+        speaker: "passenger",
+        text: "You talk like you weren't there.",
+        nextIndex: 5,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "You talk like you weren't there.",
+      // },
     ],
     passengerPreview: {
       position: [0, -0.6, 0],
@@ -365,15 +412,30 @@ const city2Missions: MissionConfig[] = [
         speaker: "driver",
         text: "Your mask slips.",
         options: [
-          { label: "Masks keep us safe." },
-          { label: "You're scaring me." },
-          { label: "I'm not hiding anything." },
+          { label: "Masks keep us safe.", nextIndex: 2 },
+          { label: "You're scaring me.", nextIndex: 3 },
+          { label: "I'm not hiding anything.", nextIndex: 4 },
         ],
       },
       {
         speaker: "passenger",
-        text: "Everyone hides something. The best ones hide bodies.",
+        text: "Masks keep crowds calm until the paint runs. Yours smeared the night the sirens found us.",
+        nextIndex: 5,
       },
+      {
+        speaker: "passenger",
+        text: "Afraid? Good. Fear fogs the visor so you finally see what is underneath.",
+        nextIndex: 5,
+      },
+      {
+        speaker: "passenger",
+        text: "Everyone hides something. The best ones hide bodies.",
+        nextIndex: 5,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "",
+      // },
     ],
     passengerPreview: {
       position: [0, -0.8, 0],
@@ -631,15 +693,30 @@ const city3Missions: MissionConfig[] = [
         speaker: "driver",
         text: "What spills out?",
         options: [
-          { label: "What do you want from me?" },
-          { label: "You're sick." },
-          { label: "Get out of my car." },
+          { label: "What do you want from me?", nextIndex: 2 },
+          { label: "You're sick.", nextIndex: 3 },
+          { label: "Get out of my car.", nextIndex: 4 },
         ],
       },
       {
         speaker: "passenger",
-        text: "I already did. Long ago. You're the one who stayed in the wreck, seasoning yourself with guilt.",
+        text: "Want? Just the truth peeled from your excuses. You marinated us in denial until the metal gave way.",
+        nextIndex: 5,
       },
+      {
+        speaker: "passenger",
+        text: "Me? You're the one who stayed in the wreck, seasoning yourself with guilt.",
+        nextIndex: 5,
+      },
+      {
+        speaker: "passenger",
+        text: "I already did. Long ago. I left with the first siren. You're the one still roasting in the chassis.",
+        nextIndex: 5,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "I already did. Long ago. You're the one who stayed in the wreck, seasoning yourself with guilt.",
+      // },
       {
         speaker: "internal",
         text: "The rearview mirror is dripping. I tell myself it's rain. I don't believe it.",
@@ -767,15 +844,30 @@ const city3Missions: MissionConfig[] = [
         speaker: "driver",
         text: "Name what you fear.",
         options: [
-          { label: "Stop talking." },
-          { label: "You're not real." },
-          { label: "What are you?" },
+          { label: "Stop talking.", nextIndex: 3 },
+          { label: "You're not real.", nextIndex: 4 },
+          { label: "What are you?", nextIndex: 5 },
         ],
       },
       {
         speaker: "passenger",
-        text: "I'm rest. You're resistance.",
+        text: "Silence just lets the crash play louder...",
+        nextIndex: 6,
       },
+      {
+        speaker: "passenger",
+        text: "Then stop reflecting me every time you blink. I'm the part you keep locking in the mirror.",
+        nextIndex: 6,
+      },
+      {
+        speaker: "passenger",
+        text: "Look in the mirror...I'm rest. You're resistance.",
+        nextIndex: 6,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "I'm rest. You're resistance.",
+      // },
       {
         speaker: "internal",
         text: "He leans forward and whispers something I can't hear. The steering wheel straightens itself. For a heartbeat, I feel peace... then the brakes screech again.",
@@ -812,15 +904,30 @@ const city3Missions: MissionConfig[] = [
         speaker: "driver",
         text: "Words fail.",
         options: [
-          { label: "Noah... I'm sorry." },
-          { label: "I didn't mean it." },
-          { label: "Please..." },
+          { label: "Noah... I'm sorry.", nextIndex: 2 },
+          { label: "I didn't mean it.", nextIndex: 3 },
+          { label: "Please...", nextIndex: 4 },
         ],
       },
       {
         speaker: "passenger",
         text: "It's okay, Dad. Mom says we're almost home. You can stop driving now.",
+        nextIndex: 5,
       },
+      {
+        speaker: "passenger",
+        text: "I know, Dad. You kept saying sorry while the world was upside down. I held your sleeve anyway.",
+        nextIndex: 5,
+      },
+      {
+        speaker: "passenger",
+        text: "Please what? Stay? Go? The road already chose. I'm just waiting for you to let go.",
+        nextIndex: 5,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "It's okay, Dad. Mom says we're almost home. You can stop driving now.",
+      // },
       {
         speaker: "internal",
         text: "I turn to look. Just a toy car on the seat. Its wheels still spin.",
@@ -857,15 +964,30 @@ const city3Missions: MissionConfig[] = [
         speaker: "driver",
         text: "You reach for excuses.",
         options: [
-          { label: "You survived?" },
-          { label: "I tried to save you." },
-          { label: "Please stop." },
+          { label: "You survived?", nextIndex: 2 },
+          { label: "I tried to save you.", nextIndex: 3 },
+          { label: "Please stop.", nextIndex: 4 },
         ],
       },
       {
         speaker: "passenger",
-        text: "You didn't try, Eli. You slept. One blink too long, one turn too late. I lived. The house is quiet. Noah's toys are in boxes. Sometimes I leave the door open, hoping the cab will pull in.",
+        text: "Survived,Yes.But part of me died that day.The house is quiet. Noah's toys are in boxes. Sometimes I leave the door open, hoping the cab will pull in",
+        nextIndex: 5,
       },
+      {
+        speaker: "passenger",
+        text: "You didn't try, Eli. You slept. One blink too long, one turn too late. I lived. The house is quiet. Noah's toys are in boxes. Sometimes I leave the door open, hoping the cab will pull in.",
+        nextIndex: 5,
+      },
+      {
+        speaker: "passenger",
+        text: " I waited for you to wake up long after the sirens left. I'm still waiting.Hoping the cab will pull in",
+        nextIndex: 5,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "You didn't try, Eli. You slept. One blink too long, one turn too late. I lived. The house is quiet. Noah's toys are in boxes. Sometimes I leave the door open, hoping the cab will pull in.",
+      // },
       {
         speaker: "internal",
         text: "Her words weigh more than the wheel. She breathes air I'll never feel.",
@@ -902,15 +1024,30 @@ const city3Missions: MissionConfig[] = [
         speaker: "driver",
         text: "You bargain anyway.",
         options: [
-          { label: "Then let me go." },
-          { label: "What about them?" },
-          { label: "I can't stop driving." },
+          { label: "Then let me go.", nextIndex: 2 },
+          { label: "What about them?", nextIndex: 3 },
+          { label: "I can't stop driving.", nextIndex: 4 },
         ],
       },
       {
         speaker: "passenger",
-        text: "No one stops. But some finally turn off the headlights.",
+        text: "The door has been open since the impact. You're the one clinging to the wheel.",
+        nextIndex: 5,
       },
+      {
+        speaker: "passenger",
+        text: "They already crossed. You're the last set of headlights stalling at the edge.",
+        nextIndex: 5,
+      },
+      {
+        speaker: "passenger",
+        text: "You already did. The engine's been quiet ever since. Only your guilt keeps revving.",
+        nextIndex: 5,
+      },
+      // {
+      //   speaker: "passenger",
+      //   text: "No one stops. But some finally turn off the headlights.",
+      // },
       {
         speaker: "internal",
         text: "His presence isn't cold, it's hollow. Like standing where something once stood.",

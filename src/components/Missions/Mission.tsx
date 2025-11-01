@@ -1132,14 +1132,18 @@ export default function Mission({
         })
       : undefined;
 
+    const hasOptions = Boolean(options && options.length > 0);
+    const onContinue = hasOptions
+      ? undefined
+      : () => advanceDialog(entry.nextIndex);
+
     setDialog({
       id: `${missionId}-entry-${dialogIndex}`,
       speaker: entry.speaker,
       speakerLabel,
       text: entry.text,
       options,
-      onContinue:
-        !options || options.length === 0 ? () => advanceDialog() : undefined,
+      onContinue,
       passengerModel: config.passengerModel ?? "generic",
       passengerPreview: config.passengerPreview,
     });
