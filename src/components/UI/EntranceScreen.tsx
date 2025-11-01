@@ -69,7 +69,7 @@ export default function EntranceScreen() {
         height: "100vh",
         display: "flex",
         flexDirection: "column",
-        justifyContent: "space-between",
+        justifyContent: "flex-start",
         alignItems: "center",
         color: "white",
         fontFamily: "sans-serif",
@@ -85,108 +85,155 @@ export default function EntranceScreen() {
           left: 0,
           width: "100%",
           height: "100%",
-          backgroundColor: "rgba(0, 0, 0, 0.4)",
+          backgroundColor: "rgba(0, 0, 0, 0)",
           zIndex: 0,
         }}
       />
 
-      {/* 🔹 Sign out button (top right) */}
+      {/* 🔹 Sign out button (top right, horror style) */}
       <button
         onClick={logout}
-        className="entrance-button entrance-button--light"
         style={{
           position: "absolute",
           top: "20px",
           right: "20px",
           zIndex: 2,
+          padding: "10px 22px",
+          fontSize: "16px",
+          fontWeight: "bold",
+          color: "#ffcc00",
+          background: "rgba(0,0,0,0.7)",
+          border: "2px solid rgba(255, 204, 0, 0.4)",
+          borderRadius: "8px",
+          cursor: "pointer",
+          boxShadow: "0 0 15px rgba(255, 204, 0, 0.2)",
+          textTransform: "uppercase",
+          letterSpacing: "1px",
+          transition:
+            "all 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease",
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = "0 0 25px rgba(255, 204, 0, 0.6)";
+          e.currentTarget.style.background = "rgba(0,0,0,0.9)";
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = "0 0 15px rgba(255, 204, 0, 0.2)";
+          e.currentTarget.style.background = "rgba(0,0,0,0.7)";
         }}
       >
         Sign Out
       </button>
 
-      {/* 🔹 Content container */}
+      {/* 🔹 Title Text (top left corner) */}
       <div
         style={{
-          zIndex: 1,
-          textAlign: "center",
-          marginTop: "60px",
+          position: "absolute",
+          top: "30px",
+          left: "80px",
+          zIndex: 2,
+          textAlign: "left",
         }}
       >
         <h1
           style={{
-            fontSize: "42px",
-            marginBottom: "10px",
-            textShadow: "3px 3px 10px black",
+            fontSize: "180px",
+            margin: 0,
+            color: "#ffcc00",
+            fontFamily: '"Bebas Neue", "Impact", sans-serif',
+            textTransform: "uppercase",
+            letterSpacing: "3px",
+            lineHeight: 1.0,
+            textShadow:
+              "0 0 10px rgba(255, 204, 0, 0.6), 0 0 30px rgba(255, 204, 0, 0.4)",
           }}
         >
-          Welcome back,{" "}
-          <span style={{ color: "#ffcc00" }}>{currentUser?.username}</span>
+          Ride or Die
         </h1>
-        <p style={{ fontSize: "18px", opacity: 0.9 }}>
-          Ready for your next ride?
+        <p
+          style={{
+            fontSize: "32px",
+            marginTop: "14px",
+            color: "#f0f0f0",
+            textShadow: "0 0 12px rgba(0,0,0,0.9)",
+            letterSpacing: "1px",
+          }}
+        >
+          Ready for your next ride,{" "}
+          <span style={{ color: "#ffcc00" }}>{currentUser?.username}</span>?
         </p>
       </div>
 
-      {/* 🔹 Start buttons */}
+      {/* 🔹 Start buttons (bottom center, lowered slightly) */}
       <div
         style={{
-          zIndex: 1,
-          marginBottom: "80px",
+          position: "absolute",
+          bottom: "40px", // lowered from 80px
+          zIndex: 2,
           display: "flex",
-          gap: "20px",
+          justifyContent: "center",
+          gap: "25px",
         }}
       >
-        <button
-          className="entrance-button entrance-button--primary"
-          onClick={handleStartNewGame}
-        >
-          Start New Game
-        </button>
-
-        <button
-          className="entrance-button entrance-button--success"
-          disabled={!hasSavedGame}
-          onClick={handleContinueGame}
-        >
-          Continue Game
-        </button>
-
-        <button
-          className="entrance-button entrance-button--secondary"
-          onClick={handleStartFreeRoam}
-        >
-          Free Roam
-        </button>
-
-        {/* 🔹 Credits button */}
-        <button
-          style={{
-            padding: "14px 36px",
-            fontSize: "20px",
-            fontWeight: "bold",
-            background:
-              "linear-gradient(135deg, rgba(0,0,0,0.85), rgba(70,70,70,0.9))",
-            color: "#fff",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
-            transition: "transform 0.2s ease, box-shadow 0.2s ease",
-          }}
-          onClick={() => setShowCredits(true)}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = "scale(1.04)";
-            e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.6)";
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = "scale(1)";
-            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.5)";
-          }}
-        >
-          Credits
-        </button>
+        {/* 🎃 Shared horror-style button base */}
+        {[
+          {
+            label: "Start New Game",
+            onClick: handleStartNewGame,
+            color: "#ffcc00",
+          },
+          {
+            label: "Continue Game",
+            onClick: handleContinueGame,
+            color: "#4caf50",
+            disabled: !hasSavedGame,
+          },
+          {
+            label: "Free Roam",
+            onClick: handleStartFreeRoam,
+            color: "#2196f3",
+          },
+          {
+            label: "Credits",
+            onClick: () => setShowCredits(true),
+            color: "#777777",
+          },
+        ].map((btn, i) => (
+          <button
+            key={i}
+            onClick={btn.onClick}
+            disabled={btn.disabled}
+            style={{
+              padding: "16px 42px",
+              fontSize: "20px",
+              fontWeight: "bold",
+              color: "#f5f5f5",
+              background: `radial-gradient(circle at top, ${btn.color}33, rgba(0,0,0,0.8))`,
+              border: "2px solid rgba(255,255,255,0.1)",
+              borderRadius: "10px",
+              textTransform: "uppercase",
+              letterSpacing: "1px",
+              cursor: "pointer",
+              boxShadow: `0 0 25px ${btn.color}33`,
+              transition:
+                "all 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = "scale(1.05)";
+              e.currentTarget.style.boxShadow = `0 0 35px ${btn.color}99`;
+              e.currentTarget.style.background = `radial-gradient(circle at top, ${btn.color}55, rgba(0,0,0,0.9))`;
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = "scale(1)";
+              e.currentTarget.style.boxShadow = `0 0 25px ${btn.color}33`;
+              e.currentTarget.style.background = `radial-gradient(circle at top, ${btn.color}33, rgba(0,0,0,0.8))`;
+            }}
+          >
+            {btn.label}
+          </button>
+        ))}
       </div>
 
+      {/* 🔹 Confirmation Overlay */}
       {isConfirmingNewGame && (
         <div
           style={{
