@@ -3,8 +3,10 @@ import { useGLTF, Clone } from "@react-three/drei";
 import type { JSX } from "react/jsx-runtime";
 import { tagRoadSurfaces } from "../../utils/markRoadSurfaces";
 
+const MODEL_URL = `${import.meta.env.BASE_URL}models/city2_mountains.glb`;
+
 export function City2mountains(props: JSX.IntrinsicElements["group"]) {
-  const { scene } = useGLTF("/models/city2_mountains.glb");
+  const { scene } = useGLTF(MODEL_URL);
   const preparedScene = useMemo(() => {
     tagRoadSurfaces(scene, { includeNameHints: ["road"] });
     return scene;
@@ -17,4 +19,4 @@ export function City2mountains(props: JSX.IntrinsicElements["group"]) {
   );
 }
 
-useGLTF.preload("/models/city2_mountains.glb");
+useGLTF.preload(MODEL_URL);

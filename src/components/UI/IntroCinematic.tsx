@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useMeta } from "../../context/MetaContext";
 
 const FADE_DURATION_MS = 800;
+const VIDEO_URL = `${import.meta.env.BASE_URL}videos/intro-cinematic.mp4`;
 
 export default function IntroCinematic() {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -68,7 +69,7 @@ export default function IntroCinematic() {
     >
       <video
         ref={videoRef}
-        src="/videos/intro-cinematic.mp4"
+        src={VIDEO_URL}
         style={{
           width: "100%",
           height: "100%",
