@@ -13,8 +13,13 @@ export default function EntranceScreen() {
   const defaultCity = CITY_SEQUENCE[0] ?? "city1";
   const [savedProgress, setSavedProgress] = useState(() => loadGameProgress());
   const [isConfirmingNewGame, setIsConfirmingNewGame] = useState(false);
-  const hasSavedGame = Boolean(savedProgress);
   const [showCredits, setShowCredits] = useState(false);
+
+  // ✅ Continue Game only if there's actual progress
+  const hasSavedGame =
+    savedProgress &&
+    Array.isArray(savedProgress.completedMissionIds) &&
+    savedProgress.completedMissionIds.length > 0;
 
   const startCampaignFlow = () => {
     setActiveCity(defaultCity);
@@ -174,8 +179,8 @@ export default function EntranceScreen() {
           gap: "25px",
         }}
       >
-        {/* 🎃 Shared horror-style button base */}
         {[
+          // 🎃 Shared horror-style button base
           {
             label: "Start New Game",
             onClick: handleStartNewGame,
@@ -212,12 +217,14 @@ export default function EntranceScreen() {
               borderRadius: "10px",
               textTransform: "uppercase",
               letterSpacing: "1px",
-              cursor: "pointer",
+              cursor: btn.disabled ? "not-allowed" : "pointer",
+              opacity: btn.disabled ? 0.4 : 1,
               boxShadow: `0 0 25px ${btn.color}33`,
               transition:
                 "all 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease",
             }}
             onMouseEnter={(e) => {
+              if (btn.disabled) return;
               e.currentTarget.style.transform = "scale(1.05)";
               e.currentTarget.style.boxShadow = `0 0 35px ${btn.color}99`;
               e.currentTarget.style.background = `radial-gradient(circle at top, ${btn.color}55, rgba(0,0,0,0.9))`;
