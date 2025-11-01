@@ -3,6 +3,7 @@ import { useMeta } from "../../context/MetaContext";
 import { useGameLifecycle } from "../../GameContext";
 import { CITY_SEQUENCE } from "../../constants/cities";
 import entranceBackground from "../../assets/entrance.png";
+import CreditsModal from "./CreditsModal";
 import { clearGameProgress, loadGameProgress } from "../../utils/storage";
 import "./EntranceScreen.css";
 
@@ -13,6 +14,7 @@ export default function EntranceScreen() {
   const [savedProgress, setSavedProgress] = useState(() => loadGameProgress());
   const [isConfirmingNewGame, setIsConfirmingNewGame] = useState(false);
   const hasSavedGame = Boolean(savedProgress);
+  const [showCredits, setShowCredits] = useState(false);
 
   const startCampaignFlow = () => {
     setActiveCity(defaultCity);
@@ -155,6 +157,34 @@ export default function EntranceScreen() {
         >
           Free Roam
         </button>
+
+        {/* 🔹 Credits button */}
+        <button
+          style={{
+            padding: "14px 36px",
+            fontSize: "20px",
+            fontWeight: "bold",
+            background:
+              "linear-gradient(135deg, rgba(0,0,0,0.85), rgba(70,70,70,0.9))",
+            color: "#fff",
+            border: "none",
+            borderRadius: "8px",
+            cursor: "pointer",
+            boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+            transition: "transform 0.2s ease, box-shadow 0.2s ease",
+          }}
+          onClick={() => setShowCredits(true)}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = "scale(1.04)";
+            e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.6)";
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = "scale(1)";
+            e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,0,0,0.5)";
+          }}
+        >
+          Credits
+        </button>
       </div>
 
       {isConfirmingNewGame && (
@@ -222,6 +252,9 @@ export default function EntranceScreen() {
           </div>
         </div>
       )}
+
+      {/* 🔹 Credits Modal */}
+      {showCredits && <CreditsModal onClose={() => setShowCredits(false)} />}
     </div>
   );
 }
