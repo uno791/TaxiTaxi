@@ -117,7 +117,7 @@ const CreditsModal: FC<CreditsModalProps> = ({ onClose }) => {
 
           <div
             style={{
-              textAlign: "left",
+              textAlign: "center",
               display: "inline-block",
               lineHeight: 1.8,
               fontSize: "0.95rem",
@@ -277,19 +277,63 @@ const CreditsModal: FC<CreditsModalProps> = ({ onClose }) => {
               ["Tree", "https://poly.pizza/m/cRipmFHCEVU", "Marc Solà"],
             ].map(([name, link, author]) => (
               <p key={name}>
-                • {name} — {author}
+                {name} — {author}
                 <br />
                 <a
                   href={link}
                   target="_blank"
                   rel="noopener noreferrer"
-                  style={{ color: "#ffcc00", textDecoration: "none" }}
+                  style={{
+                    color: "#ffcc00",
+                    textDecoration: "none",
+                  }}
                 >
                   {link}
                 </a>
               </p>
             ))}
           </div>
+          <h3 style={{ color: "#ffcc00", marginTop: "30px" }}>
+            Music & Sounds
+          </h3>
+
+          <div
+            style={{
+              textAlign: "center",
+              display: "inline-block",
+              lineHeight: 1.8,
+              fontSize: "0.95rem",
+              marginBottom: "20px",
+            }}
+          >
+            <p>
+              ふわっと — 2 8 1 4
+              <br />
+              <a
+                href="https://www.youtube.com/watch?v=8nUDTwTWF5Q"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#ffcc00", textDecoration: "none" }}
+              >
+                https://www.youtube.com/watch?v=8nUDTwTWF5Q
+              </a>
+            </p>
+            <p>
+              A Bad Dream — EarthBound OST
+              <br />
+              <a
+                href="https://www.youtube.com/watch?v=cPfmpoXQC4U"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ color: "#ffcc00", textDecoration: "none" }}
+              >
+                https://www.youtube.com/watch?v=cPfmpoXQC4U
+              </a>
+            </p>
+          </div>
+
+          <h3 style={{ color: "#ffcc00", marginTop: "10px" }}>Intro Video</h3>
+          <p style={{ marginBottom: "20px" }}>Used Veo 3</p>
 
           <p
             style={{
