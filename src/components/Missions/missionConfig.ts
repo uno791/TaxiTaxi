@@ -326,7 +326,7 @@ const city2Missions: MissionConfig[] = [
         options: [
           { label: "I'm sorry for your loss." },
           { label: "Accidents happen." },
-          { label: "What happened?." },
+          { label: "What happened?" },
         ],
       },
       {
