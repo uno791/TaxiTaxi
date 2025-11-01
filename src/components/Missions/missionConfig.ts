@@ -851,7 +851,7 @@ const city3Missions: MissionConfig[] = [
     dialogue: [
       {
         speaker: "passenger",
-        text: "You still drive in your dreams. I see you sometimes, headlights down by the water, sirens above. They pulled me out. Not you. I remember a paramedic's hand, not yours. You looked peaceful. Like you'd already left.",
+        text: "You still drive in my dreams. I see you sometimes, headlights down by the water, sirens above. They pulled me out. Not you. I remember a paramedic's hand, not yours. You looked peaceful. Like you'd already left.",
       },
       {
         speaker: "driver",
