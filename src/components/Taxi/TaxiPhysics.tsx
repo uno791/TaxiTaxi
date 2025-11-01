@@ -603,7 +603,7 @@ export function TaxiPhysics({
       if (kilometers <= 0) return;
       setKilometers((value) => value + kilometers);
       //const fuelCost = kilometers * 45;
-      const fuelCost = kilometers * (80 + speed * 0.3 + (boost > 0 ? 30 : 0));
+      const fuelCost = kilometers * (240 + speed * 0.3 + (boost > 0 ? 30 : 0));
       if (fuelCost <= 0) return;
       setMoney((value) => {
         if (fuelCost < 1e-6) return value;
