@@ -74,6 +74,8 @@ type GameLifecycleContextType = {
   isCompetition: boolean; // ✅ ADD THIS
   shouldSkipIntro: boolean;
   clearIntroSkip: () => void;
+  competitionName: string | null;
+  setCompetitionName: React.Dispatch<React.SetStateAction<string | null>>;
 };
 
 const GameContext = createContext<GameContextType | undefined>(undefined);
@@ -121,6 +123,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
     return saved?.cityId ?? DEFAULT_CITY;
   });
   const [shouldSkipIntro, setShouldSkipIntro] = useState(false);
+  const [competitionName, setCompetitionName] = useState<string | null>(null);
   const isFreeRoam = gameMode === "freeRoam";
   const isCompetition = gameMode === "competition";
 
@@ -305,6 +308,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       if (mode !== gameMode) {
         setGameMode(mode);
       }
+      if (mode !== "competition") {
+        setCompetitionName(null);
+      }
       setShouldSkipIntro(Boolean(options?.skipIntro));
       setEconomy(buildEconomyState(mode));
       setKilometers(0);
@@ -325,6 +331,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       setGameOver,
       setGameInstance,
       setShouldSkipIntro,
+      setCompetitionName,
     ]
   );
 
@@ -398,6 +405,7 @@ export function GameProvider({ children }: { children: ReactNode }) {
       gameMode,
       setGameMode,
       isFreeRoam,
+      isCompetition,
     ]
   );
 
@@ -413,6 +421,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
       isCompetition, // ✅ ADD THIS
       shouldSkipIntro,
       clearIntroSkip,
+      competitionName,
+      setCompetitionName,
     }),
 
     [
@@ -425,6 +435,9 @@ export function GameProvider({ children }: { children: ReactNode }) {
       isFreeRoam,
       shouldSkipIntro,
       clearIntroSkip,
+      isCompetition,
+      competitionName,
+      setCompetitionName,
     ]
   );
 
