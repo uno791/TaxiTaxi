@@ -102,10 +102,17 @@ const initialEconomyState: EconomyState = {
 const DEFAULT_CITY = (CITY_SEQUENCE[0] ?? "city1") as CityId;
 const FREE_ROAM_MONEY = 999_999;
 
-const buildEconomyState = (mode: GameMode): EconomyState =>
-  mode === "freeRoam" || mode === "competition"
-    ? { ...initialEconomyState, money: FREE_ROAM_MONEY }
-    : { ...initialEconomyState };
+const COMPETITION_START_MONEY = 600;
+
+const buildEconomyState = (mode: GameMode): EconomyState => {
+  if (mode === "freeRoam") {
+    return { ...initialEconomyState, money: FREE_ROAM_MONEY };
+  }
+  if (mode === "competition") {
+    return { ...initialEconomyState, money: COMPETITION_START_MONEY };
+  }
+  return { ...initialEconomyState };
+};
 
 export function GameProvider({ children }: { children: ReactNode }) {
   const [gameMode, setGameMode] = useState<GameMode>("campaign");
@@ -139,7 +146,8 @@ export function GameProvider({ children }: { children: ReactNode }) {
             ? (update as (value: number) => number)(currentMoney)
             : update;
 
-        if (gameMode === "freeRoam" || gameMode === "competition") {
+        // Free Roam = unlimited money
+        if (gameMode === "freeRoam") {
           const target = Math.max(
             typeof nextValue === "number" ? nextValue : currentMoney,
             FREE_ROAM_MONEY
@@ -175,15 +183,22 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const upgradeSpeed = useCallback(() => {
     setEconomy((previous) => {
       if (previous.speedLevel >= MAX_UPGRADE_LEVEL) {
-        if (gameMode === "freeRoam" || gameMode === "competition") {
-          const ensuredMoney = Math.max(previous.money, FREE_ROAM_MONEY);
-          if (ensuredMoney === previous.money) return previous;
-          return { ...previous, money: ensuredMoney };
+        // FREE ROAM: unlimited money
+        if (gameMode === "freeRoam") {
+          return {
+            ...previous,
+            money: Math.max(previous.money, FREE_ROAM_MONEY),
+          };
+        }
+        // COMPETITION: capped, do NOT force unlimited
+        if (gameMode === "competition") {
+          return previous; // can't upgrade further
         }
         return previous;
       }
 
-      if (gameMode === "freeRoam" || gameMode === "competition") {
+      // FREE ROAM: unlimited money
+      if (gameMode === "freeRoam") {
         return {
           ...previous,
           speedLevel: previous.speedLevel + 1,
@@ -191,9 +206,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      if (previous.money < speedUpgradePrice) {
-        return previous;
+      // COMPETITION: normal rules, DO NOT force free-roam money
+      if (gameMode === "competition") {
+        if (previous.money < speedUpgradePrice) return previous;
+
+        return {
+          ...previous,
+          speedLevel: previous.speedLevel + 1,
+          money: previous.money - speedUpgradePrice,
+        };
       }
+
+      // CAMPAIGN: requires cost
+      if (previous.money < speedUpgradePrice) return previous;
 
       return {
         ...previous,
@@ -206,15 +231,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const upgradeBrakes = useCallback(() => {
     setEconomy((previous) => {
       if (previous.brakeLevel >= MAX_UPGRADE_LEVEL) {
-        if (gameMode === "freeRoam" || gameMode === "competition") {
-          const ensuredMoney = Math.max(previous.money, FREE_ROAM_MONEY);
-          if (ensuredMoney === previous.money) return previous;
-          return { ...previous, money: ensuredMoney };
+        if (gameMode === "freeRoam") {
+          return {
+            ...previous,
+            money: Math.max(previous.money, FREE_ROAM_MONEY),
+          };
+        }
+        if (gameMode === "competition") {
+          return previous;
         }
         return previous;
       }
 
-      if (gameMode === "freeRoam" || gameMode === "competition") {
+      if (gameMode === "freeRoam") {
         return {
           ...previous,
           brakeLevel: previous.brakeLevel + 1,
@@ -222,9 +251,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      if (previous.money < brakeUpgradePrice) {
-        return previous;
+      if (gameMode === "competition") {
+        return {
+          ...previous,
+          brakeLevel: previous.brakeLevel + 1,
+          money: previous.money - brakeUpgradePrice,
+        };
       }
+
+      if (previous.money < brakeUpgradePrice) return previous;
 
       return {
         ...previous,
@@ -237,15 +272,19 @@ export function GameProvider({ children }: { children: ReactNode }) {
   const upgradeBoost = useCallback(() => {
     setEconomy((previous) => {
       if (previous.boostLevel >= MAX_UPGRADE_LEVEL) {
-        if (gameMode === "freeRoam" || gameMode === "competition") {
-          const ensuredMoney = Math.max(previous.money, FREE_ROAM_MONEY);
-          if (ensuredMoney === previous.money) return previous;
-          return { ...previous, money: ensuredMoney };
+        if (gameMode === "freeRoam") {
+          return {
+            ...previous,
+            money: Math.max(previous.money, FREE_ROAM_MONEY),
+          };
+        }
+        if (gameMode === "competition") {
+          return previous;
         }
         return previous;
       }
 
-      if (gameMode === "freeRoam" || gameMode === "competition") {
+      if (gameMode === "freeRoam") {
         return {
           ...previous,
           boostLevel: previous.boostLevel + 1,
@@ -253,9 +292,15 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      if (previous.money < boostUpgradePrice) {
-        return previous;
+      if (gameMode === "competition") {
+        return {
+          ...previous,
+          boostLevel: previous.boostLevel + 1,
+          money: previous.money - boostUpgradePrice,
+        };
       }
+
+      if (previous.money < boostUpgradePrice) return previous;
 
       return {
         ...previous,
@@ -267,22 +312,27 @@ export function GameProvider({ children }: { children: ReactNode }) {
 
   const consumeMissionFinderCharge = useCallback(() => {
     let didConsume = false;
+
     setEconomy((previous) => {
       if (previous.missionFinderCharges <= 0) {
         return previous;
       }
+
       didConsume = true;
+
       return {
         ...previous,
         missionFinderCharges: previous.missionFinderCharges - 1,
       };
     });
+
     return didConsume;
   }, []);
 
   const purchaseMissionFinder = useCallback(() => {
     setEconomy((previous) => {
-      if (gameMode === "freeRoam" || gameMode === "competition") {
+      // FREE ROAM → unlimited money
+      if (gameMode === "freeRoam") {
         return {
           ...previous,
           missionFinderCharges: previous.missionFinderCharges + 1,
@@ -290,14 +340,23 @@ export function GameProvider({ children }: { children: ReactNode }) {
         };
       }
 
-      if (previous.money < missionFinderPrice) {
-        return previous;
+      // COMPETITION → normal money (no unlimited)
+      if (gameMode === "competition") {
+        if (previous.money < missionFinderPrice) return previous;
+        return {
+          ...previous,
+          missionFinderCharges: previous.missionFinderCharges + 1,
+          money: previous.money - missionFinderPrice,
+        };
       }
+
+      // CAMPAIGN → normal cost
+      if (previous.money < missionFinderPrice) return previous;
 
       return {
         ...previous,
-        money: previous.money - missionFinderPrice,
         missionFinderCharges: previous.missionFinderCharges + 1,
+        money: previous.money - missionFinderPrice,
       };
     });
   }, [gameMode]);
