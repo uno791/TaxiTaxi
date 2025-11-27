@@ -82,9 +82,11 @@ function GameWorld() {
     setActiveCity,
     restartGame,
     isFreeRoam,
+    isCompetition,
     shouldSkipIntro,
     clearIntroSkip,
   } = useGameLifecycle();
+
   const { setAppStage } = useMeta();
   const completedCitiesRef = useRef<Record<CityId, boolean>>({
     city1: false,
@@ -234,9 +236,6 @@ function GameWorld() {
     return true;
   }, [activeCity]);
 
-  const { gameMode } = useGameLifecycle();
-  const isCompetition = gameMode === "competition";
-
   const handleMissionSummaryChange = useCallback(
     (summary: MissionProgressSummary) => {
       if (isCompetition) return; // 🚫 Ignore mission saves completely
@@ -287,7 +286,7 @@ function GameWorld() {
   );
 
   useEffect(() => {
-    if (isFreeRoam) {
+    if (isFreeRoam || isCompetition) {
       setTestMode(true);
       setIntroCity(null);
       setStoryCity(null);
@@ -713,7 +712,7 @@ function GameWorld() {
             <ColliderPainterOverlay />
             <MissionUrgencyEffects containerRef={containerRef} />
 
-            {isFreeRoam && (
+            {(isFreeRoam || isCompetition) && (
               <div
                 style={{
                   position: "absolute",
