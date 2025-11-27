@@ -112,8 +112,15 @@ import type {
   MissionPerformanceBreakdown,
   MissionStarEvent,
 } from "./MissionPerformanceContext";
+import { findPrimaryGamepad } from "../Controls/gamepadUtils";
 
-export default function MissionOverlay() {
+export default function MissionOverlay({
+  controllerModeActive,
+  controllerCursorActive = false,
+}: {
+  controllerModeActive: boolean;
+  controllerCursorActive?: boolean;
+}) {
   const {
     prompt,
     active,
@@ -161,6 +168,8 @@ export default function MissionOverlay() {
 
   const starEvents = completion?.starEvents ?? [];
   const totalStars = completion?.stars ?? 0;
+  const completionDismissRef = useRef(false);
+  const completionRafRef = useRef<number | null>(null);
 
   const [displayedDialogText, setDisplayedDialogText] = useState("");
   const [dialogTypingComplete, setDialogTypingComplete] = useState(false);
@@ -175,6 +184,8 @@ export default function MissionOverlay() {
   const dialogHasOptions = Boolean(
     dialog?.options && dialog.options.length > 0
   );
+  const controllerSubmitRef = useRef(false);
+  const controllerRafRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (isFreeRoam) {
@@ -220,6 +231,22 @@ export default function MissionOverlay() {
     };
   }, [setMissionFailureMessage]);
 
+  const dismissCompletion = useCallback(() => {
+    starAnimationTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+    starAnimationTimeoutsRef.current = [];
+    if (starAudioRef.current) {
+      starAudioRef.current.pause();
+      starAudioRef.current.currentTime = 0;
+    }
+    if (fiveStarAudioRef.current) {
+      fiveStarAudioRef.current.pause();
+      fiveStarAudioRef.current.currentTime = 0;
+    }
+    setDisplayedStars(totalStars);
+    setCurrentStarEventIndex(null);
+    setCompletion(null);
+  }, [setCompletion, totalStars]);
+
   // Auto fade out mission complete popup
   useEffect(() => {
     if (!completion) return;
@@ -227,24 +254,46 @@ export default function MissionOverlay() {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.code !== "Space") return;
       event.preventDefault();
-      starAnimationTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
-      starAnimationTimeoutsRef.current = [];
-      if (starAudioRef.current) {
-        starAudioRef.current.pause();
-        starAudioRef.current.currentTime = 0;
-      }
-      if (fiveStarAudioRef.current) {
-        fiveStarAudioRef.current.pause();
-        fiveStarAudioRef.current.currentTime = 0;
-      }
-      setDisplayedStars(totalStars);
-      setCurrentStarEventIndex(null);
-      setCompletion(null);
+      dismissCompletion();
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [completion, totalStars, setCompletion]);
+  }, [completion, dismissCompletion]);
+
+  useEffect(() => {
+    if (!completion || !controllerModeActive) {
+      completionDismissRef.current = false;
+      if (completionRafRef.current !== null) {
+        cancelAnimationFrame(completionRafRef.current);
+        completionRafRef.current = null;
+      }
+      return;
+    }
+
+    const tick = () => {
+      const pad = findPrimaryGamepad();
+      if (pad) {
+        const pressed = Boolean(pad.buttons[0]?.pressed);
+        if (pressed && !completionDismissRef.current) {
+          dismissCompletion();
+        }
+        completionDismissRef.current = pressed;
+      } else {
+        completionDismissRef.current = false;
+      }
+      completionRafRef.current = requestAnimationFrame(tick);
+    };
+
+    completionRafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (completionRafRef.current !== null) {
+        cancelAnimationFrame(completionRafRef.current);
+        completionRafRef.current = null;
+      }
+      completionDismissRef.current = false;
+    };
+  }, [completion, controllerModeActive, dismissCompletion]);
 
   useEffect(() => {
     starAnimationTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
@@ -452,6 +501,57 @@ export default function MissionOverlay() {
     setDialogTypingComplete(true);
     setDialogTyping(false);
   }, [dialogId, dialogText, dialogTypingComplete, setDialogTyping]);
+
+  useEffect(() => {
+    if (!controllerModeActive || dialogId === null || controllerCursorActive) {
+      controllerSubmitRef.current = false;
+      if (controllerRafRef.current !== null) {
+        cancelAnimationFrame(controllerRafRef.current);
+        controllerRafRef.current = null;
+      }
+      return;
+    }
+
+    const tick = () => {
+      const pad = findPrimaryGamepad();
+      if (pad) {
+        const pressed = Boolean(pad.buttons[0]?.pressed);
+        if (pressed && !controllerSubmitRef.current) {
+          if (!dialogTypingComplete) {
+            handleSkipTyping();
+          } else if (
+            dialogOnContinue &&
+            !dialogHasOptions &&
+            !dialogAutoAdvance
+          ) {
+            dialogOnContinue();
+          }
+        }
+        controllerSubmitRef.current = pressed;
+      } else {
+        controllerSubmitRef.current = false;
+      }
+      controllerRafRef.current = requestAnimationFrame(tick);
+    };
+
+    controllerRafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (controllerRafRef.current !== null) {
+        cancelAnimationFrame(controllerRafRef.current);
+        controllerRafRef.current = null;
+      }
+      controllerSubmitRef.current = false;
+    };
+  }, [
+    controllerModeActive,
+    dialogId,
+    dialogTypingComplete,
+    dialogOnContinue,
+    dialogHasOptions,
+    dialogAutoAdvance,
+    handleSkipTyping,
+    controllerCursorActive,
+  ]);
 
   const showingPassengerPreview = Boolean(
     dialog &&

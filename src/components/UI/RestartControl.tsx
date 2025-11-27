@@ -61,12 +61,12 @@ export default function RestartControl() {
         alignItems: "flex-start",
         gap: 2,
       }}
-      title="Restart the current level (Shift+R on keyboard or Options/Start on your controller)."
+      title="Restart the current level (Shift+R on keyboard or Share/Back on your controller)."
       aria-label="Restart level"
     >
       <span>Restart Level</span>
       <span style={{ fontSize: "0.74rem", opacity: 0.75 }}>
-        Shift+R / Options
+        Shift+R / Share
       </span>
     </button>
   );

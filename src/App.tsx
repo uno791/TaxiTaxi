@@ -31,6 +31,8 @@ import {
 } from "./components/Missions/MissionUIContext";
 import { MissionPerformanceProvider } from "./components/Missions/MissionPerformanceContext";
 import MissionOverlay from "./components/Missions/MissionOverlay";
+import ControllerCursor from "./components/Controls/ControllerCursor";
+import { findPrimaryGamepad } from "./components/Controls/gamepadUtils";
 import { Stars } from "@react-three/drei";
 
 import LoginScreen from "./components/UI/LoginScreen";
@@ -72,11 +74,14 @@ function GameWorld() {
   const chaseRef = useRef<THREE.Object3D | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [controlMode, setControlMode] = useState<ControlMode>("keyboard");
+  const controllerModeActive = controlMode === "controller";
   const [isPaused, setIsPaused] = useState(false);
   const [dialogPaused, setDialogPaused] = useState(false); // ✅ added
   const [lightingMode, setLightingMode] = useState<"fake" | "fill">("fake");
   const previousLightingModeRef = useRef<"fake" | "fill">("fake");
   const [clearWeather, setClearWeather] = useState(false);
+  const lastPausePressRef = useRef(false);
+  const lastCirclePressRef = useRef(false);
   const {
     activeCity,
     setActiveCity,
@@ -141,12 +146,57 @@ function GameWorld() {
   const [storyPaused, setStoryPaused] = useState(
     isFreeRoam ? false : initialGameIntro || initialIntroCity !== null
   );
+  const baseCursorVisible =
+    controllerModeActive &&
+    (isPaused ||
+      dialogPaused ||
+      storyPaused ||
+      showGameIntro ||
+      introCity !== null ||
+      storyCity !== null);
 
   useEffect(() => {
     if (shouldSkipIntro) {
       clearIntroSkip();
     }
   }, [shouldSkipIntro, clearIntroSkip]);
+
+  useEffect(() => {
+    if (!controllerModeActive) {
+      lastPausePressRef.current = false;
+      lastCirclePressRef.current = false;
+      return;
+    }
+
+    let raf: number | null = null;
+    const loop = () => {
+      const pad = findPrimaryGamepad();
+      if (pad) {
+        const pausePressed = Boolean(pad.buttons[9]?.pressed);
+        const circlePressed = Boolean(pad.buttons[1]?.pressed);
+        if (pausePressed && !lastPausePressRef.current) {
+          setIsPaused((prev) => !prev);
+        }
+        if (isPaused && circlePressed && !lastCirclePressRef.current) {
+          setIsPaused(false);
+        }
+        lastPausePressRef.current = pausePressed;
+        lastCirclePressRef.current = circlePressed;
+      } else {
+        lastPausePressRef.current = false;
+        lastCirclePressRef.current = false;
+      }
+      raf = requestAnimationFrame(loop);
+    };
+    raf = requestAnimationFrame(loop);
+    return () => {
+      if (raf !== null) {
+        cancelAnimationFrame(raf);
+      }
+      lastPausePressRef.current = false;
+      lastCirclePressRef.current = false;
+    };
+  }, [controllerModeActive, isPaused]);
 
   const playerPositionRef = useRef(new THREE.Vector3(0, 0, 0));
   const destinationRef = useRef(
@@ -611,7 +661,6 @@ function GameWorld() {
               playerObjectRef={chaseRef}
               size={220}
             />
-            <MissionOverlay />
             {!isFreeRoam ? (
               <>
                 {showGameIntro ? (
@@ -619,6 +668,8 @@ function GameWorld() {
                     storyId="game-intro"
                     story={GAME_INTRO_STORY}
                     onContinue={handleGameIntroContinue}
+                    controllerModeActive={controllerModeActive}
+                    controllerCursorActive={baseCursorVisible}
                   />
                 ) : null}
                 {!showGameIntro ? (
@@ -626,11 +677,15 @@ function GameWorld() {
                     <CityStoryOverlay
                       storyId={introCity}
                       story={introData}
+                      controllerModeActive={controllerModeActive}
+                      controllerCursorActive={baseCursorVisible}
                       onContinue={handleIntroOverlayContinue}
                     />
                     <CityStoryOverlay
                       storyId={storyCity}
                       story={storyData}
+                      controllerModeActive={controllerModeActive}
+                      controllerCursorActive={baseCursorVisible}
                       onContinue={handleStoryOverlayContinue}
                     />
                   </>
@@ -713,6 +768,10 @@ function GameWorld() {
             {flightOverlay}
             <ColliderPainterOverlay />
             <MissionUrgencyEffects containerRef={containerRef} />
+            <ControllerCursorBinding
+              controllerModeActive={controllerModeActive}
+              baseCursorVisible={baseCursorVisible}
+            />
 
             {isFreeRoam && (
               <div
@@ -884,6 +943,34 @@ function MissionUrgencyEffects({
 
   return null;
 }
+
+function ControllerCursorBinding({
+  controllerModeActive,
+  baseCursorVisible,
+}: {
+  controllerModeActive: boolean;
+  baseCursorVisible: boolean;
+}) {
+  const { prompt, dialog, completion, active } = useMissionUI();
+  const controllerCursorEnabled =
+    controllerModeActive &&
+    (baseCursorVisible ||
+      Boolean(prompt) ||
+      Boolean(dialog) ||
+      Boolean(completion) ||
+      Boolean(active));
+
+  return (
+    <>
+      <MissionOverlay
+        controllerModeActive={controllerModeActive}
+        controllerCursorActive={controllerCursorEnabled}
+      />
+      <ControllerCursor enabled={controllerCursorEnabled} />
+    </>
+  );
+}
+
 
 function AppContent() {
   const { appStage } = useMeta();

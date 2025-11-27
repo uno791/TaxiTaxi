@@ -1,20 +1,27 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { CityStory } from "../../constants/cities";
+import { findPrimaryGamepad } from "../Controls/gamepadUtils";
 
 type Props = {
   storyId: string | null;
   story: CityStory | null;
   onContinue: () => void;
+  controllerModeActive: boolean;
+  controllerCursorActive?: boolean;
 };
 
 export default function CityStoryOverlay({
   storyId,
   story,
   onContinue,
+  controllerModeActive,
+  controllerCursorActive = false,
 }: Props) {
   const [displayedText, setDisplayedText] = useState("");
   const [typingComplete, setTypingComplete] = useState(false);
   const typingTimeoutRef = useRef<number | null>(null);
+  const controllerSubmitRef = useRef(false);
+  const controllerRafRef = useRef<number | null>(null);
 
   const fullText = useMemo(() => {
     if (!story) return "";
@@ -120,6 +127,46 @@ export default function CityStoryOverlay({
     onContinue();
   }, [storyId, story, typingComplete, fullText, onContinue]);
 
+  useEffect(() => {
+    if (!controllerModeActive || !storyId || !story || controllerCursorActive) {
+      controllerSubmitRef.current = false;
+      if (controllerRafRef.current !== null) {
+        cancelAnimationFrame(controllerRafRef.current);
+        controllerRafRef.current = null;
+      }
+      return;
+    }
+
+    const tick = () => {
+      const pad = findPrimaryGamepad();
+      if (pad) {
+        const pressed = Boolean(pad.buttons[0]?.pressed);
+        if (pressed && !controllerSubmitRef.current) {
+          handleContinue();
+        }
+        controllerSubmitRef.current = pressed;
+      } else {
+        controllerSubmitRef.current = false;
+      }
+      controllerRafRef.current = requestAnimationFrame(tick);
+    };
+
+    controllerRafRef.current = requestAnimationFrame(tick);
+    return () => {
+      if (controllerRafRef.current !== null) {
+        cancelAnimationFrame(controllerRafRef.current);
+        controllerRafRef.current = null;
+      }
+      controllerSubmitRef.current = false;
+    };
+  }, [
+    controllerModeActive,
+    storyId,
+    story,
+    handleContinue,
+    controllerCursorActive,
+  ]);
+
   if (!storyId || !story) return null;
 
   return (
@@ -154,7 +201,7 @@ export default function CityStoryOverlay({
             fontWeight: 700,
             marginBottom: "18px",
             letterSpacing: "0.04em",
-          textTransform: "uppercase",
+            textTransform: "uppercase",
         }}
       >
         {story.title}

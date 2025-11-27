@@ -115,8 +115,7 @@ export function useDualSenseControls(): DualSenseControls {
         const r2 = clamp(pad.buttons[7]?.value ?? 0, 0, 1);
         const handbrake = Boolean(pad.buttons[0]?.pressed);
         const reverse = Boolean(pad.buttons[1]?.pressed);
-        const restartButton =
-          Boolean(pad.buttons[9]?.pressed) || Boolean(pad.buttons[8]?.pressed);
+        const restartButton = Boolean(pad.buttons[8]?.pressed);
 
         setState({
           connected: true,
