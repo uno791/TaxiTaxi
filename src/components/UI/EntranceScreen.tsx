@@ -64,6 +64,13 @@ export default function EntranceScreen() {
     setAppStage("car");
   };
 
+  // NEW: Competition mode (uses same flow as Free Roam)
+  const handleStartCompetition = () => {
+    setActiveCity(defaultCity);
+    restartGame({ mode: "freeRoam" }); // same behavior as Free Roam
+    setAppStage("car");
+  };
+
   return (
     <div
       style={{
@@ -197,6 +204,12 @@ export default function EntranceScreen() {
             onClick: handleStartFreeRoam,
             color: "#2196f3",
           },
+          {
+            label: "Competition",
+            onClick: handleStartCompetition,
+            color: "#ff4444",
+          },
+
           {
             label: "Credits",
             onClick: () => setShowCredits(true),
