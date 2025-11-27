@@ -234,15 +234,20 @@ function GameWorld() {
     return true;
   }, [activeCity]);
 
+  const { gameMode } = useGameLifecycle();
+  const isCompetition = gameMode === "competition";
+
   const handleMissionSummaryChange = useCallback(
     (summary: MissionProgressSummary) => {
+      if (isCompetition) return; // 🚫 Ignore mission saves completely
+
       missionSummaryRef.current = summary;
       resumeStatesRef.current[summary.cityId] = {
         completedMissionIds: [...summary.completedMissionIds],
         nextMissionId: summary.nextMissionId,
       };
     },
-    []
+    [isCompetition]
   );
 
   const missions = MISSIONS_BY_CITY[activeCity];

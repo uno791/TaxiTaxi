@@ -6,7 +6,8 @@ import CarViewer from "./CarViewer";
 
 export default function CarSelector() {
   const { currentUser, setAppStage, setSelectedCar } = useMeta();
-  const { isFreeRoam } = useGameLifecycle();
+  const { isFreeRoam, isCompetition } = useGameLifecycle();
+
   const [index, setIndex] = useState(0);
 
   if (!currentUser) return null;
@@ -21,7 +22,10 @@ export default function CarSelector() {
   }
 
   const car = cars[index];
-  const isUnlocked = isFreeRoam || unlockedLevel >= car.requiredLevel;
+  const isUnlocked =
+    isFreeRoam ||
+    isCompetition || // <- unlock all cars in competition
+    unlockedLevel >= car.requiredLevel;
 
   const handleNext = () => setIndex((i) => (i + 1) % cars.length);
   const handlePrev = () => setIndex((i) => (i - 1 + cars.length) % cars.length);

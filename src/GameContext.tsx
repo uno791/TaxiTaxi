@@ -71,6 +71,7 @@ type GameLifecycleContextType = {
   gameMode: GameMode;
   setGameMode: React.Dispatch<React.SetStateAction<GameMode>>;
   isFreeRoam: boolean;
+  isCompetition: boolean; // ✅ ADD THIS
   shouldSkipIntro: boolean;
   clearIntroSkip: () => void;
 };
@@ -409,9 +410,11 @@ export function GameProvider({ children }: { children: ReactNode }) {
       gameMode,
       setGameMode,
       isFreeRoam,
+      isCompetition, // ✅ ADD THIS
       shouldSkipIntro,
       clearIntroSkip,
     }),
+
     [
       restartGame,
       gameInstance,
