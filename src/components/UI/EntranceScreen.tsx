@@ -66,9 +66,9 @@ export default function EntranceScreen() {
 
   // NEW: Competition mode (uses same flow as Free Roam)
   const handleStartCompetition = () => {
-    setActiveCity(defaultCity);
-    restartGame({ mode: "freeRoam" }); // same behavior as Free Roam
-    setAppStage("car");
+    setActiveCity("city3"); // FORCE CITY 3
+    restartGame({ mode: "competition", skipIntro: true });
+    setAppStage("car"); // Go to car selection
   };
 
   return (
