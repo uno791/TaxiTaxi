@@ -594,7 +594,7 @@ function GameWorld() {
             <GameOverPopup />
             <UpgradeMenu />
 
-            {!isFreeRoam ? (
+            {!isFreeRoam && !isCompetition ? (
               <MissionTrackerHUD
                 remaining={missionsRemaining}
                 nextMission={nextMissionName}
