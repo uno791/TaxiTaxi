@@ -87,10 +87,11 @@ function GameWorld() {
     setActiveCity,
     restartGame,
     isFreeRoam,
+    isCompetition,
     shouldSkipIntro,
     clearIntroSkip,
-  } =
-    useGameLifecycle();
+  } = useGameLifecycle();
+
   const { setAppStage } = useMeta();
   const completedCitiesRef = useRef<Record<CityId, boolean>>({
     city1: false,
@@ -287,22 +288,23 @@ function GameWorld() {
 
   const handleMissionSummaryChange = useCallback(
     (summary: MissionProgressSummary) => {
+      if (isCompetition) return; // 🚫 Ignore mission saves completely
+
       missionSummaryRef.current = summary;
       resumeStatesRef.current[summary.cityId] = {
         completedMissionIds: [...summary.completedMissionIds],
         nextMissionId: summary.nextMissionId,
       };
     },
-    []
+    [isCompetition]
   );
 
   const missions = MISSIONS_BY_CITY[activeCity];
   const savedForActiveCity =
     savedProgress && savedProgress.cityId === activeCity ? savedProgress : null;
   const defaultSpawnPosition = CITY_SPAWN_POINTS[activeCity];
-  const [spawnPosition, setSpawnPosition] = useState<[number, number, number]>(
-    defaultSpawnPosition
-  );
+  const [spawnPosition, setSpawnPosition] =
+    useState<[number, number, number]>(defaultSpawnPosition);
   const introData = introCity ? CITY_INTRO_DIALOGS[introCity] : null;
   const storyData = storyCity ? CITY_STORY_DIALOGS[storyCity] : null;
   const [testMode, setTestMode] = useState(isFreeRoam);
@@ -328,17 +330,13 @@ function GameWorld() {
 
   const handleMissionFailedTeleport = useCallback(
     (startPosition: [number, number, number]) => {
-      setSpawnPosition([
-        startPosition[0],
-        startPosition[1],
-        startPosition[2],
-      ]);
+      setSpawnPosition([startPosition[0], startPosition[1], startPosition[2]]);
     },
     [setSpawnPosition]
   );
 
   useEffect(() => {
-    if (isFreeRoam) {
+    if (isFreeRoam || isCompetition) {
       setTestMode(true);
       setIntroCity(null);
       setStoryCity(null);
@@ -646,7 +644,7 @@ function GameWorld() {
             <GameOverPopup />
             <UpgradeMenu />
 
-            {!isFreeRoam ? (
+            {!isFreeRoam && !isCompetition ? (
               <MissionTrackerHUD
                 remaining={missionsRemaining}
                 nextMission={nextMissionName}
@@ -773,7 +771,7 @@ function GameWorld() {
               baseCursorVisible={baseCursorVisible}
             />
 
-            {isFreeRoam && (
+            {(isFreeRoam || isCompetition) && (
               <div
                 style={{
                   position: "absolute",

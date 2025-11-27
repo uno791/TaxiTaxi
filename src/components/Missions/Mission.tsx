@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { JSX } from "react/jsx-runtime";
 import type { MutableRefObject } from "react";
 import { Vector3, type Object3D } from "three";
-import { useGame } from "../../GameContext";
+import { useGame, useGameLifecycle } from "../../GameContext";
 import { MissionZone } from "./MissionZone";
 import { PassengerModel } from "../Ground/SceneObjects/PassengerModel";
 import { useMissionUI } from "./MissionUIContext";
@@ -15,6 +15,7 @@ import {
 } from "./MissionPerformanceContext";
 import { getMissionEventComponent } from "./events";
 import { getMissionEventsForMission } from "./missionEvents";
+import { saveCompetitionRun } from "../../utils/storage";
 
 export type MissionState =
   | "locked"
@@ -273,6 +274,7 @@ export default function Mission({
   const completionDisplayedRef = useRef(false);
 
   const { setMoney, gameOver } = useGame();
+  const { isCompetition, competitionName } = useGameLifecycle();
   // TIMER: include setTimer
   const {
     setPrompt,
@@ -913,6 +915,32 @@ export default function Mission({
         starEvents: performance.starEvents,
       });
 
+      // Competition leaderboard: record first City 3 mission time
+      if (
+        isCompetition &&
+        missions.length > 0 &&
+        missionId === missions[0]?.id &&
+        cityId === "city3"
+      ) {
+        const runName =
+          competitionName && competitionName.trim().length > 0
+            ? competitionName.trim()
+            : "Unnamed Run";
+        const runTime =
+          performance.timeTakenSeconds ??
+          (typeof config.timeLimit === "number" && typeof timeLeft === "number"
+            ? Math.max(0, config.timeLimit - timeLeft)
+            : null);
+        if (runTime !== null && Number.isFinite(runTime)) {
+          saveCompetitionRun({
+            name: runName,
+            missionId,
+            timeSeconds: runTime,
+            createdAt: Date.now(),
+          });
+        }
+      }
+
       if (onDestinationChange) {
         onDestinationChange(null);
       }
@@ -972,6 +1000,9 @@ export default function Mission({
       setTimer,
       timeLeft,
       unlockAll,
+      isCompetition,
+      competitionName,
+      cityId,
     ]
   );
 

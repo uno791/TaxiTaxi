@@ -672,16 +672,16 @@ const city2Missions: MissionConfig[] = [
 const city3Missions: MissionConfig[] = [
   {
     id: "night3-butcher",
-    pickupPosition: [91.183, 0.1, -440.104],
-    passengerPosition: [91.183, 0.1, -440.104],
-    dropoffPosition: [111.383, 0, -482.502],
+    pickupPosition: [26.502, 0.1, -449.673],
+    passengerPosition: [26.502, 0.1, -449.673],
+    dropoffPosition: [-19.775, 0, -410.045],
     dropoffHint: "the slaughter dock below the fog line",
     reward: 250,
-    timeLimit: 30,
+    timeLimit: 45,
     pickupRadius: 4,
     dropoffRadius: 4.5,
-    passengerRotation: [0, Math.PI, 0],
-    passengerScale: 50,
+    passengerRotation: [0, Math.PI / 2, 0],
+    passengerScale: 40,
     passengerName: "The Butcher",
     passengerModel: "butcher",
     dialogue: [

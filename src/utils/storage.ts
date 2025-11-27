@@ -16,9 +16,17 @@ export type GameProgressSave = {
   savedAt: number;
 };
 
+export type CompetitionRun = {
+  name: string;
+  missionId: string;
+  timeSeconds: number;
+  createdAt: number;
+};
+
 const STORAGE_KEY = "users";
 const CURRENT_KEY = "currentUser"; // dY`^ new key for last logged-in user
 const GAME_PROGRESS_KEY = "taxiTaxiGameProgress";
+const COMPETITION_RUNS_KEY = "taxiTaxiCompetitionRuns";
 
 // --- User list handling ---
 export function loadUsers(): UserData[] {
@@ -125,4 +133,43 @@ export function loadGameProgress(): GameProgressSave | null {
 
 export function clearGameProgress() {
   localStorage.removeItem(GAME_PROGRESS_KEY);
+}
+
+// --- Competition leaderboard handling ---
+export function loadCompetitionRuns(): CompetitionRun[] {
+  const data = localStorage.getItem(COMPETITION_RUNS_KEY);
+  if (!data) return [];
+  try {
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed)) return [];
+    return parsed
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const name =
+          typeof item.name === "string" && item.name.trim().length > 0
+            ? item.name.trim()
+            : "Unnamed Run";
+        const missionId =
+          typeof item.missionId === "string" ? item.missionId : "unknown";
+        const timeSeconds =
+          typeof item.timeSeconds === "number" && Number.isFinite(item.timeSeconds)
+            ? item.timeSeconds
+            : null;
+        const createdAt =
+          typeof item.createdAt === "number" && Number.isFinite(item.createdAt)
+            ? item.createdAt
+            : Date.now();
+        if (timeSeconds === null) return null;
+        return { name, missionId, timeSeconds, createdAt } as CompetitionRun;
+      })
+      .filter((value): value is CompetitionRun => Boolean(value));
+  } catch {
+    return [];
+  }
+}
+
+export function saveCompetitionRun(run: CompetitionRun) {
+  const existing = loadCompetitionRuns();
+  existing.push(run);
+  localStorage.setItem(COMPETITION_RUNS_KEY, JSON.stringify(existing));
 }
